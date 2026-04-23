@@ -93,13 +93,59 @@ function doPost(e) {
 
 
 /**
- * Vérification de l'état — visiter l'URL /exec dans un navigateur
- * devrait afficher ce message.
+ * Retourne tous les signalements (avec coordonnées GPS valides) en JSON.
+ * Consommé par la page map.html pour afficher les marqueurs sur la carte.
  */
 function doGet() {
-  return ContentService
-    .createTextOutput('Point de terminaison Rapport de sentier actif.')
-    .setMimeType(ContentService.MimeType.TEXT);
+  try {
+    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+    const values = sheet.getDataRange().getValues();
+
+    const reports = [];
+    // values[0] est la ligne d'en-tête — on la saute.
+    for (let i = 1; i < values.length; i++) {
+      const report = rowToReport(values[i]);
+      if (report.latitude != null && report.longitude != null) {
+        reports.push(report);
+      }
+    }
+
+    return jsonResponse({ ok: true, count: reports.length, reports: reports });
+  } catch (err) {
+    return jsonResponse({ ok: false, error: String(err && err.message || err) });
+  }
+}
+
+function rowToReport(row) {
+  // L'ordre doit correspondre à appendRow() dans doPost.
+  // `_mapsLink` n'est pas utilisé côté carte (on recalcule via lat/lng).
+  const [timestamp, trail, category, lat, lng, accuracy, gpsSource,
+         _mapsLink, mediaUrl, mediaName, reporter, notes, priority, status] = row;
+  const fileId = extractDriveFileId(mediaUrl);
+  return {
+    timestamp:    timestamp instanceof Date ? timestamp.toISOString() : String(timestamp || ''),
+    trail:        String(trail || ''),
+    category:     String(category || ''),
+    latitude:     lat === '' || lat == null ? null : Number(lat),
+    longitude:    lng === '' || lng == null ? null : Number(lng),
+    accuracy:     accuracy === '' || accuracy == null ? null : Number(accuracy),
+    gpsSource:    String(gpsSource || ''),
+    photoUrl:     String(mediaUrl || ''),
+    // URL de vignette Drive — fonctionne pour les fichiers partagés publiquement.
+    photoThumb:   fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800' : '',
+    photoName:    String(mediaName || ''),
+    reporterName: String(reporter || ''),
+    notes:        String(notes || ''),
+    priority:     String(priority || ''),
+    status:       String(status || '')
+  };
+}
+
+function extractDriveFileId(url) {
+  if (!url) return '';
+  // Les IDs Drive font typiquement 25+ caractères alphanumériques / tirets.
+  const m = String(url).match(/[-\w]{25,}/);
+  return m ? m[0] : '';
 }
 
 

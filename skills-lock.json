@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "webawesome": {
+      "source": "/Users/jeremy/tmp/orford_trails/node_modules/@awesome.me/webawesome/dist/skills/webawesome",
+      "sourceType": "local",
+      "computedHash": "570c41c1df274fcd2f5776a7d19fad32090c125c52476dc5cdf7f09a9d53dfc9"
+    }
+  }
+}

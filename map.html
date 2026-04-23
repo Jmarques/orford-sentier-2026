@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f3a2e" />
+  <title>Carte des signalements — Orford-sur-le-Lac</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Shared theme + config + masthead (all pages).
+       config.js must be synchronous so window.ORFORD is populated
+       before the inline <script> at the bottom of body runs. -->
+  <link rel="stylesheet" href="shared/theme.css" />
+  <script src="shared/config.js"></script>
+  <script defer src="shared/masthead.js"></script>
+
+  <style>
+    /* Map page uses a flex column so the map fills the remaining viewport height. */
+    body.map-page {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+    }
+    /* Hero on the map page uses the same .page-hero from shared/theme.css,
+       so h1 + subtitle match the form page exactly. */
+
+    /* ---------- Legend ---------- */
+    .legend {
+      display: flex;
+      gap: 14px;
+      padding: 8px 20px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      border: 1.5px solid var(--paper);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+    }
+
+    /* ---------- Map ---------- */
+    #map {
+      flex: 1;
+      min-height: 0;
+      background: var(--paper-warm);
+    }
+    .leaflet-container { font-family: inherit; }
+
+    /* Custom marker pins — teardrop shape colored by status */
+    .marker-pin {
+      width: 26px; height: 26px;
+      background: var(--clay);
+      border: 2px solid var(--paper);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    }
+    .marker-pin.status-encours { background: var(--ochre); }
+    .marker-pin.status-ferme   { background: var(--moss); }
+
+    /* ---------- Popup ---------- */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      background: var(--paper);
+    }
+    .leaflet-popup-content { margin: 12px 14px; line-height: 1.4; }
+    .popup { max-width: 240px; }
+    .popup img {
+      width: 100%;
+      max-height: 160px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      background: var(--paper-warm);
+    }
+    .popup .cat {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--forest-deep);
+      margin: 0 0 2px;
+    }
+    .popup .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .popup .notes {
+      font-size: 13px;
+      color: var(--text);
+      margin: 8px 0 0;
+      white-space: pre-wrap;
+    }
+    .popup .reporter {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      font-style: italic;
+    }
+    .popup .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .popup .badge.nouveau { background: rgba(164, 87, 46, 0.14); color: var(--clay); }
+    .popup .badge.encours { background: rgba(192, 138, 47, 0.16); color: #8a6120; }
+    .popup .badge.ferme   { background: rgba(74, 107, 82, 0.18);  color: var(--success); }
+
+    /* ---------- State overlay ---------- */
+    .state {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--paper);
+      padding: 16px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--forest-deep);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+    .state.err { background: #f7e4e0; color: var(--clay); border-color: #ebc9c2; }
+  </style>
+</head>
+<body class="map-page">
+  <site-masthead page="carte"></site-masthead>
+
+  <header class="page-hero">
+    <h1>Carte des <em>signalements</em></h1>
+    <p class="page-hero__subtitle" id="stats">Chargement…</p>
+  </header>
+
+  <div class="legend" aria-label="Légende">
+    <span class="legend-item"><span class="legend-dot" style="background: var(--clay);"></span>Nouveau</span>
+    <span class="legend-item"><span class="legend-dot" style="background: var(--ochre);"></span>En cours</span>
+    <span class="legend-item"><span class="legend-dot" style="background: var(--moss);"></span>Fermé</span>
+  </div>
+
+  <div id="map"></div>
+
+  <div id="stateBox" class="state">Chargement…</div>
+
+  <script>
+    // =========================================================
+    // CONFIG — defined in shared/config.js (single source of truth)
+    // =========================================================
+    const ENDPOINT_URL = window.ORFORD.ENDPOINT_URL;
+
+    // Vue par défaut — région d'Orford (Cantons-de-l'Est, QC).
+    // Ajustée automatiquement via fitBounds() quand les données arrivent.
+    const DEFAULT_CENTER = [45.32, -72.23];
+    const DEFAULT_ZOOM   = 12;
+
+    // =========================================================
+    // Init map
+    // =========================================================
+    const map = L.map('map', { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    const stateBox = document.getElementById('stateBox');
+
+    // =========================================================
+    // Helpers
+    // =========================================================
+    function statusClass(status) {
+      const s = String(status || '').toLowerCase();
+      if (s.indexOf('fermé') === 0 || s.indexOf('ferme') === 0 || s === 'closed') return 'ferme';
+      if (s.indexOf('en cours') === 0) return 'encours';
+      return 'nouveau';
+    }
+
+    function makeIcon(status) {
+      return L.divIcon({
+        className: '',
+        html: '<div class="marker-pin status-' + statusClass(status) + '"></div>',
+        iconSize:   [26, 26],
+        iconAnchor: [13, 26],
+        popupAnchor: [0, -26]
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const date = d.toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' });
+      const time = d.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+      return date + ' · ' + time;
+    }
+
+    function popupHtml(r) {
+      const sc = statusClass(r.status);
+      const label = r.status || 'Nouveau';
+      const img = r.photoThumb
+        ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />'
+        : '';
+      const notes = r.notes
+        ? '<p class="notes">' + escapeHtml(r.notes) + '</p>'
+        : '';
+      const reporter = r.reporterName
+        ? '<p class="reporter">Signalé par ' + escapeHtml(r.reporterName) + '</p>'
+        : '';
+      const sub = [escapeHtml(r.trail || ''), formatDate(r.timestamp)]
+        .filter(Boolean).join(' · ');
+
+      return '<div class="popup">'
+        + img
+        + '<p class="cat">' + escapeHtml(r.category || 'Sans catégorie') + '</p>'
+        + '<p class="sub">' + sub + '</p>'
+        + '<span class="badge ' + sc + '">' + escapeHtml(label) + '</span>'
+        + notes
+        + reporter
+        + '</div>';
+    }
+
+    function setStats(n) {
+      document.getElementById('stats').textContent =
+        n + (n === 1 ? ' signalement' : ' signalements');
+    }
+
+    function showState(msg, isError) {
+      stateBox.textContent = msg;
+      stateBox.className = 'state' + (isError ? ' err' : '');
+      stateBox.style.display = 'block';
+    }
+    function hideState() { stateBox.style.display = 'none'; }
+
+    // =========================================================
+    // Fetch & render
+    // =========================================================
+    async function load() {
+      try {
+        const res = await fetch(ENDPOINT_URL, { method: 'GET' });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Réponse invalide');
+
+        const reports = data.reports || [];
+        if (reports.length === 0) {
+          showState('Aucun signalement pour l\'instant.');
+          setStats(0);
+          return;
+        }
+
+        const markers = [];
+        reports.forEach(function (r) {
+          if (r.latitude == null || r.longitude == null) return;
+          const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status) });
+          m.bindPopup(popupHtml(r), { maxWidth: 280 });
+          m.addTo(map);
+          markers.push(m);
+        });
+
+        if (markers.length > 0) {
+          const group = L.featureGroup(markers);
+          map.fitBounds(group.getBounds().pad(0.2), { maxZoom: 15 });
+        }
+
+        setStats(markers.length);
+        hideState();
+      } catch (err) {
+        console.error(err);
+        showState('Erreur de chargement : ' + err.message, true);
+        setStats(0);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

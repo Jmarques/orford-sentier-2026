@@ -31,39 +31,16 @@
   <!-- EXIF extraction (fallback when device GPS is denied) -->
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
 
+  <!-- Shared theme + config + masthead (all pages).
+       config.js must be synchronous so window.ORFORD is populated
+       before the inline <script> at the bottom of body runs. -->
+  <link rel="stylesheet" href="shared/theme.css" />
+  <script src="shared/config.js"></script>
+  <script defer src="shared/masthead.js"></script>
+
   <style>
-    :root {
-      --forest:      #1f3a2e;
-      --forest-deep: #0f241b;
-      --moss:        #4a6b52;
-      --paper:       #f4f1e8;
-      --paper-warm:  #ebe6d8;
-      --ochre:       #c08a2f;
-      --clay:        #a4572e;
-      --line:        #2a4235;
-      --text:        #1a2821;
-      --muted:       #5a6c64;
-      --danger:      #9a3324;
-      --success:     #2d6a4f;
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--paper);
-      color: var(--text);
-      font-family: 'IBM Plex Sans', system-ui, sans-serif;
-      font-size: 16px;
-      line-height: 1.5;
-      min-height: 100vh;
-      /* Respect device safe areas (iPhone notch, etc.) */
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
     /* Subtle topographic lines in the background */
+    body { padding-bottom: env(safe-area-inset-bottom); }
     body::before {
       content: '';
       position: fixed;
@@ -83,52 +60,6 @@
       max-width: 560px;
       margin: 0 auto;
       padding: 0 20px 48px;
-    }
-
-    /* ---------- Header ---------- */
-    header {
-      padding: 32px 4px 20px;
-      border-bottom: 1px solid rgba(31, 58, 46, 0.15);
-      margin-bottom: 24px;
-      position: relative;
-    }
-    .eyebrow {
-      font-family: 'IBM Plex Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--moss);
-      margin: 0 0 8px;
-    }
-    h1 {
-      font-family: 'Fraunces', serif;
-      font-weight: 600;
-      font-size: clamp(34px, 9vw, 44px);
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      color: var(--forest-deep);
-      margin: 0;
-    }
-    h1 em {
-      font-style: italic;
-      font-variation-settings: "SOFT" 100, "opsz" 144;
-      color: var(--clay);
-    }
-    .subtitle {
-      font-size: 14px;
-      color: var(--muted);
-      margin: 10px 0 0;
-    }
-
-    /* Decorative trail glyph */
-    .trail-mark {
-      position: absolute;
-      top: 24px;
-      right: 4px;
-      width: 42px;
-      height: 42px;
-      opacity: 0.85;
     }
 
     /* ---------- Field groups ---------- */
@@ -236,53 +167,19 @@
       text-align: center;
     }
 
-    /* ---------- Web Awesome overrides ---------- */
-    wa-input, wa-textarea, wa-select {
-      --wa-form-control-background-color: var(--paper-warm);
-      --wa-form-control-border-color: rgba(31, 58, 46, 0.25);
-    }
-
-    /* Retune the "brand" variant from WA's default blue to our forest palette.
-       Affects every <wa-button variant="brand">, wa-icon links, focus rings, etc. */
-    :root {
-      --wa-color-brand-fill-loud:    var(--forest);
-      --wa-color-brand-fill-normal:  var(--moss);
-      --wa-color-brand-fill-quiet:   #d9e4dd;
-      --wa-color-brand-border-loud:  var(--forest);
-      --wa-color-brand-border-normal: var(--moss);
-      --wa-color-brand-border-quiet: rgba(31, 58, 46, 0.25);
-      --wa-color-brand-on-loud:      var(--paper);
-      --wa-color-brand-on-normal:    var(--forest-deep);
-      --wa-color-brand-on-quiet:     var(--forest-deep);
-      --wa-color-focus:              var(--moss);
-      --wa-color-text-link:          var(--forest);
-    }
-
-    /* Filled brand buttons: force cream text/icon on the dark green
-       fill. The brand-on-loud token doesn't seem to reach the button
-       shadow DOM reliably, so we pin it on the button part directly. */
-    wa-button[variant="brand"][appearance~="filled"]::part(base) {
-      color: var(--paper);
-    }
-
     /* Loading state */
     .btn-working { pointer-events: none; opacity: 0.75; }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <svg class="trail-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <path d="M8 40 Q 16 28, 24 32 T 40 12" stroke="#1f3a2e" stroke-width="2.5"
-              stroke-linecap="round" fill="none" stroke-dasharray="2 4"/>
-        <circle cx="8" cy="40" r="3" fill="#c08a2f"/>
-        <circle cx="40" cy="12" r="3" fill="#a4572e"/>
-      </svg>
-      <p class="eyebrow">Entretien des sentiers</p>
-      <h1>Signaler <em>un problème</em><br/>sur les sentiers d'Orford Sur Le Lac</h1>
-      <p class="subtitle">Un petit mot du terrain — pour qu'on sache quoi réparer.</p>
-    </header>
+  <site-masthead page="signaler"></site-masthead>
 
+  <header class="page-hero">
+    <h1>Signaler <em>un problème</em><br/>sur le sentier</h1>
+    <p class="page-hero__subtitle">Un petit mot du terrain — pour qu'on sache quoi réparer.</p>
+  </header>
+
+  <div class="app">
     <form id="reportForm">
 
       <!-- Trail name -->
@@ -440,9 +337,9 @@
 
   <script>
     // =========================================================
-    // CONFIG — paste your Apps Script Web App URL here
+    // CONFIG — defined in shared/config.js (single source of truth)
     // =========================================================
-    const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbyCTPuEw9aP5Waxv6kRAZTGvwTZFo--EGfBhhKNQsEh-IEDeXRtJPB44njsMs1BqDkCBA/exec';
+    const ENDPOINT_URL = window.ORFORD.ENDPOINT_URL;
 
     // =========================================================
     // State
