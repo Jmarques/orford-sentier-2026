@@ -6,6 +6,18 @@
   <meta name="theme-color" content="#1f3a2e" />
   <title>Carte des signalements — Orford-sur-le-Lac</title>
 
+  <!-- Web Awesome (must match index.html — used here for <wa-icon> in pins,
+       legend, and popups). Loaded BEFORE shared/theme.css so our custom
+       :root overrides win. -->
+  <link
+    rel="stylesheet"
+    href="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/styles/themes/default.css"
+  />
+  <script
+    type="module"
+    src="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/webawesome.loader.js"
+  ></script>
+
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -38,21 +50,41 @@
 
     /* ---------- Legend ---------- */
     .legend {
-      display: flex;
-      gap: 14px;
       padding: 8px 20px;
       background: var(--paper-warm);
       border-bottom: 1px solid rgba(31, 58, 46, 0.1);
       font-size: 12px;
       color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .legend-group {
+      display: flex;
       flex-wrap: wrap;
+      gap: 6px 14px;
+      align-items: center;
+    }
+    .legend-group strong {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--forest-deep);
+      min-width: 58px;
     }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
     .legend-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
       border: 1.5px solid var(--paper);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.2);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+    .legend-icon {
+      width: 14px;
+      display: inline-flex;
+      justify-content: center;
+      color: var(--forest-deep);
     }
 
     /* ---------- Map ---------- */
@@ -63,17 +95,32 @@
     }
     .leaflet-container { font-family: inherit; }
 
-    /* Custom marker pins — teardrop shape colored by status */
+    /* Custom marker pins — teardrop shape colored by status,
+       with a category-family icon inside (counter-rotated). */
     .marker-pin {
-      width: 26px; height: 26px;
+      width: 28px; height: 28px;
       background: var(--clay);
       border: 2px solid var(--paper);
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .marker-pin.status-encours { background: var(--ochre); }
     .marker-pin.status-ferme   { background: var(--moss); }
+    .marker-pin__icon {
+      /* Counter-rotate so the icon stays upright inside the tilted pin */
+      transform: rotate(45deg);
+      color: var(--paper);
+      font-size: 13px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .marker-pin__icon wa-icon { font-size: 13px; }
 
     /* ---------- Popup ---------- */
     .leaflet-popup-content-wrapper {
@@ -95,7 +142,11 @@
       font-size: 15px;
       color: var(--forest-deep);
       margin: 0 0 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+    .popup .cat wa-icon { color: var(--moss); font-size: 14px; }
     .popup .sub {
       font-size: 12px;
       color: var(--muted);
@@ -150,14 +201,26 @@
   <site-masthead page="carte"></site-masthead>
 
   <header class="page-hero">
-    <h1>Carte des <em>signalements</em></h1>
+    <h1>Carte des <em>signalements</em> sur les sentiers</h1>
     <p class="page-hero__subtitle" id="stats">Chargement…</p>
   </header>
 
   <div class="legend" aria-label="Légende">
-    <span class="legend-item"><span class="legend-dot" style="background: var(--clay);"></span>Nouveau</span>
-    <span class="legend-item"><span class="legend-dot" style="background: var(--ochre);"></span>En cours</span>
-    <span class="legend-item"><span class="legend-dot" style="background: var(--moss);"></span>Fermé</span>
+    <div class="legend-group">
+      <strong>Statut</strong>
+      <span class="legend-item"><span class="legend-dot" style="background: var(--clay);"></span>Nouveau</span>
+      <span class="legend-item"><span class="legend-dot" style="background: var(--ochre);"></span>En cours</span>
+      <span class="legend-item"><span class="legend-dot" style="background: var(--moss);"></span>Fermé</span>
+    </div>
+    <div class="legend-group">
+      <strong>Type</strong>
+      <span class="legend-item"><span class="legend-icon"><wa-icon name="tree" variant="solid"></wa-icon></span>Nature</span>
+      <span class="legend-item"><span class="legend-icon"><wa-icon name="signs-post" variant="solid"></wa-icon></span>Signalisation</span>
+      <span class="legend-item"><span class="legend-icon"><wa-icon name="bridge" variant="solid"></wa-icon></span>Infrastructure</span>
+      <span class="legend-item"><span class="legend-icon"><wa-icon name="triangle-exclamation" variant="solid"></wa-icon></span>Terrain</span>
+      <span class="legend-item"><span class="legend-icon"><wa-icon name="trash-can" variant="solid"></wa-icon></span>Déchets</span>
+      <span class="legend-item"><span class="legend-icon"><wa-icon name="circle-question" variant="solid"></wa-icon></span>Autre</span>
+    </div>
   </div>
 
   <div id="map"></div>
@@ -196,13 +259,40 @@
       return 'nouveau';
     }
 
-    function makeIcon(status) {
+    // Map the 10 form categories → 6 visual families.
+    // Keep these regexes loose so any future category labels still sort correctly.
+    function categoryFamily(category) {
+      const c = String(category || '').toLowerCase();
+      if (/arbre|végétation|vegetation/.test(c))                  return 'nature';
+      if (/pancarte|balise/.test(c))                              return 'signalisation';
+      if (/pont|passerelle/.test(c))                              return 'infrastructure';
+      if (/déchet|dechet|débris|debris/.test(c))                  return 'dechets';
+      if (/érosion|erosion|ravinement|inondation|drainage|danger/.test(c)) return 'terrain';
+      return 'autre';
+    }
+
+    const FAMILY_ICONS = {
+      nature:         'tree',
+      signalisation:  'signs-post',
+      infrastructure: 'bridge',
+      dechets:        'trash-can',
+      terrain:        'triangle-exclamation',
+      autre:          'circle-question'
+    };
+
+    function makeIcon(status, category) {
+      const iconName = FAMILY_ICONS[categoryFamily(category)];
       return L.divIcon({
         className: '',
-        html: '<div class="marker-pin status-' + statusClass(status) + '"></div>',
-        iconSize:   [26, 26],
-        iconAnchor: [13, 26],
-        popupAnchor: [0, -26]
+        html:
+          '<div class="marker-pin status-' + statusClass(status) + '">' +
+            '<span class="marker-pin__icon">' +
+              '<wa-icon name="' + iconName + '" variant="solid"></wa-icon>' +
+            '</span>' +
+          '</div>',
+        iconSize:   [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -28]
       });
     }
 
@@ -224,6 +314,7 @@
     function popupHtml(r) {
       const sc = statusClass(r.status);
       const label = r.status || 'Nouveau';
+      const famIcon = FAMILY_ICONS[categoryFamily(r.category)];
       const img = r.photoThumb
         ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />'
         : '';
@@ -238,7 +329,10 @@
 
       return '<div class="popup">'
         + img
-        + '<p class="cat">' + escapeHtml(r.category || 'Sans catégorie') + '</p>'
+        + '<p class="cat">'
+        +   '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>'
+        +   escapeHtml(r.category || 'Sans catégorie')
+        + '</p>'
         + '<p class="sub">' + sub + '</p>'
         + '<span class="badge ' + sc + '">' + escapeHtml(label) + '</span>'
         + notes
@@ -277,7 +371,7 @@
         const markers = [];
         reports.forEach(function (r) {
           if (r.latitude == null || r.longitude == null) return;
-          const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status) });
+          const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status, r.category) });
           m.bindPopup(popupHtml(r), { maxWidth: 280 });
           m.addTo(map);
           markers.push(m);
