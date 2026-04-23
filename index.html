@@ -276,7 +276,7 @@
       <p class="subtitle">Un petit mot du terrain — pour qu'on sache quoi réparer.</p>
     </header>
 
-    <form id="reportForm" novalidate>
+    <form id="reportForm">
 
       <!-- Trail name -->
       <div class="field">
@@ -587,14 +587,14 @@
     // Submit
     // =========================================================
     els.form.addEventListener('submit', async (e) => {
+      // Browser-level validation runs first (no `novalidate` on the form):
+      // if trail/category are empty, the browser fires `invalid` events on
+      // them, WA renders inline error messages, and `submit` never fires.
       e.preventDefault();
       hideStatus();
 
-      // Validate required
       const trail = els.trail.value;
       const category = els.category.value;
-      if (!trail)    return showStatus('Veuillez choisir un sentier.', 'err');
-      if (!category) return showStatus('Veuillez choisir le type de problème.', 'err');
 
       els.submitBtn.setAttribute('loading', '');
       els.submitBtn.setAttribute('disabled', '');
