@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr-CA">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#1f3a2e" />
-  <title>Trail Report</title>
+  <title>Signalement de sentier</title>
 
   <!-- ============================================================
        Web Awesome (public early CDN).
@@ -286,9 +286,9 @@
         <circle cx="8" cy="40" r="3" fill="#c08a2f"/>
         <circle cx="40" cy="12" r="3" fill="#a4572e"/>
       </svg>
-      <p class="eyebrow">Trail Maintenance</p>
-      <h1>Report <em>something</em><br/>on the trail</h1>
-      <p class="subtitle">A quick note from the field — so we know what needs fixing.</p>
+      <p class="eyebrow">Entretien des sentiers</p>
+      <h1>Signaler <em>un problème</em><br/>sur le sentier</h1>
+      <p class="subtitle">Un petit mot du terrain — pour qu'on sache quoi réparer.</p>
     </header>
 
     <form id="reportForm" novalidate>
@@ -298,8 +298,8 @@
         <wa-select
           id="trail"
           name="trail"
-          label="Trail"
-          placeholder="Choose the trail"
+          label="Sentier"
+          placeholder="Choisissez le sentier"
           required
           with-clear
         >
@@ -307,48 +307,48 @@
           <wa-option value="Sentier des Écurie">Sentier des Écurie</wa-option>
           <wa-option value="Sentier des Ruisseaux">Sentier des Ruisseaux</wa-option>
           <wa-option value="Sentier des Cathédrales">Sentier des Cathédrales</wa-option>
-          <wa-option value="Autre Sentier">Autre Sentier</wa-option>
+          <wa-option value="Autre Sentier">Autre sentier</wa-option>
         </wa-select>
       </div>
 
       <!-- GPS -->
       <div class="field">
         <div class="field-label">
-          <span>GPS location</span>
+          <span>Position GPS</span>
         </div>
         <div class="gps-card">
           <div class="gps-row">
-            <div id="gpsCoords" class="gps-coords empty">No coordinates yet</div>
+            <div id="gpsCoords" class="gps-coords empty">Aucune position pour l'instant</div>
             <wa-button id="gpsBtn" appearance="filled" variant="brand" size="small" type="button">
               <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
-              Detect
+              Détecter
             </wa-button>
           </div>
           <div id="gpsStatus" class="gps-status">
             <span class="dot"></span>
-            <span id="gpsStatusText">Tap "Detect" to capture your location.</span>
+            <span id="gpsStatusText">Touchez « Détecter » pour capter votre position.</span>
           </div>
         </div>
         <p class="field-hint">
-          Location is read from your phone. If denied, we'll try to pull it from the photo's EXIF data.
+          La position vient de votre téléphone. Si ça ne fonctionne pas, on essaiera de la lire à partir de la photo.
         </p>
       </div>
 
       <!-- Photo / Video -->
       <div class="field">
         <div class="field-label">
-          <span>Photo or video</span>
-          <span class="optional">One file</span>
+          <span>Photo ou vidéo</span>
+          <span class="optional">Un fichier</span>
         </div>
 
         <div class="media-actions">
           <wa-button id="takePhotoBtn" appearance="filled" type="button">
             <wa-icon slot="start" name="camera" variant="solid"></wa-icon>
-            Take photo
+            Prendre une photo
           </wa-button>
           <wa-button id="chooseFileBtn" appearance="outlined" type="button">
             <wa-icon slot="start" name="image" variant="solid"></wa-icon>
-            From gallery
+            Depuis la galerie
           </wa-button>
         </div>
 
@@ -377,7 +377,7 @@
             circle
             type="button"
           >
-            <wa-icon name="xmark" variant="solid" label="Remove"></wa-icon>
+            <wa-icon name="xmark" variant="solid" label="Retirer"></wa-icon>
           </wa-button>
           <div id="previewSlot"></div>
           <div class="media-info">
@@ -392,21 +392,21 @@
         <wa-select
           id="category"
           name="category"
-          label="Type of work"
-          placeholder="What needs attention?"
+          label="Type de problème"
+          placeholder="Qu'est-ce qu'il faut réparer?"
           required
           with-clear
         >
-          <wa-option value="Fallen tree">Fallen tree / blowdown</wa-option>
-          <wa-option value="Sign missing or damaged">Sign missing or damaged</wa-option>
-          <wa-option value="Trail marker faded">Trail marker faded</wa-option>
-          <wa-option value="Erosion / washout">Erosion / washout</wa-option>
-          <wa-option value="Flooding / drainage">Flooding / drainage</wa-option>
-          <wa-option value="Bridge / boardwalk damage">Bridge / boardwalk damage</wa-option>
-          <wa-option value="Overgrown vegetation">Overgrown vegetation</wa-option>
-          <wa-option value="Trash / debris">Trash / debris</wa-option>
-          <wa-option value="Hazard (other)">Hazard (other)</wa-option>
-          <wa-option value="Other">Other</wa-option>
+          <wa-option value="Fallen tree">Arbre tombé</wa-option>
+          <wa-option value="Sign missing or damaged">Pancarte manquante ou abîmée</wa-option>
+          <wa-option value="Trail marker faded">Balise effacée</wa-option>
+          <wa-option value="Erosion / washout">Érosion ou ravinement</wa-option>
+          <wa-option value="Flooding / drainage">Inondation ou drainage</wa-option>
+          <wa-option value="Bridge / boardwalk damage">Pont ou passerelle endommagé</wa-option>
+          <wa-option value="Overgrown vegetation">Végétation envahissante</wa-option>
+          <wa-option value="Trash / debris">Déchets ou débris</wa-option>
+          <wa-option value="Hazard (other)">Autre danger</wa-option>
+          <wa-option value="Other">Autre</wa-option>
         </wa-select>
       </div>
 
@@ -415,11 +415,11 @@
         <wa-input
           id="reporterName"
           name="reporterName"
-          label="Your name"
-          placeholder="Optional"
+          label="Votre nom"
+          placeholder="Facultatif"
           with-clear
         >
-          <span slot="hint" class="field-hint" style="margin:0;">So we can follow up if needed.</span>
+          <span slot="hint" class="field-hint" style="margin:0;">Pour qu'on puisse vous rejoindre au besoin.</span>
         </wa-input>
       </div>
 
@@ -428,8 +428,8 @@
         <wa-textarea
           id="notes"
           name="notes"
-          label="Notes"
-          placeholder="Anything else worth knowing? (Optional)"
+          label="Remarques"
+          placeholder="Autre chose à savoir? (facultatif)"
           rows="3"
           resize="vertical"
         ></wa-textarea>
@@ -446,14 +446,14 @@
           style="width: 100%;"
         >
           <wa-icon slot="start" name="paper-plane" variant="solid"></wa-icon>
-          Submit report
+          Envoyer le signalement
         </wa-button>
         <div id="statusBox" class="status"></div>
       </div>
     </form>
 
     <footer>
-      Trail Maintenance Committee · Field Report v1
+      Comité d'entretien des sentiers · Orford-sur-le-Lac
     </footer>
   </div>
 
@@ -461,7 +461,7 @@
     // =========================================================
     // CONFIG — paste your Apps Script Web App URL here
     // =========================================================
-    const ENDPOINT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+    const ENDPOINT_URL = 'https://script.google.com/macros/s/AKfycbyCTPuEw9aP5Waxv6kRAZTGvwTZFo--EGfBhhKNQsEh-IEDeXRtJPB44njsMs1BqDkCBA/exec';
 
     // =========================================================
     // State
@@ -527,17 +527,17 @@
           `${state.latitude.toFixed(6)}, ${state.longitude.toFixed(6)}`;
       } else {
         els.gpsCoords.classList.add('empty');
-        els.gpsCoords.textContent = 'No coordinates yet';
+        els.gpsCoords.textContent = 'Aucune position pour l\'instant';
       }
     }
 
     function detectGps(silent = false) {
       if (!('geolocation' in navigator)) {
-        setGpsStatus('Geolocation is not supported on this device.', 'err');
+        setGpsStatus('La géolocalisation n\'est pas offerte sur cet appareil.', 'err');
         return;
       }
       els.gpsBtn.classList.add('btn-working');
-      if (!silent) setGpsStatus('Locating…', '');
+      if (!silent) setGpsStatus('Recherche en cours…', '');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           els.gpsBtn.classList.remove('btn-working');
@@ -547,17 +547,17 @@
           state.gpsSource = 'device';
           updateCoordsDisplay();
           setGpsStatus(
-            `Device GPS · accuracy ±${Math.round(pos.coords.accuracy)} m`,
+            `GPS de l'appareil · précision ±${Math.round(pos.coords.accuracy)} m`,
             'ok'
           );
         },
         (err) => {
           els.gpsBtn.classList.remove('btn-working');
           const msg = err.code === 1
-            ? 'Location permission denied. We can try reading it from the photo.'
+            ? 'Permission refusée. On va essayer de lire la position depuis la photo.'
             : err.code === 3
-              ? 'Timed out getting location.'
-              : 'Could not get location.';
+              ? 'Délai dépassé pour obtenir la position.'
+              : 'Impossible d\'obtenir la position.';
           setGpsStatus(msg, 'err');
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
@@ -592,7 +592,7 @@
       if (isVideo) { media.controls = true; media.playsInline = true; }
       els.previewSlot.appendChild(media);
 
-      els.mediaName.textContent = file.name || (isVideo ? 'video' : 'photo');
+      els.mediaName.textContent = file.name || (isVideo ? 'vidéo' : 'photo');
       els.mediaSize.textContent = formatBytes(file.size);
       els.mediaPreview.classList.add('visible');
 
@@ -605,7 +605,7 @@
             state.longitude = gps.longitude;
             state.gpsSource = 'exif';
             updateCoordsDisplay();
-            setGpsStatus('Location read from photo EXIF data.', 'ok');
+            setGpsStatus('Position lue à partir de la photo.', 'ok');
           }
         } catch (e) {
           // Silent — EXIF is best-effort.
@@ -631,8 +631,8 @@
       // Validate required
       const trail = els.trail.value;
       const category = els.category.value;
-      if (!trail)    return showStatus('Please choose a trail.', 'err');
-      if (!category) return showStatus('Please choose the type of work.', 'err');
+      if (!trail)    return showStatus('Veuillez choisir un sentier.', 'err');
+      if (!category) return showStatus('Veuillez choisir le type de problème.', 'err');
 
       els.submitBtn.setAttribute('loading', '');
       els.submitBtn.setAttribute('disabled', '');
@@ -671,11 +671,11 @@
           throw new Error(data.error || ('HTTP ' + res.status));
         }
 
-        showStatus('Report submitted. Thank you!', 'ok');
+        showStatus('Signalement envoyé. Merci beaucoup!', 'ok');
         resetForm();
       } catch (err) {
         console.error(err);
-        showStatus('Submission failed: ' + err.message, 'err');
+        showStatus('Échec de l\'envoi : ' + err.message, 'err');
       } finally {
         els.submitBtn.removeAttribute('loading');
         els.submitBtn.removeAttribute('disabled');
@@ -716,7 +716,7 @@
       state.accuracy = null;
       state.gpsSource = null;
       updateCoordsDisplay();
-      setGpsStatus('Tap "Detect" to capture your location.', '');
+      setGpsStatus('Touchez « Détecter » pour capter votre position.', '');
     }
   </script>
 </body>
