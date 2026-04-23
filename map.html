@@ -18,9 +18,12 @@
     src="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/webawesome.loader.js"
   ></script>
 
-  <!-- Leaflet -->
+  <!-- Leaflet + marker clustering -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -122,6 +125,29 @@
       justify-content: center;
     }
     .marker-pin__icon wa-icon { font-size: 13px; }
+
+    /* ---------- Cluster theme (overrides MarkerCluster.Default.css) ---------- */
+    /* Progressive darkness: more markers = darker centre. Text is cream for contrast. */
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
+      background-clip: padding-box;
+      border: 2px solid var(--paper);
+    }
+    .marker-cluster-small  { background: rgba(74, 107, 82, 0.35); }
+    .marker-cluster-medium { background: rgba(31, 58, 46, 0.40); }
+    .marker-cluster-large  { background: rgba(15, 36, 27, 0.45); }
+
+    .marker-cluster-small  div { background: var(--moss); }
+    .marker-cluster-medium div { background: var(--forest); }
+    .marker-cluster-large  div { background: var(--forest-deep); }
+
+    .marker-cluster div { color: var(--paper); }
+    .marker-cluster span {
+      color: var(--paper);
+      font-weight: 600;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
 
     /* ---------- Popup ---------- */
     .leaflet-popup-content-wrapper {
@@ -371,21 +397,31 @@
           return;
         }
 
-        const markers = [];
+        // Cluster overlapping pins so dense areas stay clickable.
+        // At max zoom, pins that share coords "spiderfy" into a fan on click.
+        const cluster = L.markerClusterGroup({
+          showCoverageOnHover: false,
+          spiderfyOnMaxZoom:   true,
+          zoomToBoundsOnClick: true,
+          maxClusterRadius:    45,
+        });
+
+        let addedCount = 0;
         reports.forEach(function (r) {
           if (r.latitude == null || r.longitude == null) return;
           const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status, r.category) });
           m.bindPopup(popupHtml(r), { maxWidth: 280 });
-          m.addTo(map);
-          markers.push(m);
+          cluster.addLayer(m);
+          addedCount++;
         });
 
-        if (markers.length > 0) {
-          const group = L.featureGroup(markers);
-          map.fitBounds(group.getBounds().pad(0.2), { maxZoom: 15 });
+        map.addLayer(cluster);
+
+        if (addedCount > 0) {
+          map.fitBounds(cluster.getBounds().pad(0.2), { maxZoom: 15 });
         }
 
-        setStats(markers.length);
+        setStats(addedCount);
         hideState();
       } catch (err) {
         console.error(err);
