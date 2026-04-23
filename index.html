@@ -258,6 +258,13 @@
       --wa-color-text-link:          var(--forest);
     }
 
+    /* Filled brand buttons: force cream text/icon on the dark green
+       fill. The brand-on-loud token doesn't seem to reach the button
+       shadow DOM reliably, so we pin it on the button part directly. */
+    wa-button[variant="brand"][appearance~="filled"]::part(base) {
+      color: var(--paper);
+    }
+
     /* Loading state */
     .btn-working { pointer-events: none; opacity: 0.75; }
   </style>
