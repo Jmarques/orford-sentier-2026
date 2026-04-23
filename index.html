@@ -84,6 +84,13 @@
       color: var(--muted);
       text-transform: uppercase;
     }
+    .field-label .required {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--clay);
+      text-transform: uppercase;
+    }
     .field-hint {
       font-size: 13px;
       color: var(--muted);
@@ -135,6 +142,14 @@
       display: flex;
       justify-content: space-between;
       gap: 8px;
+    }
+    .media-gps {
+      padding: 6px 12px;
+      font-size: 12px;
+      background: var(--paper-warm);
+      border-top: 1px solid rgba(31, 58, 46, 0.08);
+      color: var(--success);
+      font-variant-numeric: tabular-nums;
     }
     .hidden-file-input {
       position: absolute;
@@ -200,24 +215,32 @@
         </wa-select>
       </div>
 
-      <!-- GPS -->
+      <!-- Category -->
       <div class="field">
-        <div class="field-label">
-          <span>Votre position</span>
-          <span class="optional">Facultatif</span>
-        </div>
-        <wa-button id="gpsBtn" appearance="outlined" variant="brand" type="button" style="width: 100%;">
-          <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
-          Capter ma position
-        </wa-button>
-        <p id="gpsStatus" class="gps-status">Sinon, on essaiera de la lire à partir de la photo.</p>
+        <wa-select
+          id="category"
+          name="category"
+          label="Type de problème"
+          placeholder="Qu'est-ce qu'il faut réparer?"
+          required
+          with-clear
+        >
+          <wa-option value="Arbre tombé">Arbre tombé</wa-option>
+          <wa-option value="Pancarte manquante ou abîmée">Pancarte manquante ou abîmée</wa-option>
+          <wa-option value="Balise effacée">Balise effacée</wa-option>
+          <wa-option value="Érosion ou ravinement">Érosion ou ravinement</wa-option>
+          <wa-option value="Inondation ou drainage">Inondation ou drainage</wa-option>
+          <wa-option value="Pont ou passerelle endommagé">Pont ou passerelle endommagé</wa-option>
+          <wa-option value="Végétation envahissante">Végétation envahissante</wa-option>
+          <wa-option value="Déchets ou débris">Déchets ou débris</wa-option>
+          <wa-option value="Autre">Autre</wa-option>
+        </wa-select>
       </div>
 
-      <!-- Photo -->
+      <!-- Photo (required) -->
       <div class="field">
         <div class="field-label">
-          <span>Photo</span>
-          <span class="optional">Une seule</span>
+          <span>Photo *</span>
         </div>
 
         <div class="media-actions">
@@ -263,29 +286,20 @@
             <span id="mediaName">—</span>
             <span id="mediaSize">—</span>
           </div>
+          <div id="mediaGps" class="media-gps" hidden></div>
         </div>
       </div>
 
-      <!-- Category -->
-      <div class="field">
-        <wa-select
-          id="category"
-          name="category"
-          label="Type de problème"
-          placeholder="Qu'est-ce qu'il faut réparer?"
-          required
-          with-clear
-        >
-          <wa-option value="Arbre tombé">Arbre tombé</wa-option>
-          <wa-option value="Pancarte manquante ou abîmée">Pancarte manquante ou abîmée</wa-option>
-          <wa-option value="Balise effacée">Balise effacée</wa-option>
-          <wa-option value="Érosion ou ravinement">Érosion ou ravinement</wa-option>
-          <wa-option value="Inondation ou drainage">Inondation ou drainage</wa-option>
-          <wa-option value="Pont ou passerelle endommagé">Pont ou passerelle endommagé</wa-option>
-          <wa-option value="Végétation envahissante">Végétation envahissante</wa-option>
-          <wa-option value="Déchets ou débris">Déchets ou débris</wa-option>
-          <wa-option value="Autre">Autre</wa-option>
-        </wa-select>
+      <!-- GPS (shown only as fallback when the photo has no EXIF GPS). -->
+      <div class="field" id="gpsField" hidden>
+        <div class="field-label">
+          <span>Votre position</span>
+        </div>
+        <wa-button id="gpsBtn" appearance="outlined" variant="brand" type="button" style="width: 100%;">
+          <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
+          Capter ma position
+        </wa-button>
+        <p id="gpsStatus" class="gps-status">Votre photo n'a pas d'information de position. Touchez pour la capter avec votre téléphone.</p>
       </div>
 
       <!-- Reporter name (optional) -->
@@ -361,6 +375,7 @@
       category:      document.getElementById('category'),
       reporterName:  document.getElementById('reporterName'),
       notes:         document.getElementById('notes'),
+      gpsField:      document.getElementById('gpsField'),
       gpsBtn:        document.getElementById('gpsBtn'),
       gpsStatus:     document.getElementById('gpsStatus'),
       takePhotoBtn:  document.getElementById('takePhotoBtn'),
@@ -371,46 +386,36 @@
       previewSlot:   document.getElementById('previewSlot'),
       mediaName:     document.getElementById('mediaName'),
       mediaSize:     document.getElementById('mediaSize'),
+      mediaGps:      document.getElementById('mediaGps'),
       removeMedia:   document.getElementById('removeMedia'),
       submitBtn:     document.getElementById('submitBtn'),
       statusBox:     document.getElementById('statusBox'),
     };
 
     // =========================================================
-    // GPS — device geolocation
+    // GPS — device geolocation (shown only as fallback when the
+    // photo has no EXIF GPS; see updateGpsUi() in the media section).
     // =========================================================
     els.gpsBtn.addEventListener('click', detectGps);
-
-    // Try to grab GPS automatically on load (no prompt on most browsers
-    // unless the user has pre-granted; quietly fails otherwise).
-    window.addEventListener('load', () => {
-      if ('permissions' in navigator) {
-        navigator.permissions.query({ name: 'geolocation' }).then((res) => {
-          if (res.state === 'granted') detectGps(true);
-        }).catch(() => {});
-      }
-    });
 
     function setGpsStatus(text, kind /* '', 'ok', 'err' */) {
       els.gpsStatus.className = 'gps-status' + (kind ? ' ' + kind : '');
       els.gpsStatus.textContent = text;
     }
 
-    function showCoords(source) {
+    function showCoords() {
       const coords = `${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)}`;
-      const suffix = source === 'exif'
-        ? ' (lue de la photo)'
-        : state.accuracy ? ` (±${Math.round(state.accuracy)} m)` : '';
+      const suffix = state.accuracy ? ` (±${Math.round(state.accuracy)} m)` : '';
       setGpsStatus(`✓ Position captée : ${coords}${suffix}`, 'ok');
     }
 
-    function detectGps(silent = false) {
+    function detectGps() {
       if (!('geolocation' in navigator)) {
         setGpsStatus('La géolocalisation n\'est pas offerte sur cet appareil.', 'err');
         return;
       }
       els.gpsBtn.classList.add('btn-working');
-      if (!silent) setGpsStatus('Recherche en cours…', '');
+      setGpsStatus('Recherche en cours…', '');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           els.gpsBtn.classList.remove('btn-working');
@@ -418,12 +423,12 @@
           state.longitude = pos.coords.longitude;
           state.accuracy  = pos.coords.accuracy;
           state.gpsSource = 'device';
-          showCoords('device');
+          showCoords();
         },
         (err) => {
           els.gpsBtn.classList.remove('btn-working');
           const msg = err.code === 1
-            ? 'Permission refusée. On essaiera de la lire à partir de la photo.'
+            ? 'Permission refusée. Impossible de capter votre position.'
             : err.code === 3
               ? 'Délai dépassé. Essayez à nouveau.'
               : 'Impossible d\'obtenir la position.';
@@ -462,19 +467,49 @@
       els.mediaSize.textContent = formatBytes(file.size);
       els.mediaPreview.classList.add('visible');
 
-      // EXIF fallback: if we don't have device GPS, try to extract from image
-      if (state.gpsSource !== 'device' && window.exifr) {
+      // Reset any previous GPS state — this photo owns the coords now.
+      state.latitude  = null;
+      state.longitude = null;
+      state.accuracy  = null;
+      state.gpsSource = null;
+
+      // Try to pull GPS from the photo's EXIF data.
+      if (window.exifr) {
         try {
           const gps = await exifr.gps(file);
           if (gps && gps.latitude != null && gps.longitude != null) {
             state.latitude  = gps.latitude;
             state.longitude = gps.longitude;
-            state.accuracy  = null;
             state.gpsSource = 'exif';
-            showCoords('exif');
           }
         } catch (e) {
           // Silent — EXIF is best-effort.
+        }
+      }
+
+      updateGpsUi();
+    }
+
+    // Reflect the current GPS state in the UI:
+    //   - If the photo had EXIF GPS: confirm it in the preview, keep GPS field hidden.
+    //   - Otherwise: reveal the GPS field as a manual fallback.
+    function updateGpsUi() {
+      if (state.gpsSource === 'exif') {
+        els.gpsField.hidden = true;
+        els.mediaGps.hidden = false;
+        els.mediaGps.textContent = '✓ Position lue à partir de la photo';
+      } else {
+        els.mediaGps.hidden = true;
+        els.gpsField.hidden = false;
+        // If the user has already captured via device GPS, show the success state;
+        // otherwise show the fallback prompt.
+        if (state.gpsSource === 'device') {
+          showCoords();
+        } else {
+          setGpsStatus(
+            'Votre photo n\'a pas d\'information de position. Touchez pour la capter avec votre téléphone.',
+            ''
+          );
         }
       }
     }
@@ -485,6 +520,14 @@
       els.cameraInput.value = '';
       els.galleryInput.value = '';
       els.mediaPreview.classList.remove('visible');
+
+      // Removing the photo invalidates any GPS we had — start fresh.
+      state.latitude  = null;
+      state.longitude = null;
+      state.accuracy  = null;
+      state.gpsSource = null;
+      els.mediaGps.hidden = true;
+      els.gpsField.hidden = true;
     }
 
     // =========================================================
@@ -496,6 +539,13 @@
       // them, WA renders inline error messages, and `submit` never fires.
       e.preventDefault();
       hideStatus();
+
+      // Photo is required but can't be enforced via native validation
+      // (our picker is a pair of WA buttons backed by hidden file inputs).
+      if (!state.file) {
+        showStatus('Veuillez ajouter une photo du problème.', 'err');
+        return;
+      }
 
       const trail = els.trail.value;
       const category = els.category.value;
@@ -576,12 +626,7 @@
       els.category.value = '';
       els.reporterName.value = '';
       els.notes.value = '';
-      clearMedia();
-      state.latitude = null;
-      state.longitude = null;
-      state.accuracy = null;
-      state.gpsSource = null;
-      setGpsStatus('Sinon, on essaiera de la lire à partir de la photo.', '');
+      clearMedia();  // also resets GPS state + hides gpsField + mediaGps
     }
   </script>
 </body>
