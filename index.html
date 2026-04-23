@@ -237,11 +237,25 @@
     }
 
     /* ---------- Web Awesome overrides ---------- */
-    wa-select::part(combobox),
-    wa-input::part(base),
-    wa-textarea::part(base) {
-      background: var(--paper-warm);
-      border-color: rgba(31, 58, 46, 0.25);
+    wa-input, wa-textarea, wa-select {
+      --wa-form-control-background-color: var(--paper-warm);
+      --wa-form-control-border-color: rgba(31, 58, 46, 0.25);
+    }
+
+    /* Retune the "brand" variant from WA's default blue to our forest palette.
+       Affects every <wa-button variant="brand">, wa-icon links, focus rings, etc. */
+    :root {
+      --wa-color-brand-fill-loud:    var(--forest);
+      --wa-color-brand-fill-normal:  var(--moss);
+      --wa-color-brand-fill-quiet:   #d9e4dd;
+      --wa-color-brand-border-loud:  var(--forest);
+      --wa-color-brand-border-normal: var(--moss);
+      --wa-color-brand-border-quiet: rgba(31, 58, 46, 0.25);
+      --wa-color-brand-on-loud:      var(--paper);
+      --wa-color-brand-on-normal:    var(--forest-deep);
+      --wa-color-brand-on-quiet:     var(--forest-deep);
+      --wa-color-focus:              var(--moss);
+      --wa-color-text-link:          var(--forest);
     }
 
     /* Loading state */
@@ -303,11 +317,11 @@
         </div>
 
         <div class="media-actions">
-          <wa-button id="takePhotoBtn" appearance="filled" type="button">
+          <wa-button id="takePhotoBtn" appearance="filled" variant="brand" type="button">
             <wa-icon slot="start" name="camera" variant="solid"></wa-icon>
             Prendre une photo
           </wa-button>
-          <wa-button id="chooseFileBtn" appearance="outlined" type="button">
+          <wa-button id="chooseFileBtn" appearance="outlined" variant="brand" type="button">
             <wa-icon slot="start" name="image" variant="solid"></wa-icon>
             Depuis la galerie
           </wa-button>
