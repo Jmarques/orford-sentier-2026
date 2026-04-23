@@ -159,43 +159,15 @@
       margin: 6px 2px 0;
     }
 
-    /* ---------- GPS card ---------- */
-    .gps-card {
-      background: var(--paper-warm);
-      border: 1px solid rgba(31, 58, 46, 0.15);
-      border-radius: 8px;
-      padding: 16px;
-    }
-    .gps-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .gps-coords {
-      flex: 1;
-      min-width: 0;
-      font-family: 'IBM Plex Sans', monospace;
-      font-variant-numeric: tabular-nums;
-      font-size: 15px;
-      color: var(--forest-deep);
-      word-break: break-all;
-    }
-    .gps-coords.empty { color: var(--muted); font-style: italic; }
+    /* ---------- GPS ---------- */
     .gps-status {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--muted);
-      margin-top: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      margin: 8px 2px 0;
+      font-variant-numeric: tabular-nums;
     }
-    .gps-status.ok { color: var(--success); }
+    .gps-status.ok  { color: var(--success); }
     .gps-status.err { color: var(--danger); }
-    .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: currentColor;
-    }
 
     /* ---------- Media uploader ---------- */
     .media-actions {
@@ -213,8 +185,7 @@
       position: relative;
     }
     .media-preview.visible { display: block; }
-    .media-preview img,
-    .media-preview video {
+    .media-preview img {
       display: block;
       width: 100%;
       max-height: 320px;
@@ -287,7 +258,7 @@
         <circle cx="40" cy="12" r="3" fill="#a4572e"/>
       </svg>
       <p class="eyebrow">Entretien des sentiers</p>
-      <h1>Signaler <em>un problème</em><br/>sur le sentier</h1>
+      <h1>Signaler <em>un problème</em><br/>sur les sentiers d'Orford Sur Le Lac</h1>
       <p class="subtitle">Un petit mot du terrain — pour qu'on sache quoi réparer.</p>
     </header>
 
@@ -314,31 +285,21 @@
       <!-- GPS -->
       <div class="field">
         <div class="field-label">
-          <span>Position GPS</span>
+          <span>Votre position</span>
+          <span class="optional">Facultatif</span>
         </div>
-        <div class="gps-card">
-          <div class="gps-row">
-            <div id="gpsCoords" class="gps-coords empty">Aucune position pour l'instant</div>
-            <wa-button id="gpsBtn" appearance="filled" variant="brand" size="small" type="button">
-              <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
-              Détecter
-            </wa-button>
-          </div>
-          <div id="gpsStatus" class="gps-status">
-            <span class="dot"></span>
-            <span id="gpsStatusText">Touchez « Détecter » pour capter votre position.</span>
-          </div>
-        </div>
-        <p class="field-hint">
-          La position vient de votre téléphone. Si ça ne fonctionne pas, on essaiera de la lire à partir de la photo.
-        </p>
+        <wa-button id="gpsBtn" appearance="outlined" variant="brand" type="button" style="width: 100%;">
+          <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
+          Capter ma position
+        </wa-button>
+        <p id="gpsStatus" class="gps-status">Sinon, on essaiera de la lire à partir de la photo.</p>
       </div>
 
-      <!-- Photo / Video -->
+      <!-- Photo -->
       <div class="field">
         <div class="field-label">
-          <span>Photo ou vidéo</span>
-          <span class="optional">Un fichier</span>
+          <span>Photo</span>
+          <span class="optional">Une seule</span>
         </div>
 
         <div class="media-actions">
@@ -364,7 +325,7 @@
           id="galleryInput"
           class="hidden-file-input"
           type="file"
-          accept="image/*,video/*"
+          accept="image/*"
         />
 
         <div id="mediaPreview" class="media-preview">
@@ -484,9 +445,7 @@
       reporterName:  document.getElementById('reporterName'),
       notes:         document.getElementById('notes'),
       gpsBtn:        document.getElementById('gpsBtn'),
-      gpsCoords:     document.getElementById('gpsCoords'),
       gpsStatus:     document.getElementById('gpsStatus'),
-      gpsStatusText: document.getElementById('gpsStatusText'),
       takePhotoBtn:  document.getElementById('takePhotoBtn'),
       chooseFileBtn: document.getElementById('chooseFileBtn'),
       cameraInput:   document.getElementById('cameraInput'),
@@ -517,18 +476,15 @@
 
     function setGpsStatus(text, kind /* '', 'ok', 'err' */) {
       els.gpsStatus.className = 'gps-status' + (kind ? ' ' + kind : '');
-      els.gpsStatusText.textContent = text;
+      els.gpsStatus.textContent = text;
     }
 
-    function updateCoordsDisplay() {
-      if (state.latitude != null && state.longitude != null) {
-        els.gpsCoords.classList.remove('empty');
-        els.gpsCoords.textContent =
-          `${state.latitude.toFixed(6)}, ${state.longitude.toFixed(6)}`;
-      } else {
-        els.gpsCoords.classList.add('empty');
-        els.gpsCoords.textContent = 'Aucune position pour l\'instant';
-      }
+    function showCoords(source) {
+      const coords = `${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)}`;
+      const suffix = source === 'exif'
+        ? ' (lue de la photo)'
+        : state.accuracy ? ` (±${Math.round(state.accuracy)} m)` : '';
+      setGpsStatus(`✓ Position captée : ${coords}${suffix}`, 'ok');
     }
 
     function detectGps(silent = false) {
@@ -545,18 +501,14 @@
           state.longitude = pos.coords.longitude;
           state.accuracy  = pos.coords.accuracy;
           state.gpsSource = 'device';
-          updateCoordsDisplay();
-          setGpsStatus(
-            `GPS de l'appareil · précision ±${Math.round(pos.coords.accuracy)} m`,
-            'ok'
-          );
+          showCoords('device');
         },
         (err) => {
           els.gpsBtn.classList.remove('btn-working');
           const msg = err.code === 1
-            ? 'Permission refusée. On va essayer de lire la position depuis la photo.'
+            ? 'Permission refusée. On essaiera de la lire à partir de la photo.'
             : err.code === 3
-              ? 'Délai dépassé pour obtenir la position.'
+              ? 'Délai dépassé. Essayez à nouveau.'
               : 'Impossible d\'obtenir la position.';
           setGpsStatus(msg, 'err');
         },
@@ -585,27 +537,24 @@
 
       // Render preview
       els.previewSlot.innerHTML = '';
-      const url = URL.createObjectURL(file);
-      const isVideo = file.type.startsWith('video/');
-      const media = document.createElement(isVideo ? 'video' : 'img');
-      media.src = url;
-      if (isVideo) { media.controls = true; media.playsInline = true; }
-      els.previewSlot.appendChild(media);
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      els.previewSlot.appendChild(img);
 
-      els.mediaName.textContent = file.name || (isVideo ? 'vidéo' : 'photo');
+      els.mediaName.textContent = file.name || 'photo';
       els.mediaSize.textContent = formatBytes(file.size);
       els.mediaPreview.classList.add('visible');
 
       // EXIF fallback: if we don't have device GPS, try to extract from image
-      if (!isVideo && state.gpsSource !== 'device' && window.exifr) {
+      if (state.gpsSource !== 'device' && window.exifr) {
         try {
           const gps = await exifr.gps(file);
           if (gps && gps.latitude != null && gps.longitude != null) {
             state.latitude  = gps.latitude;
             state.longitude = gps.longitude;
+            state.accuracy  = null;
             state.gpsSource = 'exif';
-            updateCoordsDisplay();
-            setGpsStatus('Position lue à partir de la photo.', 'ok');
+            showCoords('exif');
           }
         } catch (e) {
           // Silent — EXIF is best-effort.
@@ -715,8 +664,7 @@
       state.longitude = null;
       state.accuracy = null;
       state.gpsSource = null;
-      updateCoordsDisplay();
-      setGpsStatus('Touchez « Détecter » pour capter votre position.', '');
+      setGpsStatus('Sinon, on essaiera de la lire à partir de la photo.', '');
     }
   </script>
 </body>
