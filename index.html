@@ -430,10 +430,14 @@
     // =========================================================
     // Media capture
     // =========================================================
+    // Track the latest handleFile() call so submit can await it — otherwise
+    // a user who submits while EXIF is still parsing would send null coords.
+    let lastFileJob = Promise.resolve();
+
     els.takePhotoBtn.addEventListener('click',  () => els.cameraInput.click());
     els.chooseFileBtn.addEventListener('click', () => els.galleryInput.click());
-    els.cameraInput.addEventListener('change',  (e) => handleFile(e.target.files[0]));
-    els.galleryInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    els.cameraInput.addEventListener('change',  (e) => { lastFileJob = handleFile(e.target.files[0]); });
+    els.galleryInput.addEventListener('change', (e) => { lastFileJob = handleFile(e.target.files[0]); });
     els.removeMedia.addEventListener('click', clearMedia);
 
     function formatBytes(bytes) {
@@ -466,13 +470,15 @@
       if (window.exifr) {
         try {
           const gps = await exifr.gps(file);
+          console.log('[exif] extracted from photo:', gps);
           if (gps && gps.latitude != null && gps.longitude != null) {
             state.latitude  = gps.latitude;
             state.longitude = gps.longitude;
             state.gpsSource = 'exif';
+            console.log('[exif] state populated:', { lat: state.latitude, lng: state.longitude, source: state.gpsSource });
           }
         } catch (e) {
-          // Silent — EXIF is best-effort.
+          console.warn('[exif] extraction failed:', e);
         }
       }
 
@@ -542,6 +548,11 @@
       els.submitBtn.setAttribute('loading', '');
       els.submitBtn.setAttribute('disabled', '');
 
+      // Wait for any in-flight EXIF extraction to finish before reading
+      // state.latitude/longitude — otherwise we'd send null coords for a
+      // photo whose EXIF hasn't been parsed yet.
+      await lastFileJob;
+
       try {
         const payload = {
           trail,
@@ -563,6 +574,13 @@
           payload.mediaType   = state.file.type || 'application/octet-stream';
           payload.mediaName   = state.file.name || 'upload';
         }
+
+        // TEMP diagnostic: dump what we're actually sending so we can tell
+        // whether missing coords are a client-side or server-side problem.
+        console.log('[submit] lat/lng in state:', state.latitude, state.longitude, 'source:', state.gpsSource);
+        console.log('[submit] payload (without base64):', {
+          ...payload, mediaBase64: payload.mediaBase64 ? '<base64 ' + payload.mediaBase64.length + ' chars>' : null
+        });
 
         // text/plain avoids a CORS preflight to Apps Script
         const res = await fetch(ENDPOINT_URL, {
