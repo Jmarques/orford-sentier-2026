@@ -31,12 +31,13 @@
   <!-- EXIF extraction (fallback when device GPS is denied) -->
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
 
-  <!-- Shared theme + config + masthead (all pages).
+  <!-- Shared theme + config + masthead + footer (all pages).
        config.js must be synchronous so window.ORFORD is populated
        before the inline <script> at the bottom of body runs. -->
   <link rel="stylesheet" href="shared/theme.css" />
   <script src="shared/config.js"></script>
   <script defer src="shared/masthead.js"></script>
+  <script defer src="shared/footer.js"></script>
 
   <style>
     /* Subtle topographic lines in the background */
@@ -171,16 +172,6 @@
     .status.visible { display: block; }
     .status.ok  { background: #e5efe7; color: var(--success); border: 1px solid #c9ddce; }
     .status.err { background: #f7e4e0; color: var(--danger);  border: 1px solid #ebc9c2; }
-
-    /* ---------- Footer ---------- */
-    footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px dashed rgba(31, 58, 46, 0.2);
-      font-size: 12px;
-      color: var(--muted);
-      text-align: center;
-    }
 
     /* Loading state */
     .btn-working { pointer-events: none; opacity: 0.75; }
@@ -343,11 +334,9 @@
         <div id="statusBox" class="status"></div>
       </div>
     </form>
-
-    <footer>
-      Comité d'entretien des sentiers · Orford-sur-le-Lac
-    </footer>
   </div>
+
+  <site-footer></site-footer>
 
   <script>
     // =========================================================

@@ -153,6 +153,25 @@ site-masthead {
 }
 
 /* ============================================================
+   Footer — identical bottom bar on every page.
+   Rendered by <site-footer> in shared/footer.js.
+   Mirrors the masthead's dark palette so every page feels bookended.
+   ============================================================ */
+site-footer {
+  display: block;
+  padding: 14px 20px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  background: var(--forest-deep);
+  color: rgba(244, 241, 232, 0.65);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  border-top: 1px solid rgba(244, 241, 232, 0.05);
+  margin-top: auto; /* pin to bottom of flex-column layouts */
+}
+.site-footer__text { margin: 0; }
+
+/* ============================================================
    Web Awesome overrides — form controls + filled brand button.
    ============================================================ */
 wa-input, wa-textarea, wa-select {
