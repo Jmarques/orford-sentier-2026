@@ -31,6 +31,10 @@
   <!-- EXIF extraction (fallback when device GPS is denied) -->
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
 
+  <!-- Leaflet (used by the inline map picker in the GPS fallback) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <!-- Optional on-screen console for mobile debugging (no USB needed).
        Append ?debug to the URL to enable. Adds a floating button that
        opens a full JS console on the page itself. -->
@@ -116,9 +120,38 @@
       color: var(--muted);
       margin: 8px 2px 0;
       font-variant-numeric: tabular-nums;
+      min-height: 1.4em; /* reserve space so layout doesn't jump */
     }
     .gps-status.ok  { color: var(--success); }
     .gps-status.err { color: var(--danger); }
+    .gps-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .map-picker {
+      margin-top: 12px;
+      border: 1px solid rgba(31, 58, 46, 0.15);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--paper-warm);
+    }
+    .picker-map {
+      height: 260px;
+      width: 100%;
+      background: var(--paper);
+    }
+    .picker-hint {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 10px 12px 0;
+    }
+    .picker-actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      justify-content: flex-end;
+    }
 
     /* ---------- Media uploader ---------- */
     .media-actions {
@@ -293,16 +326,43 @@
         </div>
       </div>
 
-      <!-- GPS (shown only as fallback when the photo has no EXIF GPS). -->
+      <!-- GPS (shown only as fallback when the photo has no EXIF GPS).
+           Offers two paths: capture the user's current device GPS (when they
+           are on-site), or pick a spot on a map (when they're reporting later
+           from somewhere else). -->
       <div class="field" id="gpsField" hidden>
         <div class="field-label">
           <span>Votre position</span>
         </div>
-        <wa-button id="gpsBtn" appearance="outlined" variant="brand" type="button" style="width: 100%;">
-          <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
-          Capter ma position
-        </wa-button>
-        <p id="gpsStatus" class="gps-status">Votre photo n'a pas d'information de position. Touchez pour la capter avec votre téléphone.</p>
+        <p class="field-hint" style="margin-top: 0;">
+          Votre photo n'a pas d'information de position. Comment voulez-vous l'indiquer?
+        </p>
+        <div class="gps-actions">
+          <wa-button id="gpsBtn" appearance="outlined" variant="brand" type="button">
+            <wa-icon slot="start" name="location-crosshairs" variant="solid"></wa-icon>
+            Capter ma position
+          </wa-button>
+          <wa-button id="pickOnMapBtn" appearance="outlined" variant="brand" type="button">
+            <wa-icon slot="start" name="map-location-dot" variant="solid"></wa-icon>
+            Choisir sur la carte
+          </wa-button>
+        </div>
+        <p id="gpsStatus" class="gps-status"></p>
+
+        <!-- Inline Leaflet picker (hidden until "Choisir sur la carte" is tapped) -->
+        <div id="mapPicker" class="map-picker" hidden>
+          <div id="pickerMap" class="picker-map"></div>
+          <p class="picker-hint">Touchez la carte pour placer un marqueur. Vous pouvez le glisser pour ajuster.</p>
+          <div class="picker-actions">
+            <wa-button id="cancelPickBtn" appearance="outlined" variant="neutral" size="small" type="button">
+              Annuler
+            </wa-button>
+            <wa-button id="confirmPickBtn" appearance="filled" variant="brand" size="small" type="button" disabled>
+              <wa-icon slot="start" name="check" variant="solid"></wa-icon>
+              Confirmer
+            </wa-button>
+          </div>
+        </div>
       </div>
 
       <!-- Reporter name (optional) -->
@@ -379,6 +439,11 @@
       gpsField:      document.getElementById('gpsField'),
       gpsBtn:        document.getElementById('gpsBtn'),
       gpsStatus:     document.getElementById('gpsStatus'),
+      pickOnMapBtn:  document.getElementById('pickOnMapBtn'),
+      mapPicker:     document.getElementById('mapPicker'),
+      pickerMap:     document.getElementById('pickerMap'),
+      cancelPickBtn: document.getElementById('cancelPickBtn'),
+      confirmPickBtn: document.getElementById('confirmPickBtn'),
       takePhotoBtn:  document.getElementById('takePhotoBtn'),
       chooseFileBtn: document.getElementById('chooseFileBtn'),
       cameraInput:   document.getElementById('cameraInput'),
@@ -406,7 +471,12 @@
 
     function showCoords() {
       const coords = `${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)}`;
-      const suffix = state.accuracy ? ` (±${Math.round(state.accuracy)} m)` : '';
+      let suffix = '';
+      if (state.gpsSource === 'picker') {
+        suffix = ' (choisi sur la carte)';
+      } else if (state.accuracy) {
+        suffix = ` (±${Math.round(state.accuracy)} m)`;
+      }
       setGpsStatus(`✓ Position captée : ${coords}${suffix}`, 'ok');
     }
 
@@ -437,6 +507,68 @@
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
       );
+    }
+
+    // =========================================================
+    // Map picker — lets the user drop a pin manually when the
+    // photo has no EXIF GPS AND they're not on-site (so device
+    // geolocation would report the wrong spot).
+    // =========================================================
+    let pickerMap = null;
+    let pickerMarker = null;
+
+    els.pickOnMapBtn.addEventListener('click', openMapPicker);
+    els.cancelPickBtn.addEventListener('click', closeMapPicker);
+    els.confirmPickBtn.addEventListener('click', confirmMapPick);
+
+    function openMapPicker() {
+      els.mapPicker.hidden = false;
+
+      // Lazy init — only the first time the picker is opened.
+      if (!pickerMap) {
+        pickerMap = L.map('pickerMap', { zoomControl: true }).setView([45.304, -72.275], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(pickerMap);
+        pickerMap.on('click', (e) => placePickerPin(e.latlng));
+      }
+
+      // Leaflet computes tile layout from container size; if the container
+      // was hidden when the map was created, we must trigger a resize.
+      setTimeout(() => pickerMap.invalidateSize(), 0);
+
+      els.confirmPickBtn.setAttribute('disabled', '');
+      els.mapPicker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function placePickerPin(latlng) {
+      if (pickerMarker) {
+        pickerMarker.setLatLng(latlng);
+      } else {
+        pickerMarker = L.marker(latlng, { draggable: true }).addTo(pickerMap);
+      }
+      els.confirmPickBtn.removeAttribute('disabled');
+    }
+
+    function closeMapPicker() {
+      els.mapPicker.hidden = true;
+      if (pickerMarker) {
+        pickerMap.removeLayer(pickerMarker);
+        pickerMarker = null;
+      }
+      els.confirmPickBtn.setAttribute('disabled', '');
+    }
+
+    function confirmMapPick() {
+      if (!pickerMarker) return;
+      const latlng = pickerMarker.getLatLng();
+      state.latitude  = latlng.lat;
+      state.longitude = latlng.lng;
+      state.accuracy  = null;
+      state.gpsSource = 'picker';
+      closeMapPicker();
+      updateGpsUi();
     }
 
     // =========================================================
@@ -514,15 +646,13 @@
       } else {
         els.mediaGps.hidden = true;
         els.gpsField.hidden = false;
-        // If the user has already captured via device GPS, show the success state;
-        // otherwise show the fallback prompt.
-        if (state.gpsSource === 'device') {
+        // Once the user has obtained coords (device GPS or map picker),
+        // show them in the status line. Otherwise leave it empty — the
+        // static hint above the buttons already explains the choice.
+        if (state.gpsSource === 'device' || state.gpsSource === 'picker') {
           showCoords();
         } else {
-          setGpsStatus(
-            'Votre photo n\'a pas d\'information de position. Touchez pour la capter avec votre téléphone.',
-            ''
-          );
+          setGpsStatus('', '');
         }
       }
     }
@@ -541,6 +671,7 @@
       state.gpsSource = null;
       els.mediaGps.hidden = true;
       els.gpsField.hidden = true;
+      closeMapPicker();
     }
 
     // =========================================================

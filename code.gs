@@ -24,6 +24,7 @@ const FOLDER_ID = '16MgtyEf36wbkFXbJnHDVIdRig2Sl55nJ';
 const GPS_SOURCE_FR = {
   'device': 'Appareil',
   'exif':   'Photo EXIF',
+  'picker': 'Choix manuel',
   '':       ''
 };
 
