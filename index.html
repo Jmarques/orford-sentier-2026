@@ -31,6 +31,18 @@
   <!-- EXIF extraction (fallback when device GPS is denied) -->
   <script src="https://cdn.jsdelivr.net/npm/exifr/dist/lite.umd.js"></script>
 
+  <!-- Optional on-screen console for mobile debugging (no USB needed).
+       Append ?debug to the URL to enable. Adds a floating button that
+       opens a full JS console on the page itself. -->
+  <script>
+    if (new URLSearchParams(location.search).has('debug')) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/eruda';
+      s.onload = () => window.eruda && window.eruda.init();
+      document.head.appendChild(s);
+    }
+  </script>
+
   <!-- Shared theme + config + masthead + footer (all pages).
        config.js must be synchronous so window.ORFORD is populated
        before the inline <script> at the bottom of body runs. -->
@@ -492,7 +504,10 @@
       if (state.gpsSource === 'exif') {
         els.gpsField.hidden = true;
         els.mediaGps.hidden = false;
-        els.mediaGps.textContent = '✓ Position lue à partir de la photo';
+        // Show the actual coords so the user can verify before sending,
+        // and so we can tell at-a-glance whether state is actually populated.
+        const coords = `${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)}`;
+        els.mediaGps.textContent = `✓ Position lue de la photo : ${coords}`;
       } else {
         els.mediaGps.hidden = true;
         els.gpsField.hidden = false;
@@ -594,7 +609,10 @@
           throw new Error(data.error || ('HTTP ' + res.status));
         }
 
-        showStatus('Signalement envoyé. Merci beaucoup!', 'ok');
+        const coordsSent = (state.latitude != null && state.longitude != null)
+          ? ` (${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)})`
+          : ' (sans position GPS)';
+        showStatus('Signalement envoyé. Merci beaucoup!' + coordsSent, 'ok');
         resetForm();
       } catch (err) {
         console.error(err);
