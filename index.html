@@ -526,7 +526,7 @@
 
       // Lazy init — only the first time the picker is opened.
       if (!pickerMap) {
-        pickerMap = L.map('pickerMap', { zoomControl: true }).setView([45.304, -72.275], 15);
+        pickerMap = L.map('pickerMap', { zoomControl: true }).setView([45.304, -72.275], 14);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
