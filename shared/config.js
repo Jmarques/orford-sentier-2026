@@ -4,5 +4,5 @@
 // in each HTML page can read it without bundling.
 // ============================================================
 window.ORFORD = {
-  ENDPOINT_URL: 'https://script.google.com/macros/s/AKfycbzN67LPCT_VX23QknlQmW188QaxZNPEe5cCww89t-AHgBCSeSbns8bYKVN6xaGIfhyD_Q/exec'
+  ENDPOINT_URL: 'https://script.google.com/macros/s/AKfycbwgmInndoEkl8XJmZfZnsBijvfPp_Md0tI2hve9EUhwvFs-DYuAS2T8pTda_0A5NUy71w/exec'
 };
