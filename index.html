@@ -479,18 +479,21 @@
       state.gpsSource = null;
 
       // Try to pull GPS from the photo's EXIF data.
+      // Use Number.isFinite() instead of `!= null` — on some mobile browsers,
+      // exifr returns { latitude: NaN, longitude: NaN } for photos whose
+      // EXIF is partially readable, and NaN slips past a null check.
+      // JSON.stringify later turns NaN into "null", so the server ends up
+      // writing empty cells even though we thought we had coords.
       if (window.exifr) {
         try {
           const gps = await exifr.gps(file);
-          console.log('[exif] extracted from photo:', gps);
-          if (gps && gps.latitude != null && gps.longitude != null) {
+          if (gps && Number.isFinite(gps.latitude) && Number.isFinite(gps.longitude)) {
             state.latitude  = gps.latitude;
             state.longitude = gps.longitude;
             state.gpsSource = 'exif';
-            console.log('[exif] state populated:', { lat: state.latitude, lng: state.longitude, source: state.gpsSource });
           }
         } catch (e) {
-          console.warn('[exif] extraction failed:', e);
+          // Silent — EXIF is best-effort.
         }
       }
 
@@ -589,13 +592,6 @@
           payload.mediaType   = state.file.type || 'application/octet-stream';
           payload.mediaName   = state.file.name || 'upload';
         }
-
-        // TEMP diagnostic: dump what we're actually sending so we can tell
-        // whether missing coords are a client-side or server-side problem.
-        console.log('[submit] lat/lng in state:', state.latitude, state.longitude, 'source:', state.gpsSource);
-        console.log('[submit] payload (without base64):', {
-          ...payload, mediaBase64: payload.mediaBase64 ? '<base64 ' + payload.mediaBase64.length + ' chars>' : null
-        });
 
         // text/plain avoids a CORS preflight to Apps Script
         const res = await fetch(ENDPOINT_URL, {
