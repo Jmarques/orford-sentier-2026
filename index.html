@@ -460,6 +460,16 @@
     };
 
     // =========================================================
+    // Remember the reporter's name across sessions — most users come back.
+    // localStorage is per-origin and survives browser restarts.
+    // =========================================================
+    const REPORTER_NAME_KEY = 'orford.reporterName';
+    try {
+      const saved = localStorage.getItem(REPORTER_NAME_KEY);
+      if (saved) els.reporterName.value = saved;
+    } catch (e) { /* private mode or storage disabled — silently ignore */ }
+
+    // =========================================================
     // GPS — device geolocation (shown only as fallback when the
     // photo has no EXIF GPS; see updateGpsUi() in the media section).
     // =========================================================
@@ -754,6 +764,14 @@
           throw new Error(data.error || ('HTTP ' + res.status));
         }
 
+        // Persist the reporter name for the next visit (after the submit
+        // succeeded — we don't save names that never made it through).
+        try {
+          if (payload.reporterName) {
+            localStorage.setItem(REPORTER_NAME_KEY, payload.reporterName);
+          }
+        } catch (e) { /* ignore */ }
+
         const coordsSent = (state.latitude != null && state.longitude != null)
           ? ` (${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)})`
           : ' (sans position GPS)';
@@ -794,7 +812,8 @@
     function resetForm() {
       els.trail.value = '';
       els.category.value = '';
-      els.reporterName.value = '';
+      // Keep the reporter name so the user doesn't have to retype it next time
+      // (it's already been persisted via localStorage above).
       els.notes.value = '';
       clearMedia();  // also resets GPS state + hides gpsField + mediaGps
     }
