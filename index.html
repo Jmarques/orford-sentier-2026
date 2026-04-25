@@ -333,9 +333,10 @@
       <div class="field" id="gpsField" hidden>
         <div class="field-label">
           <span>Votre position</span>
+          <span class="required">Obligatoire</span>
         </div>
         <p class="field-hint" style="margin-top: 0;">
-          Votre photo n'a pas d'information de position. Comment voulez-vous l'indiquer?
+          Votre photo n'a pas d'information de position. Indiquez où se trouve le problème pour qu'on puisse le retrouver.
         </p>
         <div class="gps-actions">
           <wa-button id="gpsBtn" appearance="outlined" variant="brand" type="button">
@@ -526,7 +527,8 @@
 
       // Lazy init — only the first time the picker is opened.
       if (!pickerMap) {
-        pickerMap = L.map('pickerMap', { zoomControl: true }).setView([45.304, -72.275], 14);
+        pickerMap = L.map('pickerMap', { zoomControl: true })
+          .setView(window.ORFORD.MAP_CENTER, window.ORFORD.MAP_ZOOM);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -691,16 +693,32 @@
         return;
       }
 
+      // Wait for any in-flight EXIF extraction to finish before reading
+      // state.latitude/longitude — otherwise we'd reject the submit before
+      // the photo's EXIF GPS had a chance to populate state.
+      await lastFileJob;
+
+      // Position is required so the maintenance team can find the problem.
+      // EXIF is best-effort; if it failed, the user must use one of the two
+      // explicit paths in the GPS fallback section (device GPS or map picker).
+      if (!Number.isFinite(state.latitude) || !Number.isFinite(state.longitude)) {
+        // Make sure the fallback field is visible (it should be already, but
+        // belt-and-suspenders for edge cases like an empty EXIF block).
+        els.gpsField.hidden = false;
+        setGpsStatus(
+          'La position est obligatoire — sans elle, on ne peut pas retrouver le problème sur le terrain. Touchez « Capter ma position » ou « Choisir sur la carte ».',
+          'err'
+        );
+        els.gpsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showStatus('Veuillez indiquer la position du problème.', 'err');
+        return;
+      }
+
       const trail = els.trail.value;
       const category = els.category.value;
 
       els.submitBtn.setAttribute('loading', '');
       els.submitBtn.setAttribute('disabled', '');
-
-      // Wait for any in-flight EXIF extraction to finish before reading
-      // state.latitude/longitude — otherwise we'd send null coords for a
-      // photo whose EXIF hasn't been parsed yet.
-      await lastFileJob;
 
       try {
         const payload = {

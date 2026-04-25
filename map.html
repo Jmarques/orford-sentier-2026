@@ -205,6 +205,211 @@
     .popup .badge.encours { background: rgba(192, 138, 47, 0.16); color: #8a6120; }
     .popup .badge.ferme   { background: rgba(74, 107, 82, 0.18);  color: var(--success); }
 
+    /* ---------- "À localiser" chip in the hero ---------- */
+    .todo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+      padding: 3px 10px 3px 8px;
+      background: rgba(164, 87, 46, 0.14);
+      color: var(--clay);
+      border: 1px solid rgba(164, 87, 46, 0.28);
+      border-radius: 999px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .todo-chip:hover,
+    .todo-chip:focus-visible {
+      background: rgba(164, 87, 46, 0.22);
+      outline: none;
+    }
+    .todo-chip wa-icon { font-size: 12px; }
+
+    /* ---------- Admin drawer (slides up from the bottom) ---------- */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 36, 27, 0.4);
+      z-index: 1100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .drawer {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      max-height: 80vh;
+      max-height: 80dvh;
+      background: var(--paper);
+      border-top-left-radius: 14px;
+      border-top-right-radius: 14px;
+      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+      z-index: 1200;
+      transform: translateY(100%);
+      transition: transform 0.22s ease;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .drawer.open { transform: translateY(0); }
+    .drawer__handle {
+      width: 40px; height: 4px;
+      background: rgba(31, 58, 46, 0.2);
+      border-radius: 2px;
+      margin: 8px auto 4px;
+      flex-shrink: 0;
+    }
+    .drawer__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px 12px;
+      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
+      flex-shrink: 0;
+    }
+    .drawer__title {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--forest-deep);
+      margin: 0;
+    }
+    .drawer__close { background: none; border: none; cursor: pointer; padding: 4px; color: var(--muted); }
+    .drawer__close:hover { color: var(--forest-deep); }
+
+    /* List view */
+    .drawer__body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .todo-list { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .todo-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: var(--paper-warm);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      border-radius: 10px;
+    }
+    .todo-item__thumb {
+      flex-shrink: 0;
+      width: 84px; height: 84px;
+      border-radius: 8px;
+      background: rgba(31, 58, 46, 0.06);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--moss);
+      position: relative;
+    }
+    .todo-item__thumb wa-icon { font-size: 28px; }
+    .todo-item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .todo-item__cat {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--forest-deep);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .todo-item__cat wa-icon { color: var(--moss); font-size: 13px; }
+    .todo-item__sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .todo-item__notes {
+      font-size: 13px;
+      color: var(--text);
+      margin: 4px 0 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .todo-item__action { margin-top: 8px; align-self: flex-start; }
+
+    .drawer__empty {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .drawer__empty wa-icon { font-size: 28px; color: var(--success); display: block; margin: 0 auto 8px; }
+
+    /* The list wrapper uses display:contents so its children participate
+       directly in the drawer's flex layout. Edit view sits below as a
+       sibling. We toggle visibility via [data-state]. */
+    .drawer__list { display: contents; }
+    .drawer__edit { display: flex; flex-direction: column; height: 100%; }
+    .drawer[data-state="edit"] .drawer__list { display: none; }
+    .drawer[data-state="list"] .drawer__edit { display: none; }
+    .edit-summary {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
+      flex-shrink: 0;
+    }
+    .edit-summary__thumb {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: rgba(31, 58, 46, 0.08);
+      flex-shrink: 0;
+    }
+    .edit-summary__text { min-width: 0; flex: 1; }
+    .edit-summary__cat { font-size: 13px; font-weight: 600; color: var(--forest-deep); }
+    .edit-summary__sub { font-size: 11px; color: var(--muted); }
+
+    .edit-hint {
+      padding: 8px 16px;
+      background: rgba(192, 138, 47, 0.1);
+      color: #8a6120;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(192, 138, 47, 0.18);
+      flex-shrink: 0;
+    }
+    .edit-map {
+      flex: 1;
+      min-height: 280px;
+      background: var(--paper-warm);
+    }
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+      background: var(--paper);
+      flex-shrink: 0;
+    }
+    .edit-actions wa-button { flex: 1; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--forest-deep);
+      color: var(--paper);
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      z-index: 1300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.err { background: var(--clay); }
+
     /* ---------- State overlay ---------- */
     .state {
       position: absolute;
@@ -229,7 +434,13 @@
 
   <header class="page-hero">
     <h1>Carte des <em>signalements</em> sur les sentiers</h1>
-    <p class="page-hero__subtitle" id="stats">Chargement…</p>
+    <p class="page-hero__subtitle">
+      <span id="stats">Chargement…</span>
+      <button type="button" id="todoChip" class="todo-chip" hidden>
+        <wa-icon name="location-question" variant="solid"></wa-icon>
+        <span id="todoChipCount">0</span> à localiser
+      </button>
+    </p>
   </header>
 
   <div class="legend" aria-label="Légende">
@@ -254,6 +465,49 @@
 
   <site-footer></site-footer>
 
+  <!-- Admin drawer: list of reports without coords + inline picker -->
+  <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
+  <aside id="drawer" class="drawer" data-state="list" hidden aria-hidden="true">
+    <div class="drawer__handle" aria-hidden="true"></div>
+
+    <!-- LIST VIEW -->
+    <div class="drawer__list">
+      <div class="drawer__head">
+        <h2 class="drawer__title">À localiser sur la carte</h2>
+        <button type="button" class="drawer__close" id="drawerCloseBtn" aria-label="Fermer">
+          <wa-icon name="xmark" variant="solid"></wa-icon>
+        </button>
+      </div>
+      <div class="drawer__body">
+        <div id="todoList" class="todo-list"></div>
+      </div>
+    </div>
+
+    <!-- EDIT VIEW -->
+    <div class="drawer__edit">
+      <div class="drawer__head">
+        <h2 class="drawer__title">Placer le repère</h2>
+        <button type="button" class="drawer__close" id="editCloseBtn" aria-label="Retour à la liste">
+          <wa-icon name="arrow-left" variant="solid"></wa-icon>
+        </button>
+      </div>
+      <div class="edit-summary" id="editSummary"></div>
+      <p class="edit-hint">Touchez la carte pour placer un repère. Vous pouvez le glisser pour ajuster.</p>
+      <div id="editMap" class="edit-map"></div>
+      <div class="edit-actions">
+        <wa-button id="editCancelBtn" appearance="outlined" variant="neutral" type="button">
+          Annuler
+        </wa-button>
+        <wa-button id="editConfirmBtn" appearance="filled" variant="brand" type="button" disabled>
+          <wa-icon slot="start" name="check" variant="solid"></wa-icon>
+          Confirmer
+        </wa-button>
+      </div>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
   <div id="stateBox" class="state">Chargement…</div>
 
   <script>
@@ -261,16 +515,13 @@
     // CONFIG — defined in shared/config.js (single source of truth)
     // =========================================================
     const ENDPOINT_URL = window.ORFORD.ENDPOINT_URL;
-
-    // Vue par défaut — région d'Orford (Cantons-de-l'Est, QC).
-    // Ajustée automatiquement via fitBounds() quand les données arrivent.
-    const DEFAULT_CENTER = [45.32, -72.23];
-    const DEFAULT_ZOOM   = 12;
+    const MAP_CENTER   = window.ORFORD.MAP_CENTER;
+    const MAP_ZOOM     = window.ORFORD.MAP_ZOOM;
 
     // =========================================================
     // Init map
     // =========================================================
-    const map = L.map('map', { zoomControl: true }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+    const map = L.map('map', { zoomControl: true }).setView(MAP_CENTER, MAP_ZOOM);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -381,9 +632,49 @@
     }
     function hideState() { stateBox.style.display = 'none'; }
 
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (isError ? ' err' : '');
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => { t.className = 'toast'; }, 2400);
+    }
+
     // =========================================================
     // Fetch & render
     // =========================================================
+    // Module-level state so the drawer/edit flow can mutate the cluster
+    // and counters in place (no full page reload after a successful update).
+    const cluster = L.markerClusterGroup({
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom:   true,
+      zoomToBoundsOnClick: true,
+      maxClusterRadius:    45,
+    });
+    map.addLayer(cluster);
+
+    let placedCount = 0;
+    let pendingReports = []; // reports without coordinates, keyed by rowIndex
+
+    function updateCounters() {
+      setStats(placedCount);
+      const chip  = document.getElementById('todoChip');
+      const count = document.getElementById('todoChipCount');
+      if (pendingReports.length > 0) {
+        count.textContent = pendingReports.length;
+        chip.hidden = false;
+      } else {
+        chip.hidden = true;
+      }
+    }
+
+    function addPlacedMarker(r) {
+      const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status, r.category) });
+      m.bindPopup(popupHtml(r), { maxWidth: 280 });
+      cluster.addLayer(m);
+      placedCount++;
+    }
+
     async function load() {
       try {
         const res = await fetch(ENDPOINT_URL, { method: 'GET' });
@@ -391,38 +682,30 @@
         if (!data.ok) throw new Error(data.error || 'Réponse invalide');
 
         const reports = data.reports || [];
-        if (reports.length === 0) {
-          showState('Aucun signalement pour l\'instant.');
-          setStats(0);
-          return;
-        }
+        placedCount = 0;
+        pendingReports = [];
+        cluster.clearLayers();
 
-        // Cluster overlapping pins so dense areas stay clickable.
-        // At max zoom, pins that share coords "spiderfy" into a fan on click.
-        const cluster = L.markerClusterGroup({
-          showCoverageOnHover: false,
-          spiderfyOnMaxZoom:   true,
-          zoomToBoundsOnClick: true,
-          maxClusterRadius:    45,
-        });
-
-        let addedCount = 0;
         reports.forEach(function (r) {
-          if (r.latitude == null || r.longitude == null) return;
-          const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status, r.category) });
-          m.bindPopup(popupHtml(r), { maxWidth: 280 });
-          cluster.addLayer(m);
-          addedCount++;
+          if (Number.isFinite(r.latitude) && Number.isFinite(r.longitude)) {
+            addPlacedMarker(r);
+          } else {
+            pendingReports.push(r);
+          }
         });
 
-        map.addLayer(cluster);
-
-        if (addedCount > 0) {
+        if (placedCount > 0) {
           map.fitBounds(cluster.getBounds().pad(0.2), { maxZoom: 15 });
+          hideState();
+        } else if (pendingReports.length === 0) {
+          showState('Aucun signalement pour l\'instant.');
+        } else {
+          // No placed pins yet, but we have pending ones — invite the user
+          // to open the drawer rather than leaving the map blank.
+          showState('Aucun signalement n\'est encore localisé. Ouvrez « à localiser » pour commencer.');
         }
 
-        setStats(addedCount);
-        hideState();
+        updateCounters();
       } catch (err) {
         console.error(err);
         showState('Erreur de chargement : ' + err.message, true);
@@ -431,6 +714,212 @@
     }
 
     load();
+
+    // =========================================================
+    // Admin drawer — list pending reports + inline picker
+    // =========================================================
+    const drawerEl    = document.getElementById('drawer');
+    const backdropEl  = document.getElementById('drawerBackdrop');
+    const todoListEl  = document.getElementById('todoList');
+    const editSummary = document.getElementById('editSummary');
+
+    let editMap        = null;
+    let editMarker     = null;
+    let editingReport  = null; // the report currently being placed
+
+    function openDrawer() {
+      drawerEl.hidden = false;
+      backdropEl.hidden = false;
+      // next frame so the transition runs
+      requestAnimationFrame(() => {
+        drawerEl.classList.add('open');
+        backdropEl.classList.add('open');
+      });
+      drawerEl.setAttribute('aria-hidden', 'false');
+      drawerEl.dataset.state = 'list';
+      renderTodoList();
+    }
+
+    function closeDrawer() {
+      drawerEl.classList.remove('open');
+      backdropEl.classList.remove('open');
+      drawerEl.setAttribute('aria-hidden', 'true');
+      // hide elements after transition completes (220ms)
+      setTimeout(() => {
+        drawerEl.hidden = true;
+        backdropEl.hidden = true;
+        // tear down the edit map so it's fresh next time
+        if (editMap) { editMap.remove(); editMap = null; editMarker = null; }
+        editingReport = null;
+      }, 240);
+    }
+
+    document.getElementById('todoChip').addEventListener('click', openDrawer);
+    document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
+    backdropEl.addEventListener('click', closeDrawer);
+
+    function renderTodoList() {
+      if (pendingReports.length === 0) {
+        todoListEl.innerHTML =
+          '<div class="drawer__empty">' +
+            '<wa-icon name="circle-check" variant="solid"></wa-icon>' +
+            'Tout est localisé. Bon travail!' +
+          '</div>';
+        return;
+      }
+
+      todoListEl.innerHTML = pendingReports.map(itemHtml).join('');
+      // Wire up each "Localiser" button
+      todoListEl.querySelectorAll('[data-row]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const row = parseInt(btn.dataset.row, 10);
+          const r = pendingReports.find((x) => x.rowIndex === row);
+          if (r) openEditView(r);
+        });
+      });
+    }
+
+    function itemHtml(r) {
+      const famIcon = FAMILY_ICONS[categoryFamily(r.category)];
+      // Always render the family icon — it acts as a fallback if the photo
+      // fails to load (img.onerror removes the <img> and the icon shows through).
+      const thumb =
+        '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>' +
+        (r.photoThumb
+          ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" ' +
+            'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" ' +
+            'onerror="this.remove()" />'
+          : '');
+      const sub = [escapeHtml(r.trail || ''), formatDate(r.timestamp)]
+        .filter(Boolean).join(' · ');
+      const notes = r.notes
+        ? '<p class="todo-item__notes">' + escapeHtml(r.notes) + '</p>'
+        : '';
+      const reporter = r.reporterName
+        ? '<p class="todo-item__sub" style="font-style: italic;">par ' + escapeHtml(r.reporterName) + '</p>'
+        : '';
+
+      return '<div class="todo-item">' +
+        '<div class="todo-item__thumb">' + thumb + '</div>' +
+        '<div class="todo-item__body">' +
+          '<div class="todo-item__cat">' +
+            '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>' +
+            escapeHtml(r.category || 'Sans catégorie') +
+          '</div>' +
+          '<div class="todo-item__sub">' + sub + '</div>' +
+          notes +
+          reporter +
+          '<wa-button class="todo-item__action" appearance="filled" variant="brand" size="small" data-row="' + r.rowIndex + '">' +
+            '<wa-icon slot="start" name="map-pin" variant="solid"></wa-icon>' +
+            'Localiser sur la carte' +
+          '</wa-button>' +
+        '</div>' +
+      '</div>';
+    }
+
+    // =========================================================
+    // Edit view — Leaflet picker scoped to the drawer
+    // =========================================================
+    function openEditView(report) {
+      editingReport = report;
+      drawerEl.dataset.state = 'edit';
+
+      // Render the compact summary
+      const famIcon = FAMILY_ICONS[categoryFamily(report.category)];
+      const thumb = report.photoThumb
+        ? '<img class="edit-summary__thumb" src="' + escapeHtml(report.photoThumb) + '" alt="" onerror="this.style.display=\'none\'" />'
+        : '<div class="edit-summary__thumb" style="display:flex;align-items:center;justify-content:center;color:var(--moss);"><wa-icon name="' + famIcon + '" variant="solid"></wa-icon></div>';
+      editSummary.innerHTML = thumb +
+        '<div class="edit-summary__text">' +
+          '<div class="edit-summary__cat">' + escapeHtml(report.category || 'Sans catégorie') + '</div>' +
+          '<div class="edit-summary__sub">' +
+            escapeHtml([report.trail, formatDate(report.timestamp)].filter(Boolean).join(' · ')) +
+          '</div>' +
+        '</div>';
+
+      // Init / reset the picker map
+      if (!editMap) {
+        editMap = L.map('editMap', { zoomControl: true }).setView(MAP_CENTER, MAP_ZOOM);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(editMap);
+        editMap.on('click', (e) => placeEditPin(e.latlng));
+      } else {
+        if (editMarker) { editMap.removeLayer(editMarker); editMarker = null; }
+        editMap.setView(MAP_CENTER, MAP_ZOOM);
+      }
+      // Force tile recalculation now that the container is visible
+      setTimeout(() => editMap.invalidateSize(), 60);
+
+      document.getElementById('editConfirmBtn').setAttribute('disabled', '');
+    }
+
+    function placeEditPin(latlng) {
+      if (editMarker) {
+        editMarker.setLatLng(latlng);
+      } else {
+        editMarker = L.marker(latlng, { draggable: true }).addTo(editMap);
+      }
+      document.getElementById('editConfirmBtn').removeAttribute('disabled');
+    }
+
+    document.getElementById('editCloseBtn').addEventListener('click', backToList);
+    document.getElementById('editCancelBtn').addEventListener('click', backToList);
+    document.getElementById('editConfirmBtn').addEventListener('click', confirmEdit);
+
+    function backToList() {
+      drawerEl.dataset.state = 'list';
+      if (editMarker && editMap) { editMap.removeLayer(editMarker); editMarker = null; }
+      editingReport = null;
+    }
+
+    async function confirmEdit() {
+      if (!editingReport || !editMarker) return;
+      const btn = document.getElementById('editConfirmBtn');
+      btn.setAttribute('loading', '');
+      btn.setAttribute('disabled', '');
+
+      const latlng = editMarker.getLatLng();
+      try {
+        const res = await fetch(ENDPOINT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action:    'updateLocation',
+            rowIndex:  editingReport.rowIndex,
+            latitude:  latlng.lat,
+            longitude: latlng.lng,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+
+        // Move the report from pending → placed locally (no reload).
+        const updated = Object.assign({}, editingReport, {
+          latitude:  latlng.lat,
+          longitude: latlng.lng,
+          gpsSource: 'Choix manuel (différé)'
+        });
+        pendingReports = pendingReports.filter((r) => r.rowIndex !== editingReport.rowIndex);
+        addPlacedMarker(updated);
+        updateCounters();
+        showToast('Position enregistrée');
+
+        if (pendingReports.length === 0) {
+          closeDrawer();
+        } else {
+          backToList();
+          renderTodoList();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Échec : ' + err.message, true);
+      } finally {
+        btn.removeAttribute('loading');
+        btn.removeAttribute('disabled');
+      }
+    }
   </script>
 </body>
 </html>

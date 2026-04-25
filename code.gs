@@ -30,66 +30,106 @@ const GPS_SOURCE_FR = {
 
 
 /**
- * Point d'entrée principal — appelé par le formulaire via fetch().
+ * Point d'entrée principal — appelé par le formulaire et la page carte
+ * via fetch(). Le champ `action` route entre les différentes opérations :
+ *   - (par défaut)        → création d'un nouveau signalement
+ *   - 'updateLocation'    → mise à jour des coordonnées d'une rangée existante
  */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-
-    // Enregistrer le média dans Drive (s'il y en a un)
-    let mediaUrl = '';
-    let mediaName = '';
-    if (data.mediaBase64 && data.mediaType && data.mediaName) {
-      const folder  = DriveApp.getFolderById(FOLDER_ID);
-      const decoded = Utilities.base64Decode(data.mediaBase64);
-
-      // Préfixer le nom de fichier avec un horodatage pour éviter les collisions.
-      const safeName =
-        Utilities.formatDate(new Date(), 'UTC', 'yyyyMMdd-HHmmss') +
-        '_' + sanitizeFilename(data.mediaName);
-
-      const blob = Utilities.newBlob(decoded, data.mediaType, safeName);
-      const file = folder.createFile(blob);
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      mediaUrl  = file.getUrl();
-      mediaName = safeName;
+    if (data.action === 'updateLocation') {
+      return updateLocationHandler(data);
     }
-
-    // Construire le lien Google Maps si on a des coordonnées
-    const mapsLink =
-      (data.latitude != null && data.longitude != null)
-        ? 'https://www.google.com/maps?q=' + data.latitude + ',' + data.longitude
-        : '';
-
-    // Traduire la source GPS
-    const gpsSourceFr = GPS_SOURCE_FR[data.gpsSource] != null
-      ? GPS_SOURCE_FR[data.gpsSource]
-      : (data.gpsSource || '');
-
-    // Ajouter la ligne
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
-    sheet.appendRow([
-      new Date(),                  // A  Horodatage
-      data.trail        || '',     // B  Sentier
-      data.category     || '',     // C  Catégorie
-      data.latitude     != null ? data.latitude  : '', // D  Latitude
-      data.longitude    != null ? data.longitude : '', // E  Longitude
-      data.gpsAccuracy  != null ? data.gpsAccuracy : '', // F  Précision GPS (m)
-      gpsSourceFr,                 // G  Source GPS
-      mapsLink,                    // H  Lien Maps
-      mediaUrl,                    // I  URL du média
-      mediaName,                   // J  Nom du fichier média
-      data.reporterName || '',     // K  Nom du déclarant
-      data.notes        || '',     // L  Notes
-      '',                          // M  Priorité  (à remplir manuellement)
-      'Nouveau'                    // N  Statut    (colonne de suivi)
-    ]);
-
-    return jsonResponse({ ok: true, mediaUrl: mediaUrl });
-
+    return createReport(data);
   } catch (err) {
     return jsonResponse({ ok: false, error: String(err && err.message || err) });
   }
+}
+
+function createReport(data) {
+  // Enregistrer le média dans Drive (s'il y en a un)
+  let mediaUrl = '';
+  let mediaName = '';
+  if (data.mediaBase64 && data.mediaType && data.mediaName) {
+    const folder  = DriveApp.getFolderById(FOLDER_ID);
+    const decoded = Utilities.base64Decode(data.mediaBase64);
+
+    // Préfixer le nom de fichier avec un horodatage pour éviter les collisions.
+    const safeName =
+      Utilities.formatDate(new Date(), 'UTC', 'yyyyMMdd-HHmmss') +
+      '_' + sanitizeFilename(data.mediaName);
+
+    const blob = Utilities.newBlob(decoded, data.mediaType, safeName);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    mediaUrl  = file.getUrl();
+    mediaName = safeName;
+  }
+
+  // Construire le lien Google Maps si on a des coordonnées
+  const mapsLink =
+    (data.latitude != null && data.longitude != null)
+      ? 'https://www.google.com/maps?q=' + data.latitude + ',' + data.longitude
+      : '';
+
+  // Traduire la source GPS
+  const gpsSourceFr = GPS_SOURCE_FR[data.gpsSource] != null
+    ? GPS_SOURCE_FR[data.gpsSource]
+    : (data.gpsSource || '');
+
+  // Ajouter la ligne
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  sheet.appendRow([
+    new Date(),                  // A  Horodatage
+    data.trail        || '',     // B  Sentier
+    data.category     || '',     // C  Catégorie
+    data.latitude     != null ? data.latitude  : '', // D  Latitude
+    data.longitude    != null ? data.longitude : '', // E  Longitude
+    data.gpsAccuracy  != null ? data.gpsAccuracy : '', // F  Précision GPS (m)
+    gpsSourceFr,                 // G  Source GPS
+    mapsLink,                    // H  Lien Maps
+    mediaUrl,                    // I  URL du média
+    mediaName,                   // J  Nom du fichier média
+    data.reporterName || '',     // K  Nom du déclarant
+    data.notes        || '',     // L  Notes
+    '',                          // M  Priorité  (à remplir manuellement)
+    'Nouveau'                    // N  Statut    (colonne de suivi)
+  ]);
+
+  return jsonResponse({ ok: true, mediaUrl: mediaUrl });
+}
+
+/**
+ * Met à jour les colonnes GPS (D, E, F, G, H) d'une rangée existante.
+ * Appelé depuis le drawer admin de map.html quand un membre du comité
+ * place un repère a posteriori sur un signalement sans coordonnées.
+ */
+function updateLocationHandler(data) {
+  const row = parseInt(data.rowIndex, 10);
+  const lat = parseFloat(data.latitude);
+  const lng = parseFloat(data.longitude);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isInteger(row) || row < 2) {
+    return jsonResponse({ ok: false, error: 'Paramètres invalides.' });
+  }
+
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  if (row > sheet.getLastRow()) {
+    return jsonResponse({ ok: false, error: 'Ligne introuvable.' });
+  }
+
+  // Écrit lat (D), lng (E), précision vide (F), source = "Choix manuel
+  // (différé)" (G), et le lien Maps (H), en une seule opération.
+  sheet.getRange(row, 4, 1, 5).setValues([[
+    lat,
+    lng,
+    '',
+    'Choix manuel (différé)',
+    'https://www.google.com/maps?q=' + lat + ',' + lng
+  ]]);
+
+  return jsonResponse({ ok: true });
 }
 
 
@@ -104,11 +144,12 @@ function doGet() {
 
     const reports = [];
     // values[0] est la ligne d'en-tête — on la saute.
+    // On retourne TOUTES les rangées (même sans coordonnées) ; le client
+    // map.html sépare les deux groupes : pinable sur la carte vs à localiser.
     for (let i = 1; i < values.length; i++) {
       const report = rowToReport(values[i]);
-      if (report.latitude != null && report.longitude != null) {
-        reports.push(report);
-      }
+      report.rowIndex = i + 1; // 1-indexé pour Sheet.getRange()
+      reports.push(report);
     }
 
     return jsonResponse({ ok: true, count: reports.length, reports: reports });
