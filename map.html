@@ -41,6 +41,7 @@
   <script defer src="shared/masthead.js"></script>
   <script defer src="shared/footer.js"></script>
   <script src="shared/trails.js"></script>
+  <script src="shared/categories.js"></script>
 
   <style>
     /* Map page uses a flex column so the map fills the remaining viewport height. */
@@ -541,26 +542,10 @@
       return 'nouveau';
     }
 
-    // Map the 10 form categories → 6 visual families.
-    // Keep these regexes loose so any future category labels still sort correctly.
-    function categoryFamily(category) {
-      const c = String(category || '').toLowerCase();
-      if (/arbre|végétation|vegetation/.test(c))                  return 'nature';
-      if (/pancarte|balise/.test(c))                              return 'signalisation';
-      if (/pont|passerelle/.test(c))                              return 'infrastructure';
-      if (/déchet|dechet|débris|debris/.test(c))                  return 'dechets';
-      if (/érosion|erosion|ravinement|inondation|drainage|danger/.test(c)) return 'terrain';
-      return 'autre';
-    }
-
-    const FAMILY_ICONS = {
-      nature:         'tree',
-      signalisation:  'signs-post',
-      infrastructure: 'bridge',
-      dechets:        'trash-can',
-      terrain:        'triangle-exclamation',
-      autre:          'circle-question'
-    };
+    // Category → family → icon mapping is defined in shared/categories.js
+    // so the form dropdown and the map use the same visual language.
+    const categoryFamily = window.ORFORD.categoryFamily;
+    const FAMILY_ICONS   = window.ORFORD.FAMILY_ICONS;
 
     function makeIcon(status, category) {
       const iconName = FAMILY_ICONS[categoryFamily(category)];

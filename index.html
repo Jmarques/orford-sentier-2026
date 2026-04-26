@@ -55,6 +55,7 @@
   <script defer src="shared/masthead.js"></script>
   <script defer src="shared/footer.js"></script>
   <script src="shared/trails.js"></script>
+  <script src="shared/categories.js"></script>
 
   <style>
     /* Subtle topographic lines in the background */
@@ -125,6 +126,15 @@
       margin-right: 8px;
       vertical-align: middle;
       border: 1px solid rgba(0, 0, 0, 0.15);
+    }
+    /* Category dropdown — family icon in front of each option, matching
+       the icons shown in the map legend. Populated by shared/categories.js. */
+    .category-icon {
+      display: inline-flex;
+      width: 18px;
+      margin-right: 8px;
+      color: var(--moss);
+      vertical-align: middle;
     }
 
     /* ---------- GPS ---------- */
@@ -493,6 +503,19 @@
         opt.prepend(swatch);
       });
     })();
+
+    // =========================================================
+    // Add the family icon in front of each "Type de problème" option
+    // (same icon vocabulary as the map legend / pins). Synchronous —
+    // no fetch needed since categoryIcon() is a pure function.
+    // =========================================================
+    els.category.querySelectorAll('wa-option').forEach((opt) => {
+      const iconName = window.ORFORD.categoryIcon(opt.getAttribute('value'));
+      const wrap = document.createElement('span');
+      wrap.className = 'category-icon';
+      wrap.innerHTML = '<wa-icon name="' + iconName + '" variant="solid"></wa-icon>';
+      opt.prepend(wrap);
+    });
 
     // =========================================================
     // Remember the reporter's name across sessions — most users come back.
