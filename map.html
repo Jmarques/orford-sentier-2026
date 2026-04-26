@@ -40,6 +40,7 @@
   <script src="shared/config.js"></script>
   <script defer src="shared/masthead.js"></script>
   <script defer src="shared/footer.js"></script>
+  <script src="shared/trails.js"></script>
 
   <style>
     /* Map page uses a flex column so the map fills the remaining viewport height. */
@@ -526,6 +527,7 @@
       maxZoom: 19,
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
+    window.ORFORD.addTrailsToMap(map);
 
     const stateBox = document.getElementById('stateBox');
 
@@ -844,6 +846,7 @@
           maxZoom: 19,
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(editMap);
+        window.ORFORD.addTrailsToMap(editMap);
         editMap.on('click', (e) => placeEditPin(e.latlng));
       } else {
         if (editMarker) { editMap.removeLayer(editMarker); editMarker = null; }

@@ -54,6 +54,7 @@
   <script src="shared/config.js"></script>
   <script defer src="shared/masthead.js"></script>
   <script defer src="shared/footer.js"></script>
+  <script src="shared/trails.js"></script>
 
   <style>
     /* Subtle topographic lines in the background */
@@ -112,6 +113,18 @@
       font-size: 13px;
       color: var(--muted);
       margin: 6px 2px 0;
+    }
+
+    /* Trail dropdown — colored dot in front of each option, matching
+       the trail's GeoJSON color. Populated at runtime by trails.js. */
+    .trail-swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+      vertical-align: middle;
+      border: 1px solid rgba(0, 0, 0, 0.15);
     }
 
     /* ---------- GPS ---------- */
@@ -243,10 +256,12 @@
           required
           with-clear
         >
-          <wa-option value="Sentier de la Sapiniére">Sentier de la Sapiniére</wa-option>
-          <wa-option value="Sentier des Écurie">Sentier des Écurie</wa-option>
+          <wa-option value="Sentier de la Sapinière">Sentier de la Sapinière</wa-option>
+          <wa-option value="Sentier de l'Écurie">Sentier de l'Écurie</wa-option>
           <wa-option value="Sentier des Ruisseaux">Sentier des Ruisseaux</wa-option>
           <wa-option value="Sentier des Cathédrales">Sentier des Cathédrales</wa-option>
+          <wa-option value="Sentier du Pré">Sentier du Pré</wa-option>
+          <wa-option value="Sentier Ville de Eastman">Sentier Ville de Eastman</wa-option>
           <wa-option value="Autre Sentier">Autre sentier</wa-option>
         </wa-select>
       </div>
@@ -460,6 +475,26 @@
     };
 
     // =========================================================
+    // Add a colored swatch in front of each trail option so users can
+    // visually link the dropdown choice to the trail's tracing on the map.
+    // Trails not in the GeoJSON (and "Autre sentier") fall back to ochre.
+    // =========================================================
+    (async () => {
+      const options = els.trail.querySelectorAll('wa-option');
+      // Read the value via the HTML attribute — `o.value` is undefined
+      // before the wa-option custom element is fully upgraded.
+      const colors = await Promise.all(
+        Array.from(options).map((o) => window.ORFORD.getTrailColor(o.getAttribute('value')))
+      );
+      options.forEach((opt, i) => {
+        const swatch = document.createElement('span');
+        swatch.className = 'trail-swatch';
+        swatch.style.background = colors[i];
+        opt.prepend(swatch);
+      });
+    })();
+
+    // =========================================================
     // Remember the reporter's name across sessions — most users come back.
     // localStorage is per-origin and survives browser restarts.
     // =========================================================
@@ -543,6 +578,7 @@
           maxZoom: 19,
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(pickerMap);
+        window.ORFORD.addTrailsToMap(pickerMap);
         pickerMap.on('click', (e) => placePickerPin(e.latlng));
       }
 
