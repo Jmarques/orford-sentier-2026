@@ -36,23 +36,98 @@
     return cachedPromise;
   }
 
+  // Great-circle distance between two [lng, lat] points, in metres.
+  function haversine(a, b) {
+    const R = 6371000;
+    const toRad = (d) => (d * Math.PI) / 180;
+    const dLat = toRad(b[1] - a[1]);
+    const dLng = toRad(b[0] - a[0]);
+    const s =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+
+  function lineLength(coords) {
+    let d = 0;
+    for (let i = 1; i < coords.length; i++) d += haversine(coords[i - 1], coords[i]);
+    return d;
+  }
+
+  function featureLengthMeters(feature) {
+    const g = feature && feature.geometry;
+    if (!g) return 0;
+    if (g.type === 'LineString') return lineLength(g.coordinates);
+    if (g.type === 'MultiLineString') {
+      return g.coordinates.reduce((sum, c) => sum + lineLength(c), 0);
+    }
+    return 0;
+  }
+
+  function formatDistance(meters) {
+    if (meters >= 1000) return (meters / 1000).toFixed(1).replace('.', ',') + ' km';
+    return Math.round(meters) + ' m';
+  }
+
+  // Each MultiLineString sub-line becomes its own LineString Feature so it
+  // gets its own Leaflet layer — that way we can hover one section at a
+  // time, show its individual length in the tooltip, and highlight just
+  // that section without touching its siblings.
+  function explodeMultiLines(features) {
+    const out = [];
+    for (const f of features) {
+      const g = f && f.geometry;
+      if (g && g.type === 'MultiLineString') {
+        g.coordinates.forEach((coords) => {
+          out.push({
+            type: 'Feature',
+            properties: f.properties,
+            geometry: { type: 'LineString', coordinates: coords },
+          });
+        });
+      } else {
+        out.push(f);
+      }
+    }
+    return out;
+  }
+
+  const BASE_WEIGHT  = 4;
+  const HOVER_WEIGHT = 7;
+  const BASE_OPACITY  = 0.85;
+  const HOVER_OPACITY = 1;
+
   async function addTrailsToMap(map) {
     const data = await loadTrails();
     if (!data || !data.features || data.features.length === 0) return null;
 
-    const layer = L.geoJSON(data, {
+    const exploded = {
+      type: 'FeatureCollection',
+      features: explodeMultiLines(data.features),
+    };
+
+    const layer = L.geoJSON(exploded, {
       style: (feature) => ({
         color:    (feature.properties && feature.properties.color) || FALLBACK_COLOR,
-        weight:   4,
-        opacity:  0.85,
+        weight:   BASE_WEIGHT,
+        opacity:  BASE_OPACITY,
         lineCap:  'round',
         lineJoin: 'round',
       }),
       onEachFeature: (feature, lyr) => {
         const name = feature.properties && feature.properties.name;
         if (name) {
-          lyr.bindTooltip(name, { sticky: true, direction: 'top', opacity: 0.95 });
+          const dist = featureLengthMeters(feature);
+          const label = dist > 0 ? name + ' · ' + formatDistance(dist) : name;
+          lyr.bindTooltip(label, { sticky: true, direction: 'top', opacity: 0.95 });
         }
+        lyr.on('mouseover', () => {
+          lyr.setStyle({ weight: HOVER_WEIGHT, opacity: HOVER_OPACITY });
+          lyr.bringToFront();
+        });
+        lyr.on('mouseout', () => {
+          lyr.setStyle({ weight: BASE_WEIGHT, opacity: BASE_OPACITY });
+        });
       },
     });
 
