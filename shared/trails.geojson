@@ -1123,6 +1123,18 @@
           ]
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sentier du Pré",
+        "color": "#dbdb1f"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+        ]
+      }
     }
   ]
 }

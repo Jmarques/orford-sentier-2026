@@ -179,6 +179,12 @@
     }
     .type-chip wa-icon { color: var(--moss); font-size: 12px; }
     .type-chip strong { color: var(--forest-deep); }
+    a.type-chip { text-decoration: none; cursor: pointer; transition: background 0.12s ease; }
+    a.type-chip:hover { background: rgba(31, 58, 46, 0.12); }
+    .cell-link { color: var(--forest-deep); font-weight: 700; text-decoration: none; }
+    .cell-link:hover { text-decoration: underline; }
+    a.trail-card__total { text-decoration: none; cursor: pointer; }
+    a.trail-card__total:hover { text-decoration: underline; }
 
     /* ---------- State overlay ---------- */
     .state {
@@ -261,6 +267,17 @@
       return s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0 || s.indexOf('doublon') === 0;
     }
 
+    // Link to the map pre-filtered to a trail and/or type. Pass null to leave
+    // that dimension unfiltered (all trails / all types). Open tasks (Nouveau +
+    // En cours) are the map's default, so no status param is needed.
+    function mapUrl(trailKey, family) {
+      const p = new URLSearchParams();
+      if (trailKey !== null && trailKey !== undefined) p.set('trail', trailKey);
+      if (family) p.set('type', family);
+      const qs = p.toString();
+      return qs ? 'map.html?' + qs : 'map.html';
+    }
+
     const stateBox = document.getElementById('stateBox');
     function showState(msg, isError) {
       stateBox.textContent = msg;
@@ -275,14 +292,14 @@
       let grandTotal = 0;
       reports.forEach(function (r) {
         if (isClosed(r.status)) return;
-        const name = (r.trail || '').trim() || 'Sans sentier précisé';
-        const fam  = categoryFamily(r.category);
-        if (!trails.has(name)) {
+        const key = (r.trail || '').trim();          // '' = no trail (matches the map)
+        const fam = categoryFamily(r.category);
+        if (!trails.has(key)) {
           const counts = {};
           FAMILIES.forEach(function (f) { counts[f[0]] = 0; });
-          trails.set(name, { name: name, counts: counts, total: 0 });
+          trails.set(key, { key: key, name: key || 'Sans sentier précisé', counts: counts, total: 0 });
         }
-        const t = trails.get(name);
+        const t = trails.get(key);
         t.counts[fam] = (t.counts[fam] || 0) + 1;
         t.total++;
         grandTotal++;
@@ -314,18 +331,28 @@
         const dot = '<span class="trail-dot" style="background:' + colors[t.name] + ';"></span>';
         const cells = FAMILIES.map(function (f) {
           const n = t.counts[f[0]];
-          return '<td' + cellBg(n) + '>' + (n ? n : '<span class="zero">·</span>') + '</td>';
+          const inner = n
+            ? '<a class="cell-link" href="' + mapUrl(t.key, f[0]) + '" title="Voir ces tâches sur la carte">' + n + '</a>'
+            : '<span class="zero">·</span>';
+          return '<td' + cellBg(n) + '>' + inner + '</td>';
         }).join('');
         return '<tr><th class="matrix__trail">' + dot + escapeHtml(t.name) + '</th>'
-          + cells + '<td class="matrix__total">' + t.total + '</td></tr>';
+          + cells
+          + '<td class="matrix__total"><a class="cell-link" href="' + mapUrl(t.key, null)
+          + '" title="Voir tout le sentier sur la carte">' + t.total + '</a></td></tr>';
       }).join('');
 
-      const colTotals = FAMILIES.map(function (f) {
-        return list.reduce(function (s, t) { return s + t.counts[f[0]]; }, 0);
-      });
+      const footerCells = FAMILIES.map(function (f) {
+        const n = list.reduce(function (s, t) { return s + t.counts[f[0]]; }, 0);
+        const inner = n
+          ? '<a class="cell-link" href="' + mapUrl(null, f[0]) + '" title="Voir ce type sur tous les sentiers">' + n + '</a>'
+          : '<span class="zero">·</span>';
+        return '<td>' + inner + '</td>';
+      }).join('');
       const sum = '<tr class="matrix__sum"><th class="matrix__trail">Total</th>'
-        + colTotals.map(function (n) { return '<td>' + (n ? n : '·') + '</td>'; }).join('')
-        + '<td class="matrix__total">' + grandTotal + '</td></tr>';
+        + footerCells
+        + '<td class="matrix__total"><a class="cell-link" href="' + mapUrl(null, null)
+        + '" title="Voir tous les signalements ouverts">' + grandTotal + '</a></td></tr>';
 
       document.getElementById('matrixWrap').innerHTML =
         '<table class="matrix"><thead>' + head + '</thead><tbody>' + rows + sum + '</tbody></table>';
@@ -335,14 +362,16 @@
       document.getElementById('trailCards').innerHTML = list.map(function (t) {
         const chips = FAMILIES.filter(function (f) { return t.counts[f[0]] > 0; })
           .map(function (f) {
-            return '<span class="type-chip"><wa-icon name="' + FAMILY_ICONS[f[0]] + '" variant="solid"></wa-icon>'
-              + f[1] + ' <strong>' + t.counts[f[0]] + '</strong></span>';
+            return '<a class="type-chip" href="' + mapUrl(t.key, f[0]) + '" title="Voir sur la carte">'
+              + '<wa-icon name="' + FAMILY_ICONS[f[0]] + '" variant="solid"></wa-icon>'
+              + f[1] + ' <strong>' + t.counts[f[0]] + '</strong></a>';
           }).join('');
         return '<article class="trail-card">'
           + '<div class="trail-card__head">'
           +   '<span class="trail-dot" style="background:' + colors[t.name] + ';"></span>'
           +   '<h3>' + escapeHtml(t.name) + '</h3>'
-          +   '<span class="trail-card__total">' + t.total + (t.total === 1 ? ' tâche' : ' tâches') + '</span>'
+          +   '<a class="trail-card__total" href="' + mapUrl(t.key, null) + '" title="Voir tout le sentier sur la carte">'
+          +     t.total + (t.total === 1 ? ' tâche' : ' tâches') + '</a>'
           + '</div>'
           + '<div class="trail-card__types">' + chips + '</div>'
           + '</article>';
