@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f3a2e" />
+  <title>Corvées — Orford-sur-le-Lac</title>
+
+  <!-- Web Awesome (icons for the type families) -->
+  <link
+    rel="stylesheet"
+    href="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/styles/themes/default.css"
+  />
+  <script
+    type="module"
+    src="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/webawesome.loader.js"
+  ></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Shared theme + config + masthead/footer + trail & category mappings -->
+  <link rel="stylesheet" href="shared/theme.css" />
+  <script src="shared/config.js"></script>
+  <script defer src="shared/masthead.js"></script>
+  <script defer src="shared/footer.js"></script>
+  <script src="shared/trails.js"></script>
+  <script src="shared/categories.js"></script>
+
+  <style>
+    body.corvees-page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    main.corvees {
+      flex: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 16px 32px;
+    }
+
+    .panel { margin-top: 22px; }
+    .panel__title {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--forest-deep);
+      margin: 0 0 4px;
+    }
+    .panel__hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    /* ---------- Matrix (trail × type) ---------- */
+    .matrix-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid rgba(31, 58, 46, 0.12);
+      border-radius: 10px;
+      background: var(--paper);
+    }
+    table.matrix {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .matrix th,
+    .matrix td {
+      padding: 8px 10px;
+      text-align: center;
+      border-bottom: 1px solid rgba(31, 58, 46, 0.08);
+      white-space: nowrap;
+    }
+    .matrix thead th {
+      color: var(--forest-deep);
+      font-weight: 600;
+      font-size: 12px;
+      vertical-align: bottom;
+    }
+    .matrix thead wa-icon { display: block; margin: 0 auto 2px; font-size: 15px; color: var(--moss); }
+    .matrix__th-label { font-weight: 600; }
+    /* First column sticks while the rest scrolls horizontally on mobile. */
+    .matrix__corner,
+    .matrix__trail {
+      position: sticky;
+      left: 0;
+      text-align: left;
+      background: var(--paper);
+      z-index: 1;
+      box-shadow: 1px 0 0 rgba(31, 58, 46, 0.08);
+    }
+    .matrix__trail {
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .matrix__total { font-weight: 700; color: var(--forest-deep); }
+    .matrix .zero { color: var(--muted); opacity: 0.4; }
+    .matrix__sum th,
+    .matrix__sum td {
+      border-top: 2px solid rgba(31, 58, 46, 0.18);
+      border-bottom: none;
+      font-weight: 700;
+      color: var(--forest-deep);
+      background: var(--paper-warm);
+    }
+
+    .trail-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1.5px solid var(--paper);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ---------- Per-trail cards ---------- */
+    .trail-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .trail-card {
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.12);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .trail-card__head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .trail-card__head h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--forest-deep);
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .trail-card__total {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--clay);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .trail-card__types {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .type-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text);
+      background: var(--paper-warm);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-variant-numeric: tabular-nums;
+    }
+    .type-chip wa-icon { color: var(--moss); font-size: 12px; }
+    .type-chip strong { color: var(--forest-deep); }
+
+    /* ---------- State overlay ---------- */
+    .state {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--paper);
+      padding: 16px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--forest-deep);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+    .state.err { background: #f7e4e0; color: var(--clay); border-color: #ebc9c2; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 20px;
+      font-size: 14px;
+    }
+    .empty wa-icon { font-size: 30px; color: var(--success); display: block; margin: 0 auto 10px; }
+  </style>
+</head>
+<body class="corvees-page">
+  <site-masthead page="corvees"></site-masthead>
+
+  <header class="page-hero">
+    <h1>Organiser les <em>corvées</em> par sentier</h1>
+    <p class="page-hero__subtitle"><span id="stats">Chargement…</span></p>
+  </header>
+
+  <main class="corvees" id="content" hidden>
+    <section class="panel">
+      <h2 class="panel__title">Vue d'ensemble</h2>
+      <p class="panel__hint">Tâches ouvertes (Nouveau + En cours) par sentier et par type. Les cases plus foncées concentrent le plus de travail.</p>
+      <div class="matrix-wrap" id="matrixWrap"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel__title">Par sentier</h2>
+      <p class="panel__hint">Triés du plus chargé au moins chargé — un repère pour décider où former une équipe.</p>
+      <div class="trail-cards" id="trailCards"></div>
+    </section>
+  </main>
+
+  <site-footer></site-footer>
+
+  <div id="stateBox" class="state">Chargement…</div>
+
+  <script>
+    const ENDPOINT_URL   = window.ORFORD.ENDPOINT_URL;
+    const categoryFamily = window.ORFORD.categoryFamily;
+    const FAMILY_ICONS   = window.ORFORD.FAMILY_ICONS;
+    const getTrailColor  = window.ORFORD.getTrailColor;
+
+    // Column order + labels for the 6 visual families (keys from categories.js).
+    const FAMILIES = [
+      ['nature',         'Nature'],
+      ['signalisation',  'Signalisation'],
+      ['infrastructure', 'Infrastructure'],
+      ['terrain',        'Terrain'],
+      ['dechets',        'Déchets'],
+      ['autre',          'Autre'],
+    ];
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    // A report counts as open work unless it has been closed (Résolu/Doublon).
+    function isClosed(status) {
+      const s = String(status || '').toLowerCase();
+      return s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0 || s.indexOf('doublon') === 0;
+    }
+
+    const stateBox = document.getElementById('stateBox');
+    function showState(msg, isError) {
+      stateBox.textContent = msg;
+      stateBox.className = 'state' + (isError ? ' err' : '');
+      stateBox.style.display = 'block';
+    }
+    function hideState() { stateBox.style.display = 'none'; }
+
+    // Group open reports → trails → family counts.
+    function buildModel(reports) {
+      const trails = new Map();
+      let grandTotal = 0;
+      reports.forEach(function (r) {
+        if (isClosed(r.status)) return;
+        const name = (r.trail || '').trim() || 'Sans sentier précisé';
+        const fam  = categoryFamily(r.category);
+        if (!trails.has(name)) {
+          const counts = {};
+          FAMILIES.forEach(function (f) { counts[f[0]] = 0; });
+          trails.set(name, { name: name, counts: counts, total: 0 });
+        }
+        const t = trails.get(name);
+        t.counts[fam] = (t.counts[fam] || 0) + 1;
+        t.total++;
+        grandTotal++;
+      });
+      const list = Array.from(trails.values()).sort(function (a, b) { return b.total - a.total; });
+      return { list: list, grandTotal: grandTotal };
+    }
+
+    function renderMatrix(list, grandTotal, colors) {
+      let maxCell = 0;
+      list.forEach(function (t) {
+        FAMILIES.forEach(function (f) { if (t.counts[f[0]] > maxCell) maxCell = t.counts[f[0]]; });
+      });
+      const cellBg = function (n) {
+        if (!n || maxCell === 0) return '';
+        const alpha = (0.1 + 0.55 * (n / maxCell)).toFixed(2);
+        return ' style="background: rgba(164, 87, 46, ' + alpha + ');"';
+      };
+
+      const head = '<tr><th class="matrix__corner">Sentier</th>'
+        + FAMILIES.map(function (f) {
+            return '<th title="' + f[1] + '">'
+              + '<wa-icon name="' + FAMILY_ICONS[f[0]] + '" variant="solid"></wa-icon>'
+              + '<span class="matrix__th-label">' + f[1] + '</span></th>';
+          }).join('')
+        + '<th class="matrix__total">Total</th></tr>';
+
+      const rows = list.map(function (t) {
+        const dot = '<span class="trail-dot" style="background:' + colors[t.name] + ';"></span>';
+        const cells = FAMILIES.map(function (f) {
+          const n = t.counts[f[0]];
+          return '<td' + cellBg(n) + '>' + (n ? n : '<span class="zero">·</span>') + '</td>';
+        }).join('');
+        return '<tr><th class="matrix__trail">' + dot + escapeHtml(t.name) + '</th>'
+          + cells + '<td class="matrix__total">' + t.total + '</td></tr>';
+      }).join('');
+
+      const colTotals = FAMILIES.map(function (f) {
+        return list.reduce(function (s, t) { return s + t.counts[f[0]]; }, 0);
+      });
+      const sum = '<tr class="matrix__sum"><th class="matrix__trail">Total</th>'
+        + colTotals.map(function (n) { return '<td>' + (n ? n : '·') + '</td>'; }).join('')
+        + '<td class="matrix__total">' + grandTotal + '</td></tr>';
+
+      document.getElementById('matrixWrap').innerHTML =
+        '<table class="matrix"><thead>' + head + '</thead><tbody>' + rows + sum + '</tbody></table>';
+    }
+
+    function renderCards(list, colors) {
+      document.getElementById('trailCards').innerHTML = list.map(function (t) {
+        const chips = FAMILIES.filter(function (f) { return t.counts[f[0]] > 0; })
+          .map(function (f) {
+            return '<span class="type-chip"><wa-icon name="' + FAMILY_ICONS[f[0]] + '" variant="solid"></wa-icon>'
+              + f[1] + ' <strong>' + t.counts[f[0]] + '</strong></span>';
+          }).join('');
+        return '<article class="trail-card">'
+          + '<div class="trail-card__head">'
+          +   '<span class="trail-dot" style="background:' + colors[t.name] + ';"></span>'
+          +   '<h3>' + escapeHtml(t.name) + '</h3>'
+          +   '<span class="trail-card__total">' + t.total + (t.total === 1 ? ' tâche' : ' tâches') + '</span>'
+          + '</div>'
+          + '<div class="trail-card__types">' + chips + '</div>'
+          + '</article>';
+      }).join('');
+    }
+
+    async function load() {
+      try {
+        const res = await fetch(ENDPOINT_URL, { method: 'GET' });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Réponse invalide');
+
+        const model = buildModel(data.reports || []);
+        const n = model.grandTotal;
+        const trailCount = model.list.length;
+        document.getElementById('stats').textContent = n === 0
+          ? 'Aucune tâche ouverte'
+          : n + (n === 1 ? ' tâche ouverte' : ' tâches ouvertes')
+            + ' sur ' + trailCount + (trailCount === 1 ? ' sentier' : ' sentiers');
+
+        if (n === 0) {
+          document.getElementById('content').innerHTML =
+            '<div class="empty"><wa-icon name="circle-check" variant="solid"></wa-icon>'
+            + 'Aucune tâche ouverte — tout est à jour. Bon travail!</div>';
+          document.getElementById('content').hidden = false;
+          hideState();
+          return;
+        }
+
+        // Resolve a colour per trail (matches the form/map trail palette).
+        const colors = {};
+        await Promise.all(model.list.map(async function (t) {
+          colors[t.name] = await getTrailColor(t.name);
+        }));
+
+        renderMatrix(model.list, model.grandTotal, colors);
+        renderCards(model.list, colors);
+        document.getElementById('content').hidden = false;
+        hideState();
+      } catch (err) {
+        console.error(err);
+        showState('Erreur de chargement : ' + err.message, true);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

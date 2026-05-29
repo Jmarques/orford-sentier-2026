@@ -41,6 +41,9 @@ function doPost(e) {
     if (data.action === 'updateLocation') {
       return updateLocationHandler(data);
     }
+    if (data.action === 'updateStatus') {
+      return updateStatusHandler(data);
+    }
     return createReport(data);
   } catch (err) {
     return jsonResponse({ ok: false, error: String(err && err.message || err) });
@@ -129,6 +132,30 @@ function updateLocationHandler(data) {
     'https://www.google.com/maps?q=' + lat + ',' + lng
   ]]);
 
+  return jsonResponse({ ok: true });
+}
+
+/**
+ * Clôture un signalement en mettant à jour son statut (colonne N).
+ * Appelé depuis map.html quand un bénévole ferme un signalement
+ * (« Résolu » = tâche faite, « Doublon » = redondant). On restreint
+ * aux deux statuts de clôture pour éviter les valeurs arbitraires.
+ */
+function updateStatusHandler(data) {
+  const row = parseInt(data.rowIndex, 10);
+  const status = String(data.status || '');
+  const ALLOWED = ['Résolu', 'Doublon'];
+
+  if (!Number.isInteger(row) || row < 2 || ALLOWED.indexOf(status) === -1) {
+    return jsonResponse({ ok: false, error: 'Paramètres invalides.' });
+  }
+
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  if (row > sheet.getLastRow()) {
+    return jsonResponse({ ok: false, error: 'Ligne introuvable.' });
+  }
+
+  sheet.getRange(row, 14).setValue(status); // N = Statut
   return jsonResponse({ ok: true });
 }
 

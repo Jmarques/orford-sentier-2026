@@ -79,7 +79,31 @@
       color: var(--forest-deep);
       min-width: 58px;
     }
-    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font: inherit;
+      font-size: 12px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      padding: 2px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.12s ease, background 0.12s ease;
+    }
+    .legend-item:hover { background: rgba(31, 58, 46, 0.07); }
+    .legend-item:focus-visible { outline: 2px solid var(--moss); outline-offset: 1px; }
+    /* Filtered-out (deselected) entries dim so the active filters stand out. */
+    .legend-item--off { opacity: 0.32; }
+    .legend-hint {
+      flex-basis: 100%;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--muted);
+      opacity: 0.8;
+    }
     .legend-dot {
       width: 10px; height: 10px;
       border-radius: 50%;
@@ -115,7 +139,7 @@
       justify-content: center;
     }
     .marker-pin.status-encours { background: var(--ochre); }
-    .marker-pin.status-ferme   { background: var(--moss); }
+    .marker-pin.status-clos    { background: var(--moss); }
     .marker-pin__icon {
       /* Counter-rotate so the icon stays upright inside the tilted pin */
       transform: rotate(45deg);
@@ -194,6 +218,33 @@
       margin-top: 8px;
       font-style: italic;
     }
+    /* Sheet row number — admin-only, hidden by default. Tap the sub line
+       (sentier · date) to toggle a small floating bubble; it's absolutely
+       positioned so it never shifts the popup layout. The dotted underline
+       hints that the line is interactive. */
+    .popup .sub--row {
+      cursor: pointer;
+      position: relative;
+      text-decoration: underline dotted rgba(31, 58, 46, 0.3);
+      text-underline-offset: 2px;
+    }
+    .popup .sub .row-ref {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 5;
+      background: var(--forest-deep);
+      color: var(--paper);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-style: normal;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      user-select: all;
+    }
+    .popup .sub.show-row .row-ref { display: block; }
     .popup .badge {
       display: inline-block;
       font-size: 10px;
@@ -205,7 +256,43 @@
     }
     .popup .badge.nouveau { background: rgba(164, 87, 46, 0.14); color: var(--clay); }
     .popup .badge.encours { background: rgba(192, 138, 47, 0.16); color: #8a6120; }
-    .popup .badge.ferme   { background: rgba(74, 107, 82, 0.18);  color: var(--success); }
+    .popup .badge.clos    { background: rgba(74, 107, 82, 0.18);  color: var(--success); }
+
+    /* ---------- Close-report controls (popup + drawer) ---------- */
+    .close-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .close-row__label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .close-btn {
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(74, 107, 82, 0.4);
+      background: rgba(74, 107, 82, 0.12);
+      color: var(--success);
+      cursor: pointer;
+    }
+    .close-btn:hover { background: rgba(74, 107, 82, 0.2); }
+    .close-btn--dup {
+      border-color: rgba(31, 58, 46, 0.25);
+      background: rgba(31, 58, 46, 0.06);
+      color: var(--muted);
+    }
+    .close-btn--dup:hover { background: rgba(31, 58, 46, 0.12); }
+    .popup .close-row {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+    }
+    .todo-item__close { margin-top: 8px; }
 
     /* ---------- "À localiser" chip in the hero ---------- */
     .todo-chip {
@@ -445,22 +532,24 @@
     </p>
   </header>
 
-  <div class="legend" aria-label="Légende">
+  <div class="legend" aria-label="Filtres de la carte">
     <div class="legend-group">
       <strong>Statut</strong>
-      <span class="legend-item"><span class="legend-dot" style="background: var(--clay);"></span>Nouveau</span>
-      <span class="legend-item"><span class="legend-dot" style="background: var(--ochre);"></span>En cours</span>
-      <span class="legend-item"><span class="legend-dot" style="background: var(--moss);"></span>Fermé</span>
+      <button type="button" class="legend-item" data-status="nouveau"><span class="legend-dot" style="background: var(--clay);"></span>Nouveau</button>
+      <button type="button" class="legend-item" data-status="encours"><span class="legend-dot" style="background: var(--ochre);"></span>En cours</button>
+      <button type="button" class="legend-item" data-status="resolu"><span class="legend-dot" style="background: var(--moss);"></span>Résolu</button>
+      <button type="button" class="legend-item" data-status="doublon"><span class="legend-dot" style="background: var(--moss);"></span>Doublon</button>
     </div>
     <div class="legend-group">
       <strong>Type</strong>
-      <span class="legend-item"><span class="legend-icon"><wa-icon name="tree" variant="solid"></wa-icon></span>Nature</span>
-      <span class="legend-item"><span class="legend-icon"><wa-icon name="signs-post" variant="solid"></wa-icon></span>Signalisation</span>
-      <span class="legend-item"><span class="legend-icon"><wa-icon name="bridge" variant="solid"></wa-icon></span>Infrastructure</span>
-      <span class="legend-item"><span class="legend-icon"><wa-icon name="triangle-exclamation" variant="solid"></wa-icon></span>Terrain</span>
-      <span class="legend-item"><span class="legend-icon"><wa-icon name="trash-can" variant="solid"></wa-icon></span>Déchets</span>
-      <span class="legend-item"><span class="legend-icon"><wa-icon name="circle-question" variant="solid"></wa-icon></span>Autre</span>
+      <button type="button" class="legend-item" data-family="nature"><span class="legend-icon"><wa-icon name="tree" variant="solid"></wa-icon></span>Nature</button>
+      <button type="button" class="legend-item" data-family="signalisation"><span class="legend-icon"><wa-icon name="signs-post" variant="solid"></wa-icon></span>Signalisation</button>
+      <button type="button" class="legend-item" data-family="infrastructure"><span class="legend-icon"><wa-icon name="bridge" variant="solid"></wa-icon></span>Infrastructure</button>
+      <button type="button" class="legend-item" data-family="terrain"><span class="legend-icon"><wa-icon name="triangle-exclamation" variant="solid"></wa-icon></span>Terrain</button>
+      <button type="button" class="legend-item" data-family="dechets"><span class="legend-icon"><wa-icon name="trash-can" variant="solid"></wa-icon></span>Déchets</button>
+      <button type="button" class="legend-item" data-family="autre"><span class="legend-icon"><wa-icon name="circle-question" variant="solid"></wa-icon></span>Autre</button>
     </div>
+    <div class="legend-hint">Touchez une entrée pour filtrer la carte</div>
   </div>
 
   <div id="map"></div>
@@ -535,11 +624,20 @@
     // =========================================================
     // Helpers
     // =========================================================
-    function statusClass(status) {
+    // Canonical status key — drives the legend filters.
+    function statusKey(status) {
       const s = String(status || '').toLowerCase();
-      if (s.indexOf('fermé') === 0 || s.indexOf('ferme') === 0 || s === 'closed') return 'ferme';
+      if (s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0) return 'resolu';
+      if (s.indexOf('doublon') === 0) return 'doublon';
       if (s.indexOf('en cours') === 0) return 'encours';
       return 'nouveau';
+    }
+
+    // Colour bucket for pins/badges. 'clos' is the umbrella for closed
+    // reports (Résolu + Doublon), which both render green.
+    function statusClass(status) {
+      const k = statusKey(status);
+      return (k === 'resolu' || k === 'doublon') ? 'clos' : k;
     }
 
     // Category → family → icon mapping is defined in shared/categories.js
@@ -593,6 +691,21 @@
         : '';
       const sub = [escapeHtml(r.trail || ''), formatDate(r.timestamp)]
         .filter(Boolean).join(' · ');
+      // Only offer closure on reports that are still open.
+      const closeRow = sc === 'clos' ? '' :
+        '<div class="close-row">'
+        +   '<span class="close-row__label">Clôturer :</span>'
+        +   '<button type="button" class="close-btn" onclick="closeReport(' + r.rowIndex + ', \'Résolu\')">Résolu</button>'
+        +   '<button type="button" class="close-btn close-btn--dup" onclick="closeReport(' + r.rowIndex + ', \'Doublon\')">Doublon</button>'
+        + '</div>';
+      // The sub line (sentier · date) doubles as a tap target that reveals the
+      // spreadsheet row number — admin-only info, so it stays hidden until asked.
+      const subHtml = r.rowIndex != null
+        ? '<p class="sub sub--row" title="Toucher pour afficher le numéro de ligne (pour éditer dans le tableur)" onclick="this.classList.toggle(\'show-row\')">'
+          + sub
+          + '<span class="row-ref">ligne ' + r.rowIndex + '</span>'
+          + '</p>'
+        : '<p class="sub">' + sub + '</p>';
 
       return '<div class="popup">'
         + img
@@ -600,10 +713,11 @@
         +   '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>'
         +   escapeHtml(r.category || 'Sans catégorie')
         + '</p>'
-        + '<p class="sub">' + sub + '</p>'
+        + subHtml
         + '<span class="badge ' + sc + '">' + escapeHtml(label) + '</span>'
         + notes
         + reporter
+        + closeRow
         + '</div>';
     }
 
@@ -641,7 +755,20 @@
     map.addLayer(cluster);
 
     let placedCount = 0;
-    let pendingReports = []; // reports without coordinates, keyed by rowIndex
+    let pendingReports = []; // open reports without coordinates
+    let allReports = [];     // every report from the server — source of truth for re-render
+
+    const FAMILY_KEYS = ['nature', 'signalisation', 'infrastructure', 'terrain', 'dechets', 'autre'];
+    // Legend filters. Closed statuses (resolu/doublon) start hidden — the
+    // map is a triage view, so by default it shows only open work.
+    const activeStatuses = new Set(['nouveau', 'encours']);
+    const activeFamilies = new Set(FAMILY_KEYS);
+
+    function isClosed(r) { return statusClass(r.status) === 'clos'; }
+    function isVisibleOnMap(r) {
+      return activeStatuses.has(statusKey(r.status)) &&
+             activeFamilies.has(categoryFamily(r.category));
+    }
 
     function updateCounters() {
       setStats(placedCount);
@@ -662,37 +789,46 @@
       placedCount++;
     }
 
+    // Rebuilds markers + the "à localiser" list from allReports. A pin shows
+    // only if its status and type both pass the legend filters; closed reports
+    // never appear in the to-locate list. Pass fit=true to recentre the map on
+    // the visible pins (only wanted on the initial load).
+    function render(fit) {
+      placedCount = 0;
+      pendingReports = [];
+      let locatedTotal = 0; // reports with coords, before the legend filters
+      cluster.clearLayers();
+
+      allReports.forEach(function (r) {
+        if (Number.isFinite(r.latitude) && Number.isFinite(r.longitude)) {
+          locatedTotal++;
+          if (isVisibleOnMap(r)) addPlacedMarker(r);
+        } else if (!isClosed(r)) {
+          pendingReports.push(r);
+        }
+      });
+
+      if (placedCount > 0) {
+        if (fit) map.fitBounds(cluster.getBounds().pad(0.2), { maxZoom: 15 });
+        hideState();
+      } else if (allReports.length === 0) {
+        showState('Aucun signalement pour l\'instant.');
+      } else if (locatedTotal === 0 && pendingReports.length > 0) {
+        showState('Aucun signalement n\'est encore localisé. Ouvrez « à localiser » pour commencer.');
+      } else {
+        showState('Aucun signalement à afficher avec ces filtres.');
+      }
+
+      updateCounters();
+    }
+
     async function load() {
       try {
         const res = await fetch(ENDPOINT_URL, { method: 'GET' });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Réponse invalide');
-
-        const reports = data.reports || [];
-        placedCount = 0;
-        pendingReports = [];
-        cluster.clearLayers();
-
-        reports.forEach(function (r) {
-          if (Number.isFinite(r.latitude) && Number.isFinite(r.longitude)) {
-            addPlacedMarker(r);
-          } else {
-            pendingReports.push(r);
-          }
-        });
-
-        if (placedCount > 0) {
-          map.fitBounds(cluster.getBounds().pad(0.2), { maxZoom: 15 });
-          hideState();
-        } else if (pendingReports.length === 0) {
-          showState('Aucun signalement pour l\'instant.');
-        } else {
-          // No placed pins yet, but we have pending ones — invite the user
-          // to open the drawer rather than leaving the map blank.
-          showState('Aucun signalement n\'est encore localisé. Ouvrez « à localiser » pour commencer.');
-        }
-
-        updateCounters();
+        allReports = data.reports || [];
+        render(true);
       } catch (err) {
         console.error(err);
         showState('Erreur de chargement : ' + err.message, true);
@@ -701,6 +837,30 @@
     }
 
     load();
+    wireLegendFilters();
+
+    // Turn each legend entry into a show/hide filter for the map. The dimmed
+    // (--off) state and aria-pressed stay in sync with the active sets.
+    function wireLegendFilters() {
+      function setup(selector, set) {
+        document.querySelectorAll(selector).forEach(function (btn) {
+          const key = btn.dataset.status || btn.dataset.family;
+          const sync = function () {
+            const on = set.has(key);
+            btn.classList.toggle('legend-item--off', !on);
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          };
+          sync();
+          btn.addEventListener('click', function () {
+            if (set.has(key)) set.delete(key); else set.add(key);
+            sync();
+            render(false);
+          });
+        });
+      }
+      setup('.legend-item[data-status]', activeStatuses);
+      setup('.legend-item[data-family]', activeFamilies);
+    }
 
     // =========================================================
     // Admin drawer — list pending reports + inline picker
@@ -764,6 +924,12 @@
           if (r) openEditView(r);
         });
       });
+      // Wire up the "Résolu / Doublon" closure buttons
+      todoListEl.querySelectorAll('[data-close-row]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          closePending(parseInt(btn.dataset.closeRow, 10), btn.dataset.reason);
+        });
+      });
     }
 
     function itemHtml(r) {
@@ -800,6 +966,11 @@
             '<wa-icon slot="start" name="map-pin" variant="solid"></wa-icon>' +
             'Localiser sur la carte' +
           '</wa-button>' +
+          '<div class="todo-item__close close-row">' +
+            '<span class="close-row__label">Clôturer :</span>' +
+            '<button type="button" class="close-btn" data-close-row="' + r.rowIndex + '" data-reason="Résolu">Résolu</button>' +
+            '<button type="button" class="close-btn close-btn--dup" data-close-row="' + r.rowIndex + '" data-reason="Doublon">Doublon</button>' +
+          '</div>' +
         '</div>' +
       '</div>';
     }
@@ -883,15 +1054,15 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
 
-        // Move the report from pending → placed locally (no reload).
-        const updated = Object.assign({}, editingReport, {
-          latitude:  latlng.lat,
-          longitude: latlng.lng,
-          gpsSource: 'Choix manuel (différé)'
-        });
-        pendingReports = pendingReports.filter((r) => r.rowIndex !== editingReport.rowIndex);
-        addPlacedMarker(updated);
-        updateCounters();
+        // Update the source of truth, then re-render so the report moves
+        // from pending → placed (no reload).
+        const r = allReports.find((x) => x.rowIndex === editingReport.rowIndex);
+        if (r) {
+          r.latitude  = latlng.lat;
+          r.longitude = latlng.lng;
+          r.gpsSource = 'Choix manuel (différé)';
+        }
+        render(false);
         showToast('Position enregistrée');
 
         if (pendingReports.length === 0) {
@@ -906,6 +1077,61 @@
       } finally {
         btn.removeAttribute('loading');
         btn.removeAttribute('disabled');
+      }
+    }
+
+    // =========================================================
+    // Clôture d'un signalement (Résolu / Doublon)
+    // =========================================================
+    // Shared confirm + POST. Returns true once the server has recorded
+    // the new status, false if the user cancelled the confirmation.
+    async function postStatus(rowIndex, reason) {
+      const msg = reason === 'Doublon'
+        ? 'Marquer ce signalement comme doublon et le clôturer ?'
+        : 'Marquer ce signalement comme résolu et le clôturer ?';
+      if (!window.confirm(msg)) return false;
+      const res = await fetch(ENDPOINT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'updateStatus', rowIndex: rowIndex, status: reason }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      return true;
+    }
+
+    // Placed report (popup): mark it closed; render() then drops it from the
+    // map (closed statuses are filtered out unless re-enabled in the legend).
+    async function closeReport(rowIndex, reason) {
+      try {
+        if (!(await postStatus(rowIndex, reason))) return;
+        const r = allReports.find((x) => x.rowIndex === rowIndex);
+        if (r) r.status = reason;
+        render(false);
+        showToast('Signalement clôturé : ' + reason);
+      } catch (err) {
+        console.error(err);
+        showToast('Échec : ' + err.message, true);
+      }
+    }
+    window.closeReport = closeReport; // referenced by inline onclick in popups
+
+    // Pending (no-GPS) report from the drawer: mark closed, refresh the list.
+    async function closePending(rowIndex, reason) {
+      try {
+        if (!(await postStatus(rowIndex, reason))) return;
+        const r = allReports.find((x) => x.rowIndex === rowIndex);
+        if (r) r.status = reason;
+        render(false);
+        showToast('Signalement clôturé : ' + reason);
+        if (pendingReports.length === 0) {
+          closeDrawer();
+        } else {
+          renderTodoList();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Échec : ' + err.message, true);
       }
     }
   </script>
