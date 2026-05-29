@@ -121,7 +121,7 @@ The default orientation for radio items is `vertical`. Set the `orientation` to 
 The size of radios will be determined by the Radio Group's `size` attribute.
 
 ```html
-<wa-radio-group label="Small options" size="small" value="1">
+<wa-radio-group label="Small options" size="s" value="1">
   <wa-radio value="1">Option 1</wa-radio>
   <wa-radio value="2">Option 2</wa-radio>
   <wa-radio value="3">Option 3</wa-radio>
@@ -144,7 +144,7 @@ If you need to have radios of varying sizes, place the `size` attribute on indiv
 
 ```html
 <wa-radio-group label="Mixed options" value="medium">
-  <wa-radio value="1" size="small">Small</wa-radio>
+  <wa-radio value="1" size="s">Small</wa-radio>
   <wa-radio value="2" size="medium">Medium</wa-radio>
   <wa-radio value="3" size="large">Large</wa-radio>
 </wa-radio-group>

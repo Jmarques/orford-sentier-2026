@@ -38,7 +38,7 @@ Use the `disabled` attribute to disable the switch.
 Use the `size` attribute to change a switch's size.
 
 ```html
-<wa-switch size="small">Small</wa-switch>
+<wa-switch size="s">Small</wa-switch>
 <br />
 <wa-switch size="medium">Medium</wa-switch>
 <br />

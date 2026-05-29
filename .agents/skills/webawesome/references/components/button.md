@@ -77,7 +77,7 @@ Use the `size` attribute to change a button's size.
 
 ```html
 <div class="wa-cluster wa-gap-2xs">
-  <wa-button size="small">Small</wa-button>
+  <wa-button size="s">Small</wa-button>
   <wa-button size="medium">Medium</wa-button>
   <wa-button size="large">Large</wa-button>
 </div>
@@ -89,7 +89,7 @@ Use the `pill` attribute to give buttons rounded edges.
 
 ```html
 <div class="wa-cluster wa-gap-2xs">
-  <wa-button size="small" pill>Small</wa-button>
+  <wa-button size="s" pill>Small</wa-button>
   <wa-button size="medium" pill>Medium</wa-button>
   <wa-button size="large" pill>Large</wa-button>
 </div>
@@ -126,7 +126,7 @@ As expected, buttons can be given a custom width by setting the `width` CSS prop
 
 ```html
 <div class="wa-stack">
-  <wa-button size="small" style="width: 100%;">Small</wa-button>
+  <wa-button size="s" style="width: 100%;">Small</wa-button>
   <wa-button size="medium" style="width: 100%;">Medium</wa-button>
   <wa-button size="large" style="width: 100%;">Large</wa-button>
 </div>
@@ -139,17 +139,17 @@ Use the `start` and `end` slots to add presentational elements like `<wa-icon>` 
 ```html
 <div class="wa-stack">
   <div class="wa-cluster wa-gap-2xs">
-    <wa-button size="small">
+    <wa-button size="s">
       <wa-icon slot="start" name="gear"></wa-icon>
       Settings
     </wa-button>
 
-    <wa-button size="small">
+    <wa-button size="s">
       <wa-icon slot="end" name="undo"></wa-icon>
       Refresh
     </wa-button>
 
-    <wa-button size="small">
+    <wa-button size="s">
       <wa-icon slot="start" name="link"></wa-icon>
       <wa-icon slot="end" name="arrow-up-right-from-square"></wa-icon>
       Open
@@ -200,10 +200,10 @@ Use the `with-caret` attribute to add a dropdown indicator when a button will tr
 
 ```html
 <div class="wa-cluster wa-gap-2xs">
-  <wa-button size="small" with-caret>
+  <wa-button size="s" with-caret>
     <wa-icon name="gear" label="Settings"></wa-icon>
   </wa-button>
-  <wa-button size="small" with-caret>Small</wa-button>
+  <wa-button size="s" with-caret>Small</wa-button>
   <wa-button size="medium" with-caret>Medium</wa-button>
   <wa-button size="large" with-caret>Large</wa-button>
 </div>

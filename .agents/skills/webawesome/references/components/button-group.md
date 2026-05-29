@@ -40,9 +40,9 @@ Pill buttons are supported through the button's `pill` attribute.
 
 ```html
 <wa-button-group label="Alignment">
-  <wa-button appearance="filled" size="small" pill>Left</wa-button>
-  <wa-button appearance="filled" size="small" pill>Center</wa-button>
-  <wa-button appearance="filled" size="small" pill>Right</wa-button>
+  <wa-button appearance="filled" size="s" pill>Left</wa-button>
+  <wa-button appearance="filled" size="s" pill>Center</wa-button>
+  <wa-button appearance="filled" size="s" pill>Right</wa-button>
 </wa-button-group>
 
 <br /><br />

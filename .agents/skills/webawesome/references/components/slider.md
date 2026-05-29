@@ -244,7 +244,7 @@ Range sliders can also be vertical.
 Control the slider's size using the `size` attribute. Valid options include `small`, `medium`, and `large`.
 
 ```html
-<wa-slider size="small" value="50" label="Small"></wa-slider><br />
+<wa-slider size="s" value="50" label="Small"></wa-slider><br />
 <wa-slider size="medium" value="50" label="Medium"></wa-slider><br />
 <wa-slider size="large" value="50" label="Large"></wa-slider>
 ```

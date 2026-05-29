@@ -44,7 +44,7 @@ Use the `precision` attribute to let users select fractional ratings.
 Use the `size` attribute to adjust the size of the rating.
 
 ```html
-<wa-rating label="Rating" size="small"></wa-rating><br />
+<wa-rating label="Rating" size="s"></wa-rating><br />
 <wa-rating label="Rating" size="medium"></wa-rating><br />
 <wa-rating label="Rating" size="large"></wa-rating>
 ```

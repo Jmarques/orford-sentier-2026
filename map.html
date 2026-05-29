@@ -332,6 +332,86 @@
     }
     .todo-item__close { margin-top: 8px; }
 
+    /* ---------- Follow-up log (popup) ---------- */
+    .popup .followup {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+    }
+    .popup .followup__title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--forest-deep);
+      margin-bottom: 6px;
+    }
+    .popup .followup__log {
+      font-size: 12px;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 120px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .popup .followup__log--empty { color: var(--muted); font-style: italic; }
+    .popup .fu-entry { margin-bottom: 5px; }
+    .popup .fu-entry:last-child { margin-bottom: 0; }
+    .popup .fu-author {
+      font-weight: 600;
+      color: var(--forest-deep);
+      cursor: help;
+      border-bottom: 1px dotted rgba(31, 58, 46, 0.4);
+    }
+    .popup .followup__input {
+      width: 100%;
+      box-sizing: border-box;
+      font: inherit;
+      font-size: 12px;
+      border: 1px solid rgba(31, 58, 46, 0.25);
+      border-radius: 6px;
+      padding: 5px 7px;
+      background: var(--paper-warm);
+      resize: vertical;
+      margin-bottom: 6px;
+    }
+    .popup .followup__actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .popup .followup__by {
+      font-size: 12px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .popup .followup__namechip {
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--forest-deep);
+      background: var(--paper-warm);
+      border: 1px solid rgba(31, 58, 46, 0.3);
+      border-radius: 999px;
+      padding: 2px 10px;
+      cursor: pointer;
+    }
+    .popup .followup__namechip:hover { background: rgba(31, 58, 46, 0.1); }
+    .popup .followup__name {
+      font: inherit;
+      font-size: 12px;
+      border: 1px solid rgba(31, 58, 46, 0.3);
+      border-radius: 999px;
+      padding: 2px 10px;
+      background: var(--paper-warm);
+      width: 110px;
+      max-width: 10vw;
+    }
+
     /* ---------- "À localiser" chip in the hero ---------- */
     .todo-chip {
       display: inline-flex;
@@ -745,6 +825,28 @@
       return date + ' · ' + time;
     }
 
+    // Render the follow-up log (one "[date · author] text" entry per line)
+    // as HTML where only the author + text show; the date is a tooltip on the
+    // author name so it stays out of the way.
+    function renderFollowupHtml(blob) {
+      return String(blob || '').split('\n')
+        .filter(function (l) { return l.trim(); })
+        .map(function (line) {
+          const m = line.match(/^\[(.*?) · (.*?)\] (.*)$/);
+          if (!m) return '<div class="fu-entry">' + escapeHtml(line) + '</div>';
+          return '<div class="fu-entry">'
+            + '<span class="fu-author" title="' + escapeHtml(m[1]) + '">' + escapeHtml(m[2]) + '</span> '
+            + escapeHtml(m[3])
+            + '</div>';
+        }).join('');
+    }
+
+    // Last name used (shared with the report form via localStorage), for
+    // prefilling the follow-up author field. Guarded — some webviews throw.
+    function savedName() {
+      try { return localStorage.getItem('orford.reporterName') || ''; } catch (e) { return ''; }
+    }
+
     function popupHtml(r) {
       const sc = statusClass(r.status);
       const label = r.status || 'Nouveau';
@@ -775,6 +877,28 @@
           + '<span class="row-ref">ligne ' + r.rowIndex + '</span>'
           + '</p>'
         : '<p class="sub">' + sub + '</p>';
+      // Append-only follow-up log: propose resolutions / leave comments.
+      const fuLog = r.followup
+        ? '<div class="followup__log" id="fu-log-' + r.rowIndex + '">' + renderFollowupHtml(r.followup) + '</div>'
+        : '<div class="followup__log followup__log--empty" id="fu-log-' + r.rowIndex + '">Aucun suivi pour l\'instant.</div>';
+      // Attribution sits beside the « Ajouter » button. With a remembered name
+      // it's a discreet chip (tap to edit, revealing a hidden input); otherwise
+      // a small name field shows directly.
+      const nm = savedName();
+      const nameInner = nm
+        ? '<button type="button" class="followup__namechip" id="fu-chip-' + r.rowIndex + '" onclick="editFollowupName(' + r.rowIndex + ')">' + escapeHtml(nm) + '</button>'
+          + '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" value="' + escapeHtml(nm) + '" hidden />'
+        : '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" placeholder="Votre nom" value="" />';
+      const followup =
+        '<div class="followup">'
+        + '<div class="followup__title">Suivi &amp; résolution</div>'
+        + fuLog
+        + '<textarea class="followup__input" id="fu-in-' + r.rowIndex + '" rows="2" placeholder="Proposer une solution, ajouter une info…"></textarea>'
+        + '<div class="followup__actions">'
+        +   '<wa-button class="followup__btn" appearance="filled" variant="brand" size="s" onclick="addFollowup(' + r.rowIndex + ', this)">Ajouter</wa-button>'
+        +   '<span class="followup__by">au nom de ' + nameInner + '</span>'
+        + '</div>'
+        + '</div>';
 
       return '<div class="popup">'
         + img
@@ -787,6 +911,7 @@
         + notes
         + reporter
         + closeRow
+        + followup
         + '</div>';
     }
 
@@ -1080,7 +1205,7 @@
           '<div class="todo-item__sub">' + sub + '</div>' +
           notes +
           reporter +
-          '<wa-button class="todo-item__action" appearance="filled" variant="brand" size="small" data-row="' + r.rowIndex + '">' +
+          '<wa-button class="todo-item__action" appearance="filled" variant="brand" size="s" data-row="' + r.rowIndex + '">' +
             '<wa-icon slot="start" name="map-pin" variant="solid"></wa-icon>' +
             'Localiser sur la carte' +
           '</wa-button>' +
@@ -1233,6 +1358,58 @@
       }
     }
     window.closeReport = closeReport; // referenced by inline onclick in popups
+
+    // Append a follow-up entry to a report. Updates the open popup's log in
+    // place (no re-render) so the popup stays open while you read/add more.
+    async function addFollowup(rowIndex, btn) {
+      const input = document.getElementById('fu-in-' + rowIndex);
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      const nameEl = document.getElementById('fu-name-' + rowIndex);
+      const author = nameEl ? nameEl.value.trim() : '';
+      // Remember the name so it prefills next time (and the report form too).
+      if (author) { try { localStorage.setItem('orford.reporterName', author); } catch (e) {} }
+
+      input.setAttribute('disabled', '');
+      if (btn) { btn.setAttribute('loading', ''); btn.setAttribute('disabled', ''); }
+      try {
+        const res = await fetch(ENDPOINT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'appendFollowup', rowIndex: rowIndex, text: text, author: author }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+
+        const r = allReports.find(function (x) { return x.rowIndex === rowIndex; });
+        const updated = data.followup || ((r && r.followup ? r.followup + '\n' : '')
+          + '[' + author + '] ' + text);
+        if (r) r.followup = updated;
+        const log = document.getElementById('fu-log-' + rowIndex);
+        if (log) { log.innerHTML = renderFollowupHtml(updated); log.classList.remove('followup__log--empty'); }
+        input.value = '';
+        showToast('Suivi ajouté');
+      } catch (err) {
+        console.error(err);
+        showToast('Échec : ' + err.message, true);
+      } finally {
+        input.removeAttribute('disabled');
+        if (btn) { btn.removeAttribute('loading'); btn.removeAttribute('disabled'); }
+      }
+    }
+    window.addFollowup = addFollowup; // referenced by inline onclick in popups
+
+    // Reveal the name input when the user taps « modifier » on the
+    // "Au nom de X" line (the input was prefilled + hidden).
+    function editFollowupName(rowIndex) {
+      const chip = document.getElementById('fu-chip-' + rowIndex);
+      const inp  = document.getElementById('fu-name-' + rowIndex);
+      if (chip) chip.hidden = true;
+      if (inp) { inp.hidden = false; inp.focus(); inp.select(); }
+    }
+    window.editFollowupName = editFollowupName;
 
     // Pending (no-GPS) report from the drawer: mark closed, refresh the list.
     async function closePending(rowIndex, reason) {

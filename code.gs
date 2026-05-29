@@ -44,6 +44,14 @@ function doPost(e) {
     if (data.action === 'updateStatus') {
       return updateStatusHandler(data);
     }
+    if (data.action === 'appendFollowup') {
+      return appendFollowupHandler(data);
+    }
+    // No action = a new report from the form. An unknown action is rejected
+    // rather than mis-handled as a report (avoids junk rows on version skew).
+    if (data.action) {
+      return jsonResponse({ ok: false, error: 'Action inconnue : ' + data.action });
+    }
     return createReport(data);
   } catch (err) {
     return jsonResponse({ ok: false, error: String(err && err.message || err) });
@@ -159,6 +167,38 @@ function updateStatusHandler(data) {
   return jsonResponse({ ok: true });
 }
 
+/**
+ * Ajoute une entrée au journal de suivi (colonne O) d'une rangée existante.
+ * Le suivi est APPEND-only : on lit la valeur courante et on y ajoute une
+ * ligne « [date · auteur] texte » — jamais d'écrasement. Permet de proposer
+ * des résolutions ou de commenter un signalement (depuis map.html).
+ */
+function appendFollowupHandler(data) {
+  const row    = parseInt(data.rowIndex, 10);
+  // Collapse newlines so each follow-up entry stays on a single line — the
+  // client parses the log one line per entry.
+  const text   = String(data.text || '').replace(/\s*\n+\s*/g, ' ').trim();
+  const author = String(data.author || '').trim();
+
+  if (!Number.isInteger(row) || row < 2 || !text) {
+    return jsonResponse({ ok: false, error: 'Paramètres invalides.' });
+  }
+
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  if (row > sheet.getLastRow()) {
+    return jsonResponse({ ok: false, error: 'Ligne introuvable.' });
+  }
+
+  const cell     = sheet.getRange(row, 15); // O = Suivi
+  const existing = String(cell.getValue() || '');
+  const stamp    = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  const entry    = '[' + stamp + ' · ' + (author || 'Anonyme') + '] ' + text;
+  const updated  = existing ? existing + '\n' + entry : entry;
+
+  cell.setValue(updated);
+  return jsonResponse({ ok: true, followup: updated });
+}
+
 
 /**
  * Retourne tous les signalements (avec coordonnées GPS valides) en JSON.
@@ -189,7 +229,7 @@ function rowToReport(row) {
   // L'ordre doit correspondre à appendRow() dans doPost.
   // `_mapsLink` n'est pas utilisé côté carte (on recalcule via lat/lng).
   const [timestamp, trail, category, lat, lng, accuracy, gpsSource,
-         _mapsLink, mediaUrl, mediaName, reporter, notes, priority, status] = row;
+         _mapsLink, mediaUrl, mediaName, reporter, notes, priority, status, followup] = row;
   const fileId = extractDriveFileId(mediaUrl);
   return {
     timestamp:    timestamp instanceof Date ? timestamp.toISOString() : String(timestamp || ''),
@@ -206,7 +246,8 @@ function rowToReport(row) {
     reporterName: String(reporter || ''),
     notes:        String(notes || ''),
     priority:     String(priority || ''),
-    status:       String(status || '')
+    status:       String(status || ''),
+    followup:     String(followup || '')
   };
 }
 
@@ -230,7 +271,7 @@ function setupSheet() {
     'Latitude', 'Longitude', 'Précision GPS (m)', 'Source GPS',
     'Lien Maps', 'URL du média', 'Nom du fichier',
     'Nom du déclarant', 'Notes',
-    'Priorité', 'Statut'
+    'Priorité', 'Statut', 'Suivi'
   ];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length)
@@ -255,6 +296,7 @@ function setupSheet() {
   sheet.setColumnWidth(12, 300); // Notes
   sheet.setColumnWidth(13, 100); // Priorité
   sheet.setColumnWidth(14, 110); // Statut
+  sheet.setColumnWidth(15, 320); // Suivi
 }
 
 

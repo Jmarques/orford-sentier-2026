@@ -78,7 +78,7 @@ Use the `value` attribute to set an initial value.
 Use the `size` attribute to change a textarea's size.
 
 ```html
-<wa-textarea placeholder="Small" size="small"></wa-textarea>
+<wa-textarea placeholder="Small" size="s"></wa-textarea>
 <br />
 <wa-textarea placeholder="Medium" size="medium"></wa-textarea>
 <br />

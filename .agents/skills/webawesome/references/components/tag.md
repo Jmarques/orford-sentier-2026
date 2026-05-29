@@ -64,7 +64,7 @@ Use the `size` attribute to change a tag's visual appearance. The default appear
 Use the `size` attribute to change a tag's size.
 
 ```html
-<wa-tag size="small">Small</wa-tag>
+<wa-tag size="s">Small</wa-tag>
 <wa-tag size="medium">Medium</wa-tag>
 <wa-tag size="large">Large</wa-tag>
 ```
@@ -74,7 +74,7 @@ Use the `size` attribute to change a tag's size.
 Use the `pill` attribute to give tabs rounded edges.
 
 ```html
-<wa-tag size="small" pill>Small</wa-tag>
+<wa-tag size="s" pill>Small</wa-tag>
 <wa-tag size="medium" pill>Medium</wa-tag>
 <wa-tag size="large" pill>Large</wa-tag>
 ```
@@ -85,7 +85,7 @@ Use the `with-remove` attribute to add a remove button to the tag.
 
 ```html
 <div class="tags-removable">
-  <wa-tag size="small" with-remove>Small</wa-tag>
+  <wa-tag size="s" with-remove>Small</wa-tag>
   <wa-tag size="medium" with-remove>Medium</wa-tag>
   <wa-tag size="large" with-remove>Large</wa-tag>
 </div>

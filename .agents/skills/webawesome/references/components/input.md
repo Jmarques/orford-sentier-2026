@@ -78,7 +78,7 @@ Use the `disabled` attribute to disable an input.
 Use the `size` attribute to change an input's size.
 
 ```html
-<wa-input placeholder="Small" size="small"></wa-input>
+<wa-input placeholder="Small" size="s"></wa-input>
 <br />
 <wa-input placeholder="Medium" size="medium"></wa-input>
 <br />
@@ -90,7 +90,7 @@ Use the `size` attribute to change an input's size.
 Use the `pill` attribute to give inputs rounded edges.
 
 ```html
-<wa-input placeholder="Small" size="small" pill></wa-input>
+<wa-input placeholder="Small" size="s" pill></wa-input>
 <br />
 <wa-input placeholder="Medium" size="medium" pill></wa-input>
 <br />
@@ -114,7 +114,7 @@ The `type` attribute controls the type of input the browser renders.
 Use the `start` and `end` slots to add presentational elements like `<wa-icon>` within the input.
 
 ```html
-<wa-input placeholder="Small" size="small">
+<wa-input placeholder="Small" size="s">
   <wa-icon name="house" slot="start"></wa-icon>
   <wa-icon name="comment" slot="end"></wa-icon>
 </wa-input>

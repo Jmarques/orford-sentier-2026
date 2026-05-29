@@ -88,7 +88,7 @@ Use the `readonly` attribute to make the input readonly. The value can still be 
 Use the `size` attribute to change an input's size.
 
 ```html
-<wa-number-input label="Small" size="small" value="10" style="max-width: 260px;"></wa-number-input>
+<wa-number-input label="Small" size="s" value="10" style="max-width: 260px;"></wa-number-input>
 <br />
 <wa-number-input label="Medium" size="medium" value="20" style="max-width: 260px;"></wa-number-input>
 <br />
@@ -100,7 +100,7 @@ Use the `size` attribute to change an input's size.
 Use the `pill` attribute to give inputs rounded edges.
 
 ```html
-<wa-number-input label="Small Pill" size="small" pill value="10" style="max-width: 260px;"></wa-number-input>
+<wa-number-input label="Small Pill" size="s" pill value="10" style="max-width: 260px;"></wa-number-input>
 <br />
 <wa-number-input label="Medium Pill" size="medium" pill value="20" style="max-width: 260px;"></wa-number-input>
 <br />

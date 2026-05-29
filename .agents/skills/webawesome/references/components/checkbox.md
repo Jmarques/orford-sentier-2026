@@ -46,7 +46,7 @@ Use the `disabled` attribute to disable the checkbox.
 Use the `size` attribute to change a checkbox's size.
 
 ```html
-<wa-checkbox size="small">Small</wa-checkbox>
+<wa-checkbox size="s">Small</wa-checkbox>
 <br />
 <wa-checkbox size="medium">Medium</wa-checkbox>
 <br />
