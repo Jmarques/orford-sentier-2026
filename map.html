@@ -82,7 +82,8 @@
     /* Hover hint on each filter group title — a styled bubble above the label
        (native title tooltips were too subtle / didn't show). */
     .legend-title { position: relative; cursor: help; }
-    .legend-title::after {
+    .legend-title::after,
+    .legend-item[data-tip]::after {
       content: attr(data-tip);
       position: absolute;
       left: 0;
@@ -103,8 +104,11 @@
       transition: opacity 0.12s ease;
     }
     .legend-title:hover::after,
-    .legend-title:focus-visible::after { opacity: 1; }
+    .legend-title:focus-visible::after,
+    .legend-item[data-tip]:hover::after,
+    .legend-item[data-tip]:focus::after { opacity: 1; }
     .legend-item {
+      position: relative;
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -113,7 +117,7 @@
       color: var(--muted);
       background: none;
       border: none;
-      padding: 2px 6px;
+      padding: 3px 7px;
       border-radius: 6px;
       cursor: pointer;
       transition: opacity 0.12s ease, background 0.12s ease;
@@ -653,19 +657,19 @@
   <div class="legend" aria-label="Filtres de la carte">
     <div class="legend-group">
       <strong class="legend-title" data-tip="Touchez les entrées pour afficher/masquer par statut">Statut</strong>
-      <button type="button" class="legend-item" data-status="nouveau"><span class="legend-dot" style="background: var(--clay);"></span>Nouveau</button>
-      <button type="button" class="legend-item" data-status="encours"><span class="legend-dot" style="background: var(--ochre);"></span>En cours</button>
-      <button type="button" class="legend-item" data-status="resolu"><span class="legend-dot" style="background: var(--moss);"></span>Résolu</button>
-      <button type="button" class="legend-item" data-status="doublon"><span class="legend-dot" style="background: var(--moss);"></span>Doublon</button>
+      <button type="button" class="legend-item" data-status="nouveau" data-tip="Nouveau" aria-label="Nouveau"><span class="legend-dot" style="background: var(--clay);"></span></button>
+      <button type="button" class="legend-item" data-status="encours" data-tip="En cours" aria-label="En cours"><span class="legend-dot" style="background: var(--ochre);"></span></button>
+      <button type="button" class="legend-item" data-status="resolu" data-tip="Résolu" aria-label="Résolu"><span class="legend-dot" style="background: var(--moss);"></span></button>
+      <button type="button" class="legend-item" data-status="doublon" data-tip="Doublon" aria-label="Doublon"><span class="legend-dot" style="background: var(--moss);"></span></button>
     </div>
     <div class="legend-group">
       <strong class="legend-title" data-tip="Touchez les entrées pour afficher/masquer par type">Type</strong>
-      <button type="button" class="legend-item" data-family="nature"><span class="legend-icon"><wa-icon name="tree" variant="solid"></wa-icon></span>Nature</button>
-      <button type="button" class="legend-item" data-family="signalisation"><span class="legend-icon"><wa-icon name="signs-post" variant="solid"></wa-icon></span>Signalisation</button>
-      <button type="button" class="legend-item" data-family="infrastructure"><span class="legend-icon"><wa-icon name="bridge" variant="solid"></wa-icon></span>Infrastructure</button>
-      <button type="button" class="legend-item" data-family="terrain"><span class="legend-icon"><wa-icon name="triangle-exclamation" variant="solid"></wa-icon></span>Terrain</button>
-      <button type="button" class="legend-item" data-family="dechets"><span class="legend-icon"><wa-icon name="trash-can" variant="solid"></wa-icon></span>Déchets</button>
-      <button type="button" class="legend-item" data-family="autre"><span class="legend-icon"><wa-icon name="circle-question" variant="solid"></wa-icon></span>Autre</button>
+      <button type="button" class="legend-item" data-family="nature" data-tip="Nature" aria-label="Nature"><span class="legend-icon"><wa-icon name="tree" variant="solid"></wa-icon></span></button>
+      <button type="button" class="legend-item" data-family="signalisation" data-tip="Signalisation" aria-label="Signalisation"><span class="legend-icon"><wa-icon name="signs-post" variant="solid"></wa-icon></span></button>
+      <button type="button" class="legend-item" data-family="infrastructure" data-tip="Infrastructure" aria-label="Infrastructure"><span class="legend-icon"><wa-icon name="bridge" variant="solid"></wa-icon></span></button>
+      <button type="button" class="legend-item" data-family="terrain" data-tip="Terrain" aria-label="Terrain"><span class="legend-icon"><wa-icon name="triangle-exclamation" variant="solid"></wa-icon></span></button>
+      <button type="button" class="legend-item" data-family="dechets" data-tip="Déchets" aria-label="Déchets"><span class="legend-icon"><wa-icon name="trash-can" variant="solid"></wa-icon></span></button>
+      <button type="button" class="legend-item" data-family="autre" data-tip="Autre" aria-label="Autre"><span class="legend-icon"><wa-icon name="circle-question" variant="solid"></wa-icon></span></button>
     </div>
     <div class="legend-group">
       <strong class="legend-title" data-tip="Choisissez un sentier pour n'afficher que celui-ci">Sentier</strong>
