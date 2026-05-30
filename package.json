@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "@awesome.me/webawesome": "^3.5.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }
