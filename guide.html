@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f3a2e" />
+  <title>Guide d'utilisation — Orford-sur-le-Lac</title>
+
+  <!-- Web Awesome (kept here so any wa-icon embedded in the guide later renders) -->
+  <link
+    rel="stylesheet"
+    href="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/styles/themes/default.css"
+  />
+  <script
+    type="module"
+    src="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/webawesome.loader.js"
+  ></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Shared theme + masthead + footer -->
+  <link rel="stylesheet" href="shared/theme.css" />
+  <script src="shared/config.js"></script>
+  <script defer src="shared/masthead.js"></script>
+  <script defer src="shared/footer.js"></script>
+
+  <!-- Tiny Markdown renderer (~50 KB) -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.2/marked.min.js"></script>
+
+  <style>
+    body.guide-page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    main.guide {
+      flex: 1;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Typography — matches the rest of the site (Fraunces for headings,
+       IBM Plex Sans for body) so the guide doesn't feel like a separate app. */
+    .guide h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: clamp(28px, 5vw, 34px);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: var(--forest-deep);
+      margin: 8px 0 6px;
+    }
+    .guide h1 em {
+      font-style: italic;
+      font-variation-settings: "SOFT" 100, "opsz" 144;
+      color: var(--clay);
+    }
+    .guide h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 22px;
+      color: var(--forest-deep);
+      margin: 40px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(31, 58, 46, 0.12);
+    }
+    .guide h3 {
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--forest-deep);
+      margin: 28px 0 8px;
+    }
+    .guide p, .guide ul, .guide ol { margin: 0 0 14px; }
+    .guide ul, .guide ol { padding-left: 22px; }
+    .guide li { margin-bottom: 4px; }
+    .guide strong { color: var(--forest-deep); }
+    .guide em { color: var(--clay); }
+    .guide a {
+      color: var(--forest);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .guide a:hover { color: var(--forest-deep); }
+
+    /* Blockquote = our « Astuce » callouts in the markdown. */
+    .guide blockquote {
+      margin: 16px 0;
+      padding: 12px 16px;
+      background: rgba(192, 138, 47, 0.08);
+      border-left: 3px solid var(--ochre);
+      border-radius: 0 6px 6px 0;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .guide blockquote p:last-child { margin-bottom: 0; }
+
+    .guide img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+      margin: 14px 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    /* The form mock-up is wrapped in <p align="center"><img width=320> in
+       the markdown — keep that intent. */
+    .guide p[align="center"] img { margin-left: auto; margin-right: auto; }
+
+    .guide code {
+      background: var(--paper-warm);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.92em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    /* Status / type table */
+    .guide table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 14px;
+      background: var(--paper);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .guide th, .guide td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
+    }
+    .guide th {
+      font-weight: 600;
+      color: var(--forest-deep);
+      background: var(--paper-warm);
+      font-size: 13px;
+    }
+    .guide tr:last-child td { border-bottom: none; }
+
+    .guide hr {
+      border: none;
+      border-top: 1px solid rgba(31, 58, 46, 0.12);
+      margin: 36px 0;
+    }
+
+    /* States */
+    .guide__loading {
+      text-align: center;
+      color: var(--muted);
+      padding: 48px 0;
+      font-style: italic;
+    }
+    .guide__error {
+      background: #f7e4e0;
+      color: var(--clay);
+      border: 1px solid #ebc9c2;
+      padding: 14px 16px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body class="guide-page">
+  <site-masthead page="guide"></site-masthead>
+
+  <main class="guide" id="guideContent">
+    <p class="guide__loading">Chargement du guide…</p>
+  </main>
+
+  <site-footer></site-footer>
+
+  <script>
+    // Fetch the GUIDE.md source of truth and render it with marked.
+    // Same file as the GitHub README — one source, no duplication.
+    fetch('GUIDE.md')
+      .then(function (r) {
+        if (!r.ok) throw new Error('Impossible de récupérer le guide (HTTP ' + r.status + ')');
+        return r.text();
+      })
+      .then(function (md) {
+        marked.setOptions({ gfm: true, breaks: false });
+        document.getElementById('guideContent').innerHTML = marked.parse(md);
+      })
+      .catch(function (err) {
+        document.getElementById('guideContent').innerHTML =
+          '<div class="guide__error">' + err.message + '</div>';
+      });
+  </script>
+</body>
+</html>

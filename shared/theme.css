@@ -170,6 +170,17 @@ site-footer {
   margin-top: auto; /* pin to bottom of flex-column layouts */
 }
 .site-footer__text { margin: 0; }
+.site-footer__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.site-footer__link:hover,
+.site-footer__link:focus-visible {
+  color: var(--paper);
+  outline: none;
+}
 
 /* ============================================================
    Web Awesome overrides — form controls + filled brand button.

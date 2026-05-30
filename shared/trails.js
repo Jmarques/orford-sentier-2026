@@ -13,8 +13,8 @@
 //                     "coordinates": [[lng, lat], [lng, lat], ...] }
 //   }
 // `condition: "rough"` marks a trail that exists but isn't part of the
-// officially maintained network (not blazed, wet, etc.). Such trails are
-// drawn as a dashed line and labelled "informel" in the tooltip.
+// officially maintained network (overgrown, wet, not blazed…). Such trails
+// are drawn as a dashed line and labelled "Broussailleux" in the tooltip.
 // Absent = normal trail.
 //
 // Note GeoJSON's coordinate order is [longitude, latitude] — the

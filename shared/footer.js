@@ -8,6 +8,7 @@ class SiteFooter extends HTMLElement {
     this.innerHTML = `
       <p class="site-footer__text">
         Comité d'entretien des sentiers · Orford-sur-le-Lac
+        · <a class="site-footer__link" href="guide.html">Guide d'utilisation</a>
       </p>
     `;
   }
