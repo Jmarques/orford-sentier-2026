@@ -223,54 +223,36 @@
       background: var(--paper);
     }
     .leaflet-popup-content { margin: 12px 14px; line-height: 1.4; }
-    .popup { max-width: 240px; }
-    .popup img {
+    .popup { max-width: 280px; }
+    .popup__photo {
       width: 100%;
       max-height: 160px;
       object-fit: cover;
       border-radius: 4px;
-      margin-bottom: 10px;
+      margin: 8px 0 4px;
       background: var(--paper-warm);
     }
-    .popup .cat {
-      font-weight: 600;
-      font-size: 15px;
-      color: var(--forest-deep);
-      margin: 0 0 2px;
+    /* Category title — also the tap target for the « ligne N » popover. */
+    .popup .cat-title {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 6px;
-    }
-    .popup .cat wa-icon { color: var(--moss); font-size: 14px; }
-    .popup .sub {
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0 0 8px;
-      font-variant-numeric: tabular-nums;
-    }
-    .popup .notes {
-      font-size: 13px;
-      color: var(--text);
-      margin: 8px 0 0;
-      white-space: pre-wrap;
-    }
-    .popup .reporter {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 8px;
-      font-style: italic;
-    }
-    /* Sheet row number — admin-only, hidden by default. Tap the sub line
-       (sentier · date) to toggle a small floating bubble; it's absolutely
-       positioned so it never shifts the popup layout. The dotted underline
-       hints that the line is interactive. */
-    .popup .sub--row {
+      width: 100%;
+      font: inherit;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--forest-deep);
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
       cursor: pointer;
-      position: relative;
-      text-decoration: underline dotted rgba(31, 58, 46, 0.3);
-      text-underline-offset: 2px;
     }
-    .popup .sub .row-ref {
+    .popup .cat-title wa-icon { color: var(--moss); font-size: 14px; }
+    .popup .cat-title__text { flex: 1; min-width: 0; }
+    .popup .cat-title__row {
       display: none;
       position: absolute;
       right: 0;
@@ -281,12 +263,35 @@
       padding: 3px 8px;
       border-radius: 6px;
       font-size: 11px;
-      font-style: normal;
+      font-weight: 500;
       white-space: nowrap;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
       user-select: all;
+      font-variant-numeric: tabular-nums;
     }
-    .popup .sub.show-row .row-ref { display: block; }
+    .popup .cat-title.show-row .cat-title__row { display: block; }
+    /* Trail subtitle: dot in the trail's colour + name. */
+    .popup .trail-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 2px 0 0;
+    }
+    .popup .trail-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1.5px solid var(--paper);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+    .popup .notes {
+      font-size: 13px;
+      color: var(--text);
+      margin: 6px 0 0;
+      white-space: pre-wrap;
+    }
     .popup .badge {
       display: inline-block;
       font-size: 10px;
@@ -295,6 +300,7 @@
       border-radius: 10px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
+      margin-top: 6px;
     }
     .popup .badge.nouveau { background: rgba(164, 87, 46, 0.14); color: var(--clay); }
     .popup .badge.encours { background: rgba(192, 138, 47, 0.16); color: #8a6120; }
@@ -329,41 +335,116 @@
       color: var(--muted);
     }
     .close-btn--dup:hover { background: rgba(31, 58, 46, 0.12); }
-    .popup .close-row {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(31, 58, 46, 0.1);
-    }
     .todo-item__close { margin-top: 8px; }
 
-    /* ---------- Follow-up log (popup) ---------- */
-    .popup .followup {
+    /* ---------- Suivi & résolution — accordion (popup) ---------- */
+    .popup .fa {
       margin-top: 10px;
-      padding-top: 10px;
       border-top: 1px solid rgba(31, 58, 46, 0.1);
     }
-    .popup .followup__title {
+    .popup .fa__head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      list-style: none;
+      cursor: pointer;
+      padding: 8px 0;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--forest-deep);
-      margin-bottom: 6px;
     }
+    .popup .fa__head::-webkit-details-marker { display: none; }
+    .popup .fa__chevron {
+      font-size: 10px;
+      color: var(--moss);
+      transition: transform 0.18s ease;
+    }
+    .popup details[open] .fa__chevron { transform: rotate(90deg); }
+    .popup .fa__title { flex: 1; }
+    .popup .fa__count {
+      background: var(--moss);
+      color: var(--paper);
+      border-radius: 999px;
+      padding: 1px 7px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .popup .fa__body { padding-bottom: 4px; }
+    /* Action row : envoyer (icône) + « au nom de ⟨chip⟩ » — toujours UNE ligne. */
+    .popup .fa__actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      margin-bottom: 8px;
+    }
+    .popup .fa__send {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      border-radius: 8px;
+      background: var(--forest);
+      color: var(--paper);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.12s ease;
+    }
+    .popup .fa__send:hover { background: var(--forest-deep); }
+    .popup .fa__send:disabled { opacity: 0.55; cursor: not-allowed; }
+    .popup .fa__send wa-icon { font-size: 13px; }
+    .popup .fa__send.is-loading wa-icon { display: none; }
+    .popup .fa__send.is-loading::before {
+      content: '';
+      display: block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--paper);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: fa-spin 0.7s linear infinite;
+    }
+    @keyframes fa-spin { to { transform: rotate(360deg); } }
+    .popup .fa__by {
+      font-size: 11px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .popup .fa__by-icon { font-size: 12px; color: var(--moss); flex-shrink: 0; }
+    /* Clôturer — séparé visuellement à l'intérieur du panneau. */
+    .popup .fa__body .close-row {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(31, 58, 46, 0.08);
+    }
+
     .popup .followup__log {
       font-size: 12px;
       color: var(--text);
       white-space: pre-wrap;
-      max-height: 120px;
+      max-height: 140px;
       overflow-y: auto;
-      margin-bottom: 6px;
+      margin: 0 0 8px;
       line-height: 1.4;
     }
-    .popup .followup__log--empty { color: var(--muted); font-style: italic; }
     .popup .fu-entry { margin-bottom: 5px; }
     .popup .fu-entry:last-child { margin-bottom: 0; }
+    .popup .fu-entry--auto { color: var(--muted); font-style: italic; }
     .popup .fu-author {
       font-weight: 600;
+      font-style: normal;
       color: var(--forest-deep);
       cursor: help;
       border-bottom: 1px dotted rgba(31, 58, 46, 0.4);
@@ -378,42 +459,33 @@
       padding: 5px 7px;
       background: var(--paper-warm);
       resize: vertical;
-      margin-bottom: 6px;
-    }
-    .popup .followup__actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .popup .followup__by {
-      font-size: 12px;
-      color: var(--muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
+      margin-bottom: 8px;
     }
     .popup .followup__namechip {
       font: inherit;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--forest-deep);
       background: var(--paper-warm);
       border: 1px solid rgba(31, 58, 46, 0.3);
       border-radius: 999px;
-      padding: 2px 10px;
+      padding: 2px 9px;
       cursor: pointer;
+      max-width: 110px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .popup .followup__namechip:hover { background: rgba(31, 58, 46, 0.1); }
     .popup .followup__name {
       font: inherit;
-      font-size: 12px;
+      font-size: 11px;
       border: 1px solid rgba(31, 58, 46, 0.3);
       border-radius: 999px;
-      padding: 2px 10px;
+      padding: 2px 9px;
       background: var(--paper-warm);
-      width: 110px;
-      max-width: 10vw;
+      width: 100%;
+      max-width: 50vw;
     }
 
     /* ---------- "À localiser" chip in the hero ---------- */
@@ -855,67 +927,87 @@
       const sc = statusClass(r.status);
       const label = r.status || 'Nouveau';
       const famIcon = FAMILY_ICONS[categoryFamily(r.category)];
+      const trailKey = (r.trail || '').trim();
+      const trailColor = trailColorMap[trailKey] || window.ORFORD.TRAIL_FALLBACK_COLOR;
+
+      // The category title doubles as the tap target to reveal the spreadsheet
+      // row number — admin-only info, so it lives in a popover, not inline.
+      const rowPopover = r.rowIndex != null
+        ? '<span class="cat-title__row">ligne ' + r.rowIndex + '</span>'
+        : '';
+      const titleHtml =
+        '<div class="cat-title" role="button" tabindex="0" title="Toucher pour voir le numéro de ligne dans la feuille" onclick="this.classList.toggle(\'show-row\')">'
+        + '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>'
+        + '<span class="cat-title__text">' + escapeHtml(r.category || 'Sans catégorie') + '</span>'
+        + rowPopover
+        + '</div>';
+
+      const trailLine = trailKey
+        ? '<div class="trail-line"><span class="trail-dot" style="background:' + trailColor + ';"></span>' + escapeHtml(r.trail) + '</div>'
+        : '<div class="trail-line"><span class="trail-dot" style="background:' + trailColor + ';"></span>Sans sentier précisé</div>';
+
       const img = r.photoThumb
-        ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />'
+        ? '<img class="popup__photo" src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />'
         : '';
       const notes = r.notes
         ? '<p class="notes">' + escapeHtml(r.notes) + '</p>'
         : '';
-      const reporter = r.reporterName
-        ? '<p class="reporter">Signalé par ' + escapeHtml(r.reporterName) + '</p>'
-        : '';
-      const sub = [escapeHtml(r.trail || ''), formatDate(r.timestamp)]
-        .filter(Boolean).join(' · ');
-      // Only offer closure on reports that are still open.
+
+      // First entry of the follow-up log is auto-derived from the original
+      // report (reporter + timestamp). It tells the story chronologically and
+      // moves the metadata out of the default view.
+      const autoEntry = '<div class="fu-entry fu-entry--auto">'
+        + '<span class="fu-author" title="' + escapeHtml(formatDate(r.timestamp)) + '">'
+        +   escapeHtml(r.reporterName || 'Anonyme')
+        + '</span> a signalé le problème.'
+        + '</div>';
+      const fuCount = r.followup ? r.followup.split('\n').filter(function (l) { return l.trim(); }).length : 0;
+      const countBadge = fuCount > 0 ? '<span class="fa__count">' + fuCount + '</span>' : '';
+      const fuLogHtml = autoEntry + renderFollowupHtml(r.followup);
+
+      // Attribution chip beside the send button (one line, even on mobile).
+      const nm = savedName();
+      const nameInner = nm
+        ? '<button type="button" class="followup__namechip" id="fu-chip-' + r.rowIndex + '" onclick="editFollowupName(' + r.rowIndex + ')">' + escapeHtml(nm) + '</button>'
+          + '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" value="' + escapeHtml(nm) + '" hidden />'
+        : '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" placeholder="Votre nom" value="" />';
+
+      // Closure controls live INSIDE the expanded accordion — closing is part
+      // of the resolution workflow (write a final follow-up, then mark closed).
       const closeRow = sc === 'clos' ? '' :
         '<div class="close-row">'
         +   '<span class="close-row__label">Clôturer :</span>'
         +   '<button type="button" class="close-btn" onclick="closeReport(' + r.rowIndex + ', \'Résolu\')">Résolu</button>'
         +   '<button type="button" class="close-btn close-btn--dup" onclick="closeReport(' + r.rowIndex + ', \'Doublon\')">Doublon</button>'
         + '</div>';
-      // The sub line (sentier · date) doubles as a tap target that reveals the
-      // spreadsheet row number — admin-only info, so it stays hidden until asked.
-      const subHtml = r.rowIndex != null
-        ? '<p class="sub sub--row" title="Toucher pour afficher le numéro de ligne (pour éditer dans le tableur)" onclick="this.classList.toggle(\'show-row\')">'
-          + sub
-          + '<span class="row-ref">ligne ' + r.rowIndex + '</span>'
-          + '</p>'
-        : '<p class="sub">' + sub + '</p>';
-      // Append-only follow-up log: propose resolutions / leave comments.
-      const fuLog = r.followup
-        ? '<div class="followup__log" id="fu-log-' + r.rowIndex + '">' + renderFollowupHtml(r.followup) + '</div>'
-        : '<div class="followup__log followup__log--empty" id="fu-log-' + r.rowIndex + '">Aucun suivi pour l\'instant.</div>';
-      // Attribution sits beside the « Ajouter » button. With a remembered name
-      // it's a discreet chip (tap to edit, revealing a hidden input); otherwise
-      // a small name field shows directly.
-      const nm = savedName();
-      const nameInner = nm
-        ? '<button type="button" class="followup__namechip" id="fu-chip-' + r.rowIndex + '" onclick="editFollowupName(' + r.rowIndex + ')">' + escapeHtml(nm) + '</button>'
-          + '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" value="' + escapeHtml(nm) + '" hidden />'
-        : '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" placeholder="Votre nom" value="" />';
-      const followup =
-        '<div class="followup">'
-        + '<div class="followup__title">Suivi &amp; résolution</div>'
-        + fuLog
-        + '<textarea class="followup__input" id="fu-in-' + r.rowIndex + '" rows="2" placeholder="Proposer une solution, ajouter une info…"></textarea>'
-        + '<div class="followup__actions">'
-        +   '<wa-button class="followup__btn" appearance="filled" variant="brand" size="s" onclick="addFollowup(' + r.rowIndex + ', this)">Ajouter</wa-button>'
-        +   '<span class="followup__by">au nom de ' + nameInner + '</span>'
+
+      const accordion =
+        '<details class="fa">'
+        + '<summary class="fa__head">'
+        +   '<wa-icon class="fa__chevron" name="chevron-right" variant="solid"></wa-icon>'
+        +   '<span class="fa__title">Suivi &amp; résolution</span>'
+        +   countBadge
+        + '</summary>'
+        + '<div class="fa__body">'
+        +   '<div class="followup__log" id="fu-log-' + r.rowIndex + '">' + fuLogHtml + '</div>'
+        +   '<textarea class="followup__input" id="fu-in-' + r.rowIndex + '" rows="2" placeholder="Proposer une solution, ajouter une info…"></textarea>'
+        +   '<div class="fa__actions">'
+        +     '<button type="button" class="fa__send" aria-label="Ajouter le suivi" onclick="addFollowup(' + r.rowIndex + ', this)">'
+        +       '<wa-icon name="paper-plane" variant="solid"></wa-icon>'
+        +     '</button>'
+        +     '<span class="fa__by"><wa-icon class="fa__by-icon" name="user" variant="solid" aria-label="au nom de"></wa-icon>' + nameInner + '</span>'
+        +   '</div>'
+        +   closeRow
         + '</div>'
-        + '</div>';
+        + '</details>';
 
       return '<div class="popup">'
+        + titleHtml
+        + trailLine
         + img
-        + '<p class="cat">'
-        +   '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>'
-        +   escapeHtml(r.category || 'Sans catégorie')
-        + '</p>'
-        + subHtml
         + '<span class="badge ' + sc + '">' + escapeHtml(label) + '</span>'
         + notes
-        + reporter
-        + closeRow
-        + followup
+        + accordion
         + '</div>';
     }
 
@@ -955,6 +1047,7 @@
     let placedCount = 0;
     let pendingReports = []; // open reports without coordinates
     let allReports = [];     // every report from the server — source of truth for re-render
+    let trailColorMap = {};  // trail name → colour (pre-fetched so popupHtml is synchronous)
 
     const FAMILY_KEYS = ['nature', 'signalisation', 'infrastructure', 'terrain', 'dechets', 'autre'];
     // Legend filters. Closed statuses (resolu/doublon) start hidden — the
@@ -1004,7 +1097,7 @@
 
     function addPlacedMarker(r) {
       const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status, r.category) });
-      m.bindPopup(popupHtml(r), { maxWidth: 280 });
+      m.bindPopup(popupHtml(r), { minWidth: 260, maxWidth: 300, maxHeight: 460 });
       cluster.addLayer(m);
       placedCount++;
     }
@@ -1049,6 +1142,14 @@
         if (!data.ok) throw new Error(data.error || 'Réponse invalide');
         allReports = data.reports || [];
         populateTrailFilter();
+        // Pre-fetch the colour of every trail present in the data so the popup
+        // can render the trail-dot synchronously.
+        const trailKeys = Array.from(new Set(allReports.map(function (r) {
+          return (r.trail || '').trim();
+        })));
+        await Promise.all(trailKeys.map(async function (k) {
+          trailColorMap[k] = await window.ORFORD.getTrailColor(k);
+        }));
         render(true);
       } catch (err) {
         console.error(err);
@@ -1377,7 +1478,7 @@
       if (author) { try { localStorage.setItem('orford.reporterName', author); } catch (e) {} }
 
       input.setAttribute('disabled', '');
-      if (btn) { btn.setAttribute('loading', ''); btn.setAttribute('disabled', ''); }
+      if (btn) { btn.classList.add('is-loading'); btn.setAttribute('disabled', ''); }
       try {
         const res = await fetch(ENDPOINT_URL, {
           method: 'POST',
@@ -1400,7 +1501,7 @@
         showToast('Échec : ' + err.message, true);
       } finally {
         input.removeAttribute('disabled');
-        if (btn) { btn.removeAttribute('loading'); btn.removeAttribute('disabled'); }
+        if (btn) { btn.classList.remove('is-loading'); btn.removeAttribute('disabled'); }
       }
     }
     window.addFollowup = addFollowup; // referenced by inline onclick in popups

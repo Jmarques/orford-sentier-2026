@@ -180,8 +180,12 @@ async function main() {
   await page.waitForTimeout(700);
   await shot(page, 'carte-popup');
 
-  // Gros plan sur la zone "Suivi & résolution" du popup
-  const followup = page.locator('.leaflet-popup .followup');
+  // Pour le gros plan sur le « Suivi & résolution », on ouvre l'accordéon
+  // (fermé par défaut) en cliquant sur son en-tête.
+  await page.locator('.leaflet-popup .fa__head').click();
+  await page.waitForSelector('.leaflet-popup details[open]');
+  await page.waitForTimeout(400);
+  const followup = page.locator('.leaflet-popup .fa');
   await shot(followup, 'carte-suivi');
 
   // ----- Carte — popup d'un Nouveau (montre les boutons Résolu/Doublon).
@@ -192,9 +196,15 @@ async function main() {
   await page.waitForSelector('.marker-pin', { timeout: 10000 });
   await page.waitForTimeout(1000);
   await page.locator('.marker-pin').first().click();
-  await page.waitForSelector('.leaflet-popup .close-row', { timeout: 10000 });
+  await page.waitForSelector('.leaflet-popup .fa__head', { timeout: 10000 });
+  // Les boutons Résolu/Doublon sont dans l'accordéon — on l'ouvre.
+  await page.locator('.leaflet-popup .fa__head').click();
+  await page.waitForSelector('.leaflet-popup .close-row', { timeout: 5000 });
   await page.waitForTimeout(500);
-  const closePopup = page.locator('.leaflet-popup');
+  // On capture juste le corps de l'accordéon ouvert : le journal, la zone
+  // de saisie + le bouton envoyer + le nom, et les boutons Résolu/Doublon.
+  // C'est l'élément à mettre en lumière, sans bruit autour.
+  const closePopup = page.locator('.leaflet-popup .fa__body');
   await shot(closePopup, 'carte-popup-cloture');
 
   // ----- Carte — tiroir « à localiser » ------------------------------
