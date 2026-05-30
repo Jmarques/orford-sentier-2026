@@ -5,17 +5,21 @@
 // Leaflet map in the app can paint the trail network with
 // a single line.
 //
-// Expected GeoJSON shape — one Feature per trail:
+// Expected GeoJSON shape — one Feature per segment (main trail or access):
 //   {
 //     "type": "Feature",
-//     "properties": { "name": "…", "color": "#…", "condition"?: "rough" },
+//     "properties": {
+//       "name":      "…",         // displayed name
+//       "color":     "#…",        // segment colour
+//       "condition"?: "rough",    // overgrown / unmaintained → dashed + labelled
+//       "kind"?:      "access",   // distinguishes trail accesses from main trails
+//       "parent"?:    "Sentier …" // for kind:access — its parent trail's name,
+//                                 // so the access stays visible when the
+//                                 // parent trail is selected in the filter.
+//     },
 //     "geometry":   { "type": "LineString",
 //                     "coordinates": [[lng, lat], [lng, lat], ...] }
 //   }
-// `condition: "rough"` marks a trail that exists but isn't part of the
-// officially maintained network (overgrown, wet, not blazed…). Such trails
-// are drawn as a dashed line and labelled "Broussailleux" in the tooltip.
-// Absent = normal trail.
 //
 // Note GeoJSON's coordinate order is [longitude, latitude] — the
 // reverse of Leaflet's L.marker([lat, lng]). Leaflet handles the

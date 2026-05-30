@@ -823,8 +823,8 @@
     window.ORFORD.addTrailsToMap(map).then(function (layer) {
       trailsLayer = layer;
       if (layer) layer.eachLayer(function (lyr) {
-        const nm = lyr.feature && lyr.feature.properties && lyr.feature.properties.name;
-        trailSublayers.push({ layer: lyr, name: nm || '' });
+        const props = (lyr.feature && lyr.feature.properties) || {};
+        trailSublayers.push({ layer: lyr, name: props.name || '', parent: props.parent || '' });
       });
       updateTrailVisibility();
     });
@@ -833,12 +833,17 @@
       return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
     }
     // When a specific trail is selected, drop the other trails' lines from the
-    // overlay; null/'' (all or "sans sentier") shows every line.
+    // overlay; null/'' (all or "sans sentier") shows every line. Accesses
+    // (features with `parent: "Sentier X"`) stay visible when their parent is
+    // selected, so you can see how to get onto the trail.
     function updateTrailVisibility() {
       if (!trailsLayer) return;
       const filtering = activeTrail !== null && activeTrail !== '';
+      const target = normTrail(activeTrail);
       trailSublayers.forEach(function (s) {
-        const show = !filtering || normTrail(s.name) === normTrail(activeTrail);
+        const show = !filtering
+          || normTrail(s.name) === target
+          || normTrail(s.parent) === target;
         if (show && !trailsLayer.hasLayer(s.layer)) trailsLayer.addLayer(s.layer);
         else if (!show && trailsLayer.hasLayer(s.layer)) trailsLayer.removeLayer(s.layer);
       });
