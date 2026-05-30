@@ -1,6 +1,6 @@
 {
   "type": "FeatureCollection",
-  "_doc": "Trails of Orford-sur-le-Lac. One Feature per trail. Each Feature has a LineString geometry (an array of [lng, lat] pairs — note: longitude FIRST, that's the GeoJSON spec) and properties { name, color }. The 'color' should match the community PDF map. Edit this file in geojson.io for a visual editor.",  
+  "_doc": "Trails of Orford-sur-le-Lac. One Feature per trail. Each Feature has a LineString geometry (an array of [lng, lat] pairs — note: longitude FIRST, that's the GeoJSON spec) and properties { name, color, condition? }. The 'color' should match the community PDF map. The optional 'condition' tells the renderer how usable the trail is — supported values: 'rough' (exists but not officially maintained — not blazed, wet, etc. — drawn as a dashed line). Absent = normal trail. Edit this file in geojson.io for a visual editor.",
   "features": [
     {
       "type": "Feature",
@@ -1026,7 +1026,8 @@
       "type": "Feature",
       "properties": {
         "name": "Sentier Vertendre",
-        "color": "#66b366"
+        "color": "#66b366",
+        "condition": "rough"
       },
       "geometry": {
         "type": "LineString",
@@ -1182,11 +1183,152 @@
       "type": "Feature",
       "properties": {
         "name": "Sentier du Pré",
-        "color": "#dbdb1f"
+        "color": "#dbdb1f",
+        "condition": "rough"
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
+          [
+            -72.2792642,
+            45.3068657
+          ],
+          [
+            -72.2790843,
+            45.3069711
+          ],
+          [
+            -72.2789843,
+            45.3070555
+          ],
+          [
+            -72.2788743,
+            45.3071258
+          ],
+          [
+            -72.2787543,
+            45.3071715
+          ],
+          [
+            -72.2786844,
+            45.3072559
+          ],
+          [
+            -72.2786444,
+            45.3073438
+          ],
+          [
+            -72.2785694,
+            45.3074106
+          ],
+          [
+            -72.2785644,
+            45.3075442
+          ],
+          [
+            -72.2786344,
+            45.3077235
+          ],
+          [
+            -72.2786594,
+            45.3078677
+          ],
+          [
+            -72.2787791,
+            45.3080332
+          ],
+          [
+            -72.2790006,
+            45.3080799
+          ],
+          [
+            -72.2791778,
+            45.3080539
+          ],
+          [
+            -72.2793254,
+            45.308002
+          ],
+          [
+            -72.2794362,
+            45.3081162
+          ],
+          [
+            -72.2794879,
+            45.3083083
+          ],
+          [
+            -72.2794731,
+            45.3084849
+          ],
+          [
+            -72.2794288,
+            45.3085991
+          ],
+          [
+            -72.2793402,
+            45.3086822
+          ],
+          [
+            -72.2793402,
+            45.3088328
+          ],
+          [
+            -72.2793254,
+            45.308947
+          ],
+          [
+            -72.2793328,
+            45.3090976
+          ],
+          [
+            -72.2794362,
+            45.309217
+          ],
+          [
+            -72.2794879,
+            45.309352
+          ],
+          [
+            -72.27951,
+            45.3094714
+          ],
+          [
+            -72.2795395,
+            45.3096012
+          ],
+          [
+            -72.2795764,
+            45.3096947
+          ],
+          [
+            -72.27951,
+            45.3098608
+          ],
+          [
+            -72.2794657,
+            45.3099647
+          ],
+          [
+            -72.2794362,
+            45.3100945
+          ],
+          [
+            -72.2794362,
+            45.3101931
+          ],
+          [
+            -72.2794362,
+            45.3103022
+          ],
+          [
+            -72.2793697,
+            45.3104008
+          ],
+          [
+            -72.2793328,
+            45.3104112
+          ]
         ]
       }
     }

@@ -8,10 +8,15 @@
 // Expected GeoJSON shape — one Feature per trail:
 //   {
 //     "type": "Feature",
-//     "properties": { "name": "Sentier de la Sapinière", "color": "#a4572e" },
+//     "properties": { "name": "…", "color": "#…", "condition"?: "rough" },
 //     "geometry":   { "type": "LineString",
 //                     "coordinates": [[lng, lat], [lng, lat], ...] }
 //   }
+// `condition: "rough"` marks a trail that exists but isn't part of the
+// officially maintained network (not blazed, wet, etc.). Such trails are
+// drawn as a dashed line and labelled "informel" in the tooltip.
+// Absent = normal trail.
+//
 // Note GeoJSON's coordinate order is [longitude, latitude] — the
 // reverse of Leaflet's L.marker([lat, lng]). Leaflet handles the
 // translation when reading GeoJSON, so just feed it raw.
@@ -92,10 +97,25 @@
     return out;
   }
 
-  const BASE_WEIGHT  = 4;
-  const HOVER_WEIGHT = 7;
-  const BASE_OPACITY  = 0.85;
+  const BASE_WEIGHT   = 4;
+  const HOVER_WEIGHT  = 7;
+  const BASE_OPACITY  = 0.9;
   const HOVER_OPACITY = 1;
+  // Dashed pattern for rough trails — same colour & opacity as the rest,
+  // just dashed so they read as "different" without disappearing.
+  const ROUGH_DASH = '6, 6';
+
+  function baseStyleFor(feature) {
+    const props = (feature && feature.properties) || {};
+    return {
+      color:     props.color || FALLBACK_COLOR,
+      weight:    BASE_WEIGHT,
+      opacity:   BASE_OPACITY,
+      dashArray: props.condition === 'rough' ? ROUGH_DASH : null,
+      lineCap:   'round',
+      lineJoin:  'round',
+    };
+  }
 
   async function addTrailsToMap(map) {
     const data = await loadTrails();
@@ -107,26 +127,24 @@
     };
 
     const layer = L.geoJSON(exploded, {
-      style: (feature) => ({
-        color:    (feature.properties && feature.properties.color) || FALLBACK_COLOR,
-        weight:   BASE_WEIGHT,
-        opacity:  BASE_OPACITY,
-        lineCap:  'round',
-        lineJoin: 'round',
-      }),
+      style: baseStyleFor,
       onEachFeature: (feature, lyr) => {
-        const name = feature.properties && feature.properties.name;
+        const props = (feature && feature.properties) || {};
+        const name = props.name;
         if (name) {
           const dist = featureLengthMeters(feature);
-          const label = dist > 0 ? name + ' · ' + formatDistance(dist) : name;
-          lyr.bindTooltip(label, { sticky: true, direction: 'top', opacity: 0.95 });
+          const parts = [name];
+          if (dist > 0) parts.push(formatDistance(dist));
+          if (props.condition === 'rough') parts.push('Broussailleux');
+          lyr.bindTooltip(parts.join(' · '), { sticky: true, direction: 'top', opacity: 0.95 });
         }
         lyr.on('mouseover', () => {
+          // Keep dashArray; just thicken and re-opacify for readability.
           lyr.setStyle({ weight: HOVER_WEIGHT, opacity: HOVER_OPACITY });
           lyr.bringToFront();
         });
         lyr.on('mouseout', () => {
-          lyr.setStyle({ weight: BASE_WEIGHT, opacity: BASE_OPACITY });
+          lyr.setStyle(baseStyleFor(feature));
         });
       },
     });
