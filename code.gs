@@ -7,6 +7,13 @@
  *
  * Étapes d'installation :
  *   1. Créer une feuille Google → copier son ID dans SHEET_ID.
+ *      - Onglet « Signalements » : les données (en-tête créé par setupSheet).
+ *      - Onglet « Config » : les mots de passe. Colonne A = libellé,
+ *        colonne B = valeur. Deux lignes attendues :
+ *            communaute | <mot de passe de la communauté>
+ *            comite     | <mot de passe du comité>
+ *        Cet onglet n'est JAMAIS exposé (doGet ne lit que « Signalements »).
+ *        Garder la feuille partagée uniquement avec le comité.
  *   2. Créer un dossier Drive  → copier son ID dans FOLDER_ID.
  *   3. Exécuter setupSheet() une fois pour créer l'en-tête.
  *   4. Déployer → Nouveau déploiement → Application Web.
@@ -16,9 +23,72 @@
  * ---------------------------------------------------------------- */
 
 // ======== CONFIG =========================================================
-const SHEET_ID  = '13BZIbWOw77hZQu25otyYBJfjY5zFWhRNuwjv2bFYcXY';
-const FOLDER_ID = '16MgtyEf36wbkFXbJnHDVIdRig2Sl55nJ';
+const SHEET_ID   = '13BZIbWOw77hZQu25otyYBJfjY5zFWhRNuwjv2bFYcXY';
+const FOLDER_ID  = '16MgtyEf36wbkFXbJnHDVIdRig2Sl55nJ';
+const SHEET_NAME = 'Signalements'; // onglet des données
+const CONFIG_NAME = 'Config';      // onglet des mots de passe (jamais exposé)
 // =========================================================================
+
+/**
+ * Retourne l'onglet des données par NOM (jamais par index). C'est essentiel :
+ * référencer par index risquerait de lire l'onglet « Config » et d'exposer
+ * les mots de passe via doGet.
+ */
+function getDataSheet() {
+  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+  if (!sheet) throw new Error('Onglet « ' + SHEET_NAME + ' » introuvable.');
+  return sheet;
+}
+
+/**
+ * Lit les mots de passe depuis l'onglet « Config » (par libellé en colonne A,
+ * robuste si on réordonne les lignes) et les met en cache 5 min via
+ * CacheService — on ne touche donc la feuille qu'une fois toutes les 5 min,
+ * pas à chaque POST.
+ */
+function getSecrets() {
+  const cache  = CacheService.getScriptCache();
+  const cached = cache.get('orford_secrets');
+  if (cached) return JSON.parse(cached);
+
+  const secrets = { communaute: '', comite: '' };
+  const sheet   = SpreadsheetApp.openById(SHEET_ID).getSheetByName(CONFIG_NAME);
+  if (sheet) {
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 0; i < rows.length; i++) {
+      const key = String(rows[i][0] || '').trim().toLowerCase();
+      const val = String(rows[i][1] || '');
+      if (key === 'communaute') secrets.communaute = val;
+      else if (key === 'comite') secrets.comite = val;
+    }
+  }
+  cache.put('orford_secrets', JSON.stringify(secrets), 300); // 5 min
+  return secrets;
+}
+
+/**
+ * Déduit le niveau d'autorisation d'un mot de passe :
+ *   'comite'     → autorise tout
+ *   'communaute' → autorise la création de signalements
+ *   null         → refusé
+ * Le comité l'emporte si les deux codes étaient identiques.
+ */
+function checkRole(password) {
+  const pw = String(password == null ? '' : password);
+  if (!pw) return null;
+  const s = getSecrets();
+  if (s.comite && pw === s.comite) return 'comite';
+  if (s.communaute && pw === s.communaute) return 'communaute';
+  return null;
+}
+
+/**
+ * Réponse d'échec d'authentification. Le drapeau `authError` indique au
+ * client de re-demander le mot de passe (code faux OU rôle insuffisant).
+ */
+function authError(msg) {
+  return jsonResponse({ ok: false, authError: true, error: msg });
+}
 
 // Traduction des sources GPS (valeurs techniques → libellés français)
 const GPS_SOURCE_FR = {
@@ -59,6 +129,11 @@ function doPost(e) {
 }
 
 function createReport(data) {
+  // Un mot de passe valide (communauté ou comité) est requis pour signaler.
+  if (!checkRole(data.password)) {
+    return authError('Mot de passe incorrect ou manquant.');
+  }
+
   // Enregistrer le média dans Drive (s'il y en a un)
   let mediaUrl = '';
   let mediaName = '';
@@ -90,7 +165,7 @@ function createReport(data) {
     : (data.gpsSource || '');
 
   // Ajouter la ligne
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  const sheet = getDataSheet();
   sheet.appendRow([
     new Date(),                  // A  Horodatage
     data.trail        || '',     // B  Sentier
@@ -117,6 +192,10 @@ function createReport(data) {
  * place un repère a posteriori sur un signalement sans coordonnées.
  */
 function updateLocationHandler(data) {
+  if (checkRole(data.password) !== 'comite') {
+    return authError('Action réservée au comité.');
+  }
+
   const row = parseInt(data.rowIndex, 10);
   const lat = parseFloat(data.latitude);
   const lng = parseFloat(data.longitude);
@@ -125,7 +204,7 @@ function updateLocationHandler(data) {
     return jsonResponse({ ok: false, error: 'Paramètres invalides.' });
   }
 
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  const sheet = getDataSheet();
   if (row > sheet.getLastRow()) {
     return jsonResponse({ ok: false, error: 'Ligne introuvable.' });
   }
@@ -150,6 +229,10 @@ function updateLocationHandler(data) {
  * aux deux statuts de clôture pour éviter les valeurs arbitraires.
  */
 function updateStatusHandler(data) {
+  if (checkRole(data.password) !== 'comite') {
+    return authError('Action réservée au comité.');
+  }
+
   const row = parseInt(data.rowIndex, 10);
   const status = String(data.status || '');
   const ALLOWED = ['Résolu', 'Doublon'];
@@ -158,7 +241,7 @@ function updateStatusHandler(data) {
     return jsonResponse({ ok: false, error: 'Paramètres invalides.' });
   }
 
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  const sheet = getDataSheet();
   if (row > sheet.getLastRow()) {
     return jsonResponse({ ok: false, error: 'Ligne introuvable.' });
   }
@@ -180,11 +263,15 @@ function appendFollowupHandler(data) {
   const text   = String(data.text || '').replace(/\s*\n+\s*/g, ' ').trim();
   const author = String(data.author || '').trim();
 
+  if (checkRole(data.password) !== 'comite') {
+    return authError('Action réservée au comité.');
+  }
+
   if (!Number.isInteger(row) || row < 2 || !text) {
     return jsonResponse({ ok: false, error: 'Paramètres invalides.' });
   }
 
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  const sheet = getDataSheet();
   if (row > sheet.getLastRow()) {
     return jsonResponse({ ok: false, error: 'Ligne introuvable.' });
   }
@@ -206,7 +293,7 @@ function appendFollowupHandler(data) {
  */
 function doGet() {
   try {
-    const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+    const sheet = getDataSheet();
     const values = sheet.getDataRange().getValues();
 
     const reports = [];
@@ -265,7 +352,7 @@ function extractDriveFileId(url) {
  * ré-exécuté sans risque — ne touche que la ligne 1.
  */
 function setupSheet() {
-  const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+  const sheet = getDataSheet();
   const headers = [
     'Horodatage', 'Sentier', 'Catégorie',
     'Latitude', 'Longitude', 'Précision GPS (m)', 'Source GPS',

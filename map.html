@@ -38,6 +38,7 @@
        before the inline <script> at the bottom of body runs. -->
   <link rel="stylesheet" href="shared/theme.css" />
   <script src="shared/config.js"></script>
+  <script src="shared/auth.js"></script>
   <script defer src="shared/masthead.js"></script>
   <script defer src="shared/footer.js"></script>
   <script src="shared/trails.js"></script>
@@ -1394,18 +1395,14 @@
 
       const latlng = editMarker.getLatLng();
       try {
-        const res = await fetch(ENDPOINT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            action:    'updateLocation',
-            rowIndex:  editingReport.rowIndex,
-            latitude:  latlng.lat,
-            longitude: latlng.lng,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        const data = await ORFORD_AUTH.post({
+          action:    'updateLocation',
+          rowIndex:  editingReport.rowIndex,
+          latitude:  latlng.lat,
+          longitude: latlng.lng,
+        }, { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' });
+        if (data.cancelled) return;
+        if (!data.ok) throw new Error(data.error || 'Échec.');
 
         // Update the source of truth, then re-render so the report moves
         // from pending → placed (no reload).
@@ -1443,13 +1440,12 @@
         ? 'Marquer ce signalement comme doublon et le clôturer ?'
         : 'Marquer ce signalement comme résolu et le clôturer ?';
       if (!window.confirm(msg)) return false;
-      const res = await fetch(ENDPOINT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'updateStatus', rowIndex: rowIndex, status: reason }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      const data = await ORFORD_AUTH.post(
+        { action: 'updateStatus', rowIndex: rowIndex, status: reason },
+        { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' }
+      );
+      if (data.cancelled) return false;
+      if (!data.ok) throw new Error(data.error || 'Échec.');
       return true;
     }
 
@@ -1485,13 +1481,12 @@
       input.setAttribute('disabled', '');
       if (btn) { btn.classList.add('is-loading'); btn.setAttribute('disabled', ''); }
       try {
-        const res = await fetch(ENDPOINT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'appendFollowup', rowIndex: rowIndex, text: text, author: author }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        const data = await ORFORD_AUTH.post(
+          { action: 'appendFollowup', rowIndex: rowIndex, text: text, author: author },
+          { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' }
+        );
+        if (data.cancelled) return;
+        if (!data.ok) throw new Error(data.error || 'Échec.');
 
         const r = allReports.find(function (x) { return x.rowIndex === rowIndex; });
         const updated = data.followup || ((r && r.followup ? r.followup + '\n' : '')

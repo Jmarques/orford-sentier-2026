@@ -52,6 +52,7 @@
        before the inline <script> at the bottom of body runs. -->
   <link rel="stylesheet" href="shared/theme.css" />
   <script src="shared/config.js"></script>
+  <script src="shared/auth.js"></script>
   <script defer src="shared/masthead.js"></script>
   <script defer src="shared/footer.js"></script>
   <script src="shared/trails.js"></script>
@@ -811,16 +812,19 @@
           payload.mediaName   = state.file.name || 'upload';
         }
 
-        // text/plain avoids a CORS preflight to Apps Script
-        const res = await fetch(ENDPOINT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload),
+        // ORFORD_AUTH attaches the password (prompting once if none is stored)
+        // and re-prompts if the server rejects it. The map/consultation stays
+        // open — only this submit is gated.
+        const data = await ORFORD_AUTH.post(payload, {
+          title:   'Mot de passe',
+          message: 'Entrez le mot de passe de la communauté pour envoyer votre signalement.',
         });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || ('HTTP ' + res.status));
+        if (data.cancelled) {
+          showStatus('Envoi annulé.', 'err');
+          return;
+        }
+        if (!data.ok) {
+          throw new Error(data.error || 'Échec de l\'envoi.');
         }
 
         // Persist the reporter name for the next visit (after the submit

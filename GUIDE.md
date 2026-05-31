@@ -6,9 +6,10 @@ du comité et aux bénévoles. Aucune connaissance technique n'est requise —
 on a essayé de tout illustrer.
 
 > Le site fonctionne dans n'importe quel navigateur récent (Chrome, Safari,
-> Firefox, Edge), sur ordinateur, tablette ou téléphone. Aucun compte n'est
-> nécessaire : tout le monde peut signaler, consulter, et — pour le comité —
-> faire le suivi des tâches.
+> Firefox, Edge), sur ordinateur, tablette ou téléphone. **Pas de compte à
+> créer** : consulter la carte et les corvées est totalement libre. Pour
+> *envoyer* quelque chose, un simple **mot de passe partagé** est demandé une
+> seule fois (voir « [Le mot de passe](#le-mot-de-passe) »).
 
 ## À quoi sert l'application
 
@@ -85,8 +86,11 @@ sur place.
 
 ### Étape 4 — Envoyer
 
-Touchez **« Envoyer le signalement »**. Vous verrez un message vert
-« Signalement envoyé. Merci beaucoup! » quand c'est passé.
+Touchez **« Envoyer le signalement »**. **La première fois**, le site
+demande le **mot de passe de la communauté** : tapez-le une fois, il est
+mémorisé sur votre appareil et ne vous sera plus redemandé. Vous verrez
+ensuite un message vert « Signalement envoyé. Merci beaucoup! » quand
+c'est passé.
 
 ---
 
@@ -168,17 +172,20 @@ Deux motifs :
 - **Résolu** — la tâche a été faite (arbre coupé, pancarte remise, etc.).
 - **Doublon** — le signalement faisait double emploi avec un autre.
 
-Une confirmation est demandée. Après clôture, le pin disparaît de la
-carte (puisque les clos sont masqués par défaut) — ou il devient vert si
-vous avez réactivé le filtre Résolu/Doublon.
+Une confirmation est demandée, puis le **mot de passe du comité** (la
+première fois seulement — ensuite il est mémorisé sur l'appareil).
+Après clôture, le pin disparaît de la carte (puisque les clos sont
+masqués par défaut) — ou il devient vert si vous avez réactivé le
+filtre Résolu/Doublon.
 
 ![Le bouton Résolu et Doublon dans le popup d'un signalement ouvert](docs/screenshots/carte-popup-cloture.png)
 
 ### Le journal de suivi & résolution
 
-Tout en bas du popup, **chacun peut ajouter un suivi** : « j'irai samedi
+Tout en bas du popup, le **comité peut ajouter un suivi** : « j'irai samedi
 matin », « bois commandé chez Patrick », « équipe sur place »… Le but est
-de garder une trace publique de qui s'occupe de quoi.
+de garder une trace publique de qui s'occupe de quoi. L'ajout d'un suivi
+demande le **mot de passe du comité** (mémorisé après la première fois).
 
 ![Le journal de suivi avec deux entrées, le champ de saisie et le bouton Ajouter](docs/screenshots/carte-suivi.png)
 
@@ -277,13 +284,32 @@ signalement. Les photos sont sauvegardées dans un **dossier Google
 Drive** lié à la feuille. Le site se contente d'afficher et de modifier
 ce qui s'y trouve.
 
+### Le mot de passe
+
+Pour éviter les signalements indésirables, **écrire** dans l'application
+demande un mot de passe — **consulter** reste toujours libre. Il y a deux
+mots de passe, et le site reconnaît tout seul lequel vous tapez :
+
+| Mot de passe | Donne accès à |
+|---|---|
+| **Communauté** | envoyer un signalement |
+| **Comité** | tout : clôturer, suivi, placer un repère — *et* signaler |
+
+Vous le tapez **une seule fois** : il est ensuite mémorisé sur votre
+appareil. Un membre du comité qui aurait d'abord tapé le mot de passe
+communauté se verra simplement redemander le mot de passe comité la
+première fois qu'il fait une action de comité.
+
+> Le mot de passe se communique de bouche à oreille / par courriel dans la
+> communauté ; il n'est écrit nulle part dans le site. En cas d'abus, le
+> comité peut le changer en quelques secondes dans la feuille Google.
+
 ### Qui peut faire quoi
 
-Il n'y a **pas de connexion** : le site fonctionne en confiance.
-N'importe qui peut signaler, consulter et ajouter un suivi. Les actions
-plus engageantes (clôturer, placer un repère sur un signalement à
-localiser) sont aussi accessibles à tous — c'est le comité qui en fait
-usage.
+- **Tout le monde** (avec le mot de passe communauté) : signaler, et bien
+  sûr consulter la carte et les corvées sans aucun mot de passe.
+- **Le comité** (avec le mot de passe comité) : clôturer un signalement,
+  ajouter un suivi, et placer un repère sur un signalement « à localiser ».
 
 ### Le numéro de ligne
 
@@ -300,6 +326,10 @@ pas été choisie).
 - **« Échec de l'envoi »** : vérifiez votre connexion Internet, puis
   réessayez. La feuille Google peut être occasionnellement lente à
   répondre.
+- **« Mot de passe incorrect » / « Action réservée au comité »** :
+  vérifiez le mot de passe (communauté pour signaler, comité pour
+  clôturer / suivi / placer un repère). Demandez-le à un membre du comité
+  si besoin.
 - **Un signalement n'apparaît pas sur la carte** : il est probablement
   dans le tiroir **« à localiser »** (sans GPS), ou son statut est
   *Résolu / Doublon* et donc masqué — réactivez ces filtres dans la

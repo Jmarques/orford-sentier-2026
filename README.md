@@ -13,17 +13,17 @@ ravinement…) ; le comité fait le triage, le suivi et la résolution.
 ## Architecture en bref
 
 ```
-┌─────────────────────┐      fetch() GET/POST       ┌──────────────────────────┐
-│  Pages HTML statiques│ ──────────────────────────► │ Google Apps Script (web)  │
-│  (index / map /      │                             │  code.gs  → doGet/doPost  │
-│   corvees / guide)   │ ◄────────────────────────── │                           │
-└─────────────────────┘        JSON                  └────────────┬─────────────┘
+┌──────────────────────┐      fetch() GET/POST        ┌──────────────────────────┐
+│  Pages HTML statiques│ ───────────────────────────► │ Google Apps Script (web) │
+│  (index / map /      │                              │  code.gs  → doGet/doPost │
+│   corvees / guide)   │ ◄─────────────────────────── │                          │
+└──────────────────────┘        JSON                  └────────────┬─────────────┘
                                                                    │
-                                                        ┌──────────▼───────────┐
+                                                        ┌──────────▼────────────┐
                                                         │  Google Sheet (1 ligne│
                                                         │  = 1 signalement)     │
-                                                        │  + dossier Drive       │
-                                                        │    (photos)            │
+                                                        │  + dossier Drive      │
+                                                        │    (photos)           │
                                                         └───────────────────────┘
 ```
 
@@ -35,10 +35,13 @@ ravinement…) ; le comité fait le triage, le suivi et la résolution.
 - **Back-end** : un seul fichier **Google Apps Script** (`code.gs`) déployé en
   *Application Web*. Il expose un `doGet` (liste des signalements) et un
   `doPost` (création + actions de mise à jour).
-- **Stockage** : une **feuille Google Sheets** (une ligne par signalement) et un
-  **dossier Google Drive** (les photos). Pas de base de données, pas
-  d'authentification — le modèle est basé sur la confiance pour une petite
-  communauté.
+- **Stockage** : une **feuille Google Sheets** (onglet `Signalements`, une ligne
+  par signalement) et un **dossier Google Drive** (les photos). Pas de base de
+  données.
+- **Auth** : un gate minimal à **deux mots de passe partagés** (communauté /
+  comité) stockés dans un onglet `Config` de la même feuille. La consultation
+  reste libre ; seules les écritures sont protégées. Voir
+  [« Authentification »](#authentification-deux-mots-de-passe).
 
 ---
 
@@ -119,6 +122,7 @@ Il faut alors **rafraîchir le navigateur à la main** après chaque modificatio
 │
 ├── shared/               # Modules partagés par toutes les pages
 │   ├── config.js         #   window.ORFORD : URL du back-end, centre/zoom carte
+│   ├── auth.js           #   ORFORD_AUTH : gate mot de passe pour les écritures
 │   ├── theme.css         #   thème visuel commun (couleurs, typo, composants)
 │   ├── masthead.js       #   <site-masthead> — bandeau de navigation du haut
 │   ├── footer.js         #   <site-footer> — pied de page commun
@@ -283,21 +287,56 @@ L'ordre des colonnes de `appendRow()` doit correspondre à celui de
 
 ### Routes (`doPost`, routées par le champ `action`)
 
-| `action`         | Effet |
-|------------------|-------|
-| *(aucune)*       | `createReport` — nouveau signalement (statut `Nouveau`). |
-| `updateLocation` | Met à jour lat/lng/source/lien Maps d'une ligne existante (repère posé a posteriori depuis le tiroir « à localiser »). |
-| `updateStatus`   | Clôt un signalement — uniquement `Résolu` ou `Doublon` (liste blanche). |
-| `appendFollowup` | Ajoute une entrée datée au journal de suivi (col. O), **sans jamais écraser** l'existant. |
+| `action`         | Niveau requis | Effet |
+|------------------|---------------|-------|
+| *(aucune)*       | communauté ou comité | `createReport` — nouveau signalement (statut `Nouveau`). |
+| `updateLocation` | **comité** | Met à jour lat/lng/source/lien Maps d'une ligne existante (repère posé a posteriori depuis le tiroir « à localiser »). |
+| `updateStatus`   | **comité** | Clôt un signalement — uniquement `Résolu` ou `Doublon` (liste blanche). |
+| `appendFollowup` | **comité** | Ajoute une entrée datée au journal de suivi (col. O), **sans jamais écraser** l'existant. |
 
-`doGet` renvoie **toutes** les lignes en JSON (`{ ok, count, reports }`), y
-compris celles sans coordonnées : c'est le client (`map.html`) qui sépare les
-signalements « plaçables » de ceux « à localiser ». Les vignettes photo sont
-servies via `https://drive.google.com/thumbnail?id=…`.
+Chaque écriture transporte un champ `password` ; le serveur le revalide à chaque
+requête via `checkRole()` (jamais de confiance au rôle annoncé côté client). Un
+refus renvoie `{ ok:false, authError:true, error }`, ce qui déclenche une
+re-demande de mot de passe côté client.
+
+`doGet` n'exige **aucun** mot de passe (consultation libre) et renvoie **toutes**
+les lignes en JSON (`{ ok, count, reports }`), y compris celles sans coordonnées :
+c'est le client (`map.html`) qui sépare les signalements « plaçables » de ceux
+« à localiser ». Les vignettes photo sont servies via
+`https://drive.google.com/thumbnail?id=…`.
+
+### Authentification (deux mots de passe)
+
+Le but n'est pas une sécurité forte mais de **décourager les signalements
+indésirables**. Deux mots de passe vivent dans l'onglet **`Config`** (colonne A =
+libellé, colonne B = valeur) :
+
+| Col. A (libellé) | Col. B (valeur)            | Autorise |
+|------------------|----------------------------|----------|
+| `communaute`     | *mot de passe communauté*  | créer un signalement |
+| `comite`         | *mot de passe comité*      | tout (statut, suivi, position) + signaler |
+
+- `code.gs` lit ces valeurs via `getSecrets()`, **mis en cache 5 min**
+  (`CacheService`) — la feuille n'est donc consultée qu'une fois toutes les 5 min,
+  pas à chaque POST.
+- Le client (`shared/auth.js`, exposé en `window.ORFORD_AUTH`) ne stocke que le
+  mot de passe **tapé** (`localStorage['orford.auth']`) et l'envoie à chaque
+  écriture. Il ne prompte qu'au moment d'écrire, et seulement si rien n'est
+  stocké ; il re-prompte si le serveur refuse (code faux **ou** rôle insuffisant).
+- ⚠️ Les onglets sont référencés **par nom** (`getSheetByName`), jamais par index :
+  c'est ce qui garantit que `doGet` ne sérialise jamais l'onglet `Config`.
+- **Rotation** : éditer une cellule de `Config` suffit (effet sous ≤ 5 min, le
+  temps du cache) — aucun redéploiement nécessaire.
+- **À garder en tête** : la feuille (donc `Config`) ne doit être partagée qu'avec
+  le comité. Pas de plafond anti-spam ni de protection brute-force pour l'instant
+  (choix assumé) — d'où l'intérêt de mots de passe non triviaux.
 
 ### Installation / déploiement du back-end
 
-1. Créer une feuille Google → copier son ID dans `SHEET_ID`.
+1. Créer une feuille Google → copier son ID dans `SHEET_ID`. Y créer **deux
+   onglets** :
+   - `Signalements` — les données (l'en-tête est créé par `setupSheet()`).
+   - `Config` — les mots de passe : `A1=communaute / B1=…`, `A2=comite / B2=…`.
 2. Créer un dossier Drive → copier son ID dans `FOLDER_ID`.
 3. Coller `code.gs` dans le projet Apps Script lié, puis exécuter
    **`setupSheet()` une fois** (crée la ligne d'en-tête + la mise en forme).
@@ -341,8 +380,9 @@ capture ait la bonne taille.
 ## Conventions & rappels
 
 - **Langue** : interface et contenu en **français (fr-CA)**.
-- **Pas d'auth** : modèle de confiance ; tout le monde peut signaler, consulter,
-  commenter et clôturer.
+- **Auth légère** : consultation libre ; écrire demande un mot de passe partagé
+  (communauté pour signaler, comité pour statut/suivi/position). Détails dans
+  [« Authentification »](#authentification-deux-mots-de-passe).
 - **Modèle de statut** consolidé à `Nouveau / En cours / Résolu / Doublon`.
 - **Numéro de ligne** : chaque popup expose discrètement le numéro de ligne de
   la feuille Google — pratique pour corriger un détail directement dans le
