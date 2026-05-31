@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "npx --yes live-server --port=8765 --watch=index.html,map.html,corvees.html,guide.html,shared",
+    "serve": "python3 -m http.server 8765",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
   "dependencies": {
     "@awesome.me/webawesome": "^3.5.0"
   },
