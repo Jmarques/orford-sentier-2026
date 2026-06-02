@@ -53,9 +53,14 @@
       height: 100dvh;
     }
     /* Hero on the map page uses the same .page-hero from shared/theme.css,
-       so h1 + subtitle match the form page exactly. */
+       so h1 + subtitle match the other pages exactly. */
 
     /* ---------- Legend ---------- */
+    /* Une seule rangée de "pilules" de filtres au traitement identique :
+       statut, type et sentier ont la même hauteur, le même rayon et le même
+       fond léger — aucun libellé. La continuité vient du contenant commun, et
+       les pilules se replient en bloc sur écran étroit (jamais de coupure au
+       milieu d'un groupe). */
     .legend {
       padding: 8px 20px;
       background: var(--paper-warm);
@@ -63,32 +68,36 @@
       font-size: 12px;
       color: var(--muted);
       display: flex;
-      flex-direction: column;
-      gap: 4px;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
     }
     .legend-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 14px;
+      display: inline-flex;
       align-items: center;
+      gap: 2px;
+      min-height: 32px;
+      box-sizing: border-box;
+      padding: 2px 4px;
+      background: rgba(31, 58, 46, 0.05);
+      border: 1px solid rgba(31, 58, 46, 0.10);
+      border-radius: 999px;
     }
-    .legend-group strong {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--forest-deep);
-      min-width: 58px;
+    /* Le groupe Sentier porte directement le <select> stylé en pilule —
+       pas de double contenant. */
+    .legend-group--trail {
+      padding: 0;
+      background: none;
+      border: none;
     }
-    /* Hover hint on each filter group title — a styled bubble above the label
-       (native title tooltips were too subtle / didn't show). */
-    .legend-title { position: relative; cursor: help; }
-    .legend-title::after,
+    /* Bulle d'aide au survol/focus de chaque filtre (le title natif était
+       trop discret), centrée au-dessus de l'icône. */
     .legend-item[data-tip]::after {
       content: attr(data-tip);
       position: absolute;
-      left: 0;
-      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(100% + 8px);
       z-index: 10;
       background: var(--forest-deep);
       color: var(--paper);
@@ -104,48 +113,50 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
       transition: opacity 0.12s ease;
     }
-    .legend-title:hover::after,
-    .legend-title:focus-visible::after,
     .legend-item[data-tip]:hover::after,
     .legend-item[data-tip]:focus::after { opacity: 1; }
     .legend-item {
       position: relative;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      min-width: 30px;
+      min-height: 24px;
       font: inherit;
       font-size: 12px;
       color: var(--muted);
       background: none;
       border: none;
-      padding: 3px 7px;
-      border-radius: 6px;
+      padding: 4px;
+      border-radius: 999px;
       cursor: pointer;
       transition: opacity 0.12s ease, background 0.12s ease;
     }
-    .legend-item:hover { background: rgba(31, 58, 46, 0.07); }
+    .legend-item:hover { background: rgba(31, 58, 46, 0.10); }
     .legend-item:focus-visible { outline: 2px solid var(--moss); outline-offset: 1px; }
-    /* Filtered-out (deselected) entries dim so the active filters stand out. */
-    .legend-item--off { opacity: 0.32; }
+    /* Filtre désactivé : estompé pour faire ressortir les filtres actifs. */
+    .legend-item--off { opacity: 0.30; }
     .trail-filter {
       font: inherit;
       font-size: 12px;
       font-weight: 500;
       color: var(--forest-deep);
-      background-color: var(--paper-warm);
+      background-color: rgba(31, 58, 46, 0.05);
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%231f3a2e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 8px center;
+      background-position: right 10px center;
       background-size: 10px;
-      border: 1px solid rgba(31, 58, 46, 0.18);
+      min-height: 32px;
+      box-sizing: border-box;
+      border: 1px solid rgba(31, 58, 46, 0.10);
       border-radius: 999px;
-      padding: 3px 24px 3px 11px;
+      padding: 4px 28px 4px 14px;
       cursor: pointer;
       max-width: 220px;
       appearance: none;
       -webkit-appearance: none;
     }
-    .trail-filter:hover { background-color: rgba(31, 58, 46, 0.1); }
+    .trail-filter:hover { background-color: rgba(31, 58, 46, 0.10); }
     .trail-filter:focus-visible { outline: 2px solid var(--moss); outline-offset: 1px; }
     .legend-dot {
       width: 10px; height: 10px;
@@ -717,7 +728,7 @@
   <site-masthead page="carte"></site-masthead>
 
   <header class="page-hero">
-    <h1>Carte des <em>signalements</em> sur les sentiers</h1>
+    <h1>Carte des <em>signalements</em></h1>
     <p class="page-hero__subtitle">
       <span id="stats">Chargement…</span>
       <button type="button" id="todoChip" class="todo-chip" hidden>
@@ -727,16 +738,17 @@
     </p>
   </header>
 
+  <!-- Trois pilules de filtres au traitement identique (statut · type ·
+       sentier), sans libellé : les pastilles/icônes + tooltips parlent
+       d'elles-mêmes, et le contenant commun assure la continuité visuelle. -->
   <div class="legend" aria-label="Filtres de la carte">
-    <div class="legend-group">
-      <strong class="legend-title" data-tip="Touchez les entrées pour afficher/masquer par statut">Statut</strong>
+    <div class="legend-group" role="group" aria-label="Filtrer par statut">
       <button type="button" class="legend-item" data-status="nouveau" data-tip="Nouveau" aria-label="Nouveau"><span class="legend-dot" style="background: var(--clay);"></span></button>
       <button type="button" class="legend-item" data-status="encours" data-tip="En cours" aria-label="En cours"><span class="legend-dot" style="background: var(--ochre);"></span></button>
       <button type="button" class="legend-item" data-status="resolu" data-tip="Résolu" aria-label="Résolu"><span class="legend-dot" style="background: var(--moss);"></span></button>
       <button type="button" class="legend-item" data-status="doublon" data-tip="Doublon" aria-label="Doublon"><span class="legend-dot" style="background: var(--moss);"></span></button>
     </div>
-    <div class="legend-group">
-      <strong class="legend-title" data-tip="Touchez les entrées pour afficher/masquer par type">Type</strong>
+    <div class="legend-group" role="group" aria-label="Filtrer par type">
       <button type="button" class="legend-item" data-family="nature" data-tip="Nature" aria-label="Nature"><span class="legend-icon"><wa-icon name="tree" variant="solid"></wa-icon></span></button>
       <button type="button" class="legend-item" data-family="signalisation" data-tip="Signalisation" aria-label="Signalisation"><span class="legend-icon"><wa-icon name="signs-post" variant="solid"></wa-icon></span></button>
       <button type="button" class="legend-item" data-family="infrastructure" data-tip="Infrastructure" aria-label="Infrastructure"><span class="legend-icon"><wa-icon name="bridge" variant="solid"></wa-icon></span></button>
@@ -744,9 +756,8 @@
       <button type="button" class="legend-item" data-family="dechets" data-tip="Déchets" aria-label="Déchets"><span class="legend-icon"><wa-icon name="trash-can" variant="solid"></wa-icon></span></button>
       <button type="button" class="legend-item" data-family="autre" data-tip="Autre" aria-label="Autre"><span class="legend-icon"><wa-icon name="circle-question" variant="solid"></wa-icon></span></button>
     </div>
-    <div class="legend-group">
-      <strong class="legend-title" data-tip="Choisissez un sentier pour n'afficher que celui-ci">Sentier</strong>
-      <select id="trailFilter" class="trail-filter" aria-label="Filtrer par sentier">
+    <div class="legend-group legend-group--trail">
+      <select id="trailFilter" class="trail-filter" aria-label="Filtrer par sentier" title="Choisissez un sentier pour n'afficher que celui-ci">
         <option value="*">Tous les sentiers</option>
       </select>
     </div>
