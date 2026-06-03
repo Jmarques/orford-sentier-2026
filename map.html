@@ -761,6 +761,9 @@
         <option value="*">Tous les sentiers</option>
       </select>
     </div>
+    <div class="legend-group" role="group" aria-label="Calques">
+      <button type="button" class="legend-item legend-item--off" id="oldTracesToggle" aria-pressed="false" data-tip="Anciens tracés" aria-label="Afficher les anciens tracés (cartes papier)"><span class="legend-icon"><wa-icon name="scroll" variant="solid"></wa-icon></span></button>
+    </div>
   </div>
 
   <div id="map"></div>
@@ -828,6 +831,35 @@
       maxZoom: 19,
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
+
+    // =========================================================
+    // Anciens tracés (cartes papier numérisées) — calque optionnel
+    // ---------------------------------------------------------
+    // Images des anciens tracés calées sur la carte, regroupées dans un
+    // calque MASQUÉ par défaut. Le bouton « Anciens tracés » de la légende
+    // (icône parchemin) l'affiche/le masque. Bornes : [[Sud, Ouest], [Nord, Est]].
+    // Pour ajouter un sentier : dépose son image dans docs/overlays/ et ajoute
+    // un L.imageOverlay ci-dessous avec ses bornes calées.
+    // =========================================================
+    const oldTracesLayer = L.layerGroup([
+      L.imageOverlay('docs/overlays/sentier-ecurie-ancien.png',
+        [[45.302, -72.2839], [45.3073, -72.2768]], { opacity: 0.5, interactive: false }),
+      L.imageOverlay('docs/overlays/sentier-ruisseaux-ancien.png',
+        [[45.30022, -72.2721], [45.306776, -72.2662]], { opacity:0.5, interactive: false }),
+    ]);
+
+    (function wireOldTracesToggle() {
+      const btn = document.getElementById('oldTracesToggle');
+      if (!btn) return;
+      let on = false; // off par défaut : le calque n'est pas ajouté à la carte
+      btn.addEventListener('click', function () {
+        on = !on;
+        if (on) oldTracesLayer.addTo(map); else map.removeLayer(oldTracesLayer);
+        btn.classList.toggle('legend-item--off', !on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    })();
+
     // Keep a handle on the trail overlay so we can show only the selected
     // trail's line(s) when a trail filter is active.
     let trailsLayer = null;
