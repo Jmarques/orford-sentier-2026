@@ -13,7 +13,7 @@ on a essayé de tout illustrer.
 
 ## À quoi sert l'application
 
-L'application permet trois choses :
+L'application permet quatre choses :
 
 1. **Signaler** un problème vu sur un sentier (arbre tombé, déchets,
    pancarte brisée, ravinement, etc.) — avec une photo et la position.
@@ -21,10 +21,13 @@ L'application permet trois choses :
    problèmes, leur statut, et tous les détails.
 3. **Organiser les corvées** — la page « Corvées » montre, en un coup
    d'œil, ce qui reste à faire par sentier et par type de tâche.
+4. **Planifier les projets** — la page « Projets » permet au comité de
+   regrouper des signalements en projets d'entretien, avec une date
+   visée, du matériel, des participants et un journal de suivi.
 
 Toutes les pages se trouvent dans le bandeau du haut :
 
-![Le bandeau du haut avec les liens Signaler · Carte · Corvées](docs/screenshots/bandeau-navigation.png)
+![Le bandeau du haut avec les liens Signaler · Carte · Corvées · Projets](docs/screenshots/bandeau-navigation.png)
 
 ---
 
@@ -108,8 +111,7 @@ statut, **l'icône** à l'intérieur indique le type :
 | Couleur            | Statut                                  |
 |--------------------|------------------------------------------|
 | Brun-rouge (clay)  | **Nouveau** — vient d'être signalé       |
-| Orangé (ocre)      | **En cours** — quelqu'un s'en occupe      |
-| Vert (mousse)      | **Clôturé** (Résolu ou Doublon)          |
+| Vert (mousse)      | **Clôturé** — tâche faite, ou doublon    |
 
 Les pins très rapprochés sont **regroupés en bulle** avec le nombre :
 zoomez (avec la molette ou en pinçant) ou cliquez sur la bulle pour la
@@ -121,14 +123,21 @@ La bande sous le titre regroupe trois filtres très compacts. **Cliquer
 sur une pastille ou une icône affiche ou masque** les pins correspondants
 sur la carte.
 
-- **Statut** : 4 pastilles colorées (Nouveau, En cours, Résolu, Doublon).
-  Par défaut, *Résolu* et *Doublon* sont masqués — la carte se concentre
+- **Statut** : 3 pastilles colorées (Nouveau, Clôturé, Doublon).
+  Par défaut, *Clôturé* et *Doublon* sont masqués — la carte se concentre
   sur ce qui reste à faire.
 - **Type** : 6 icônes (Nature, Signalisation, Infrastructure, Terrain,
   Déchets, Autre). Même principe : touchez pour afficher/masquer.
 - **Sentier** : un menu déroulant pour ne voir qu'**un seul sentier** à
   la fois. Quand un sentier est choisi, **le tracé GPS des autres
   sentiers est aussi masqué** pour éviter le bruit.
+- **Anciens tracés** (icône parchemin 📜, tout à droite) : superpose en
+  **transparence les anciennes cartes papier** numérisées des sentiers.
+  Pratique pour comparer le tracé d'aujourd'hui avec celui d'autrefois,
+  ou retrouver un ancien segment. Touchez l'icône à nouveau pour masquer
+  le calque.
+
+![La carte avec les anciens tracés papier superposés en transparence](docs/screenshots/carte-anciens-traces.png)
 
 > **Astuce — Connaître le nom d'une pastille ou d'une icône.** Survolez-la
 > avec la souris (ou touchez-la sur mobile) : une petite étiquette
@@ -150,12 +159,12 @@ On y trouve, dans l'ordre :
 1. **La photo** du problème.
 2. **La catégorie** précise (ex. « Arbre tombé »).
 3. **Le sentier et la date** sur une ligne soulignée en pointillés.
-4. **Le badge de statut** (Nouveau, En cours, Résolu, Doublon).
+4. **Le badge de statut** (Nouveau, Clôturé, Doublon).
 5. **Les notes** du déclarant.
 6. **Le nom du déclarant** (« Signalé par … »).
-7. (Pour les signalements ouverts) **les boutons de clôture** : Résolu /
-   Doublon.
-8. **Le journal de suivi & résolution** (voir plus bas).
+7. **Le journal de suivi & résolution** (voir plus bas), avec les boutons
+   **✓ Clôturer / Doublon** — ou, si le signalement fait partie d'un
+   projet, **la balise « 📁 nom du projet »** qui mène à sa fiche.
 
 > **Astuce — Numéro de ligne.** Touchez la ligne *sentier · date* :
 > une petite bulle apparaît avec **« ligne 42 »**. C'est le numéro de
@@ -165,18 +174,23 @@ On y trouve, dans l'ordre :
 ### Clôturer un signalement (mode comité)
 
 Quand un problème est traité, le comité peut le clôturer **directement
-depuis le popup**, sans toucher au tableur.
+depuis le popup** (dans « Suivi & résolution »), sans toucher au tableur.
 
-Deux motifs :
+Deux boutons :
 
-- **Résolu** — la tâche a été faite (arbre coupé, pancarte remise, etc.).
+- **✓ Clôturer** — la tâche a été faite (arbre coupé, pancarte remise, etc.).
 - **Doublon** — le signalement faisait double emploi avec un autre.
 
 Une confirmation est demandée, puis le **mot de passe du comité** (la
 première fois seulement — ensuite il est mémorisé sur l'appareil).
 Après clôture, le pin disparaît de la carte (puisque les clos sont
 masqués par défaut) — ou il devient vert si vous avez réactivé le
-filtre Résolu/Doublon.
+filtre Clôturé/Doublon.
+
+> **Signalement dans un projet?** Les boutons et le champ de commentaire
+> sont absents : le suivi et la clôture se font **sur la fiche du
+> projet** (la balise « 📁 … » y mène directement). Au besoin, on peut
+> retirer le signalement du projet pour le clôturer individuellement.
 
 ![Le bouton Résolu et Doublon dans le popup d'un signalement ouvert](docs/screenshots/carte-popup-cloture.png)
 
@@ -190,15 +204,15 @@ demande le **mot de passe du comité** (mémorisé après la première fois).
 ![Le journal de suivi avec deux entrées, le champ de saisie et le bouton Ajouter](docs/screenshots/carte-suivi.png)
 
 - **Écrivez votre message** dans le champ.
-- À droite du bouton **Ajouter**, vous voyez **« au nom de ⟨ Jeremy ⟩ »**.
-  C'est le nom mémorisé. Pour le changer ponctuellement, touchez la
-  petite pastille avec votre nom — un champ s'ouvre pour le modifier.
+- À droite du bouton **Ajouter**, vous voyez **« au nom de ⟨ Jeremy ✎ ⟩ »**.
+  C'est le nom mémorisé. Pour le changer, touchez la pastille (le petit
+  crayon le rappelle) — un champ s'ouvre pour le modifier.
 - Touchez **Ajouter**. Votre suivi apparaît immédiatement, sous la forme
-  **Votre Nom**(*date au survol*) suivi de votre message.
+  **Votre Nom** · *date* suivi de votre message.
 
-> **La date/heure est cachée** pour ne pas alourdir l'affichage. Elle
-> apparaît en infobulle quand on survole le nom d'un auteur — ou au tap
-> sur mobile.
+> Le journal fonctionne **exactement de la même façon** sur la fiche d'un
+> projet (voir « Organiser les projets »). L'heure exacte d'une entrée
+> apparaît au survol de sa date.
 
 ### Les signalements « à localiser »
 
@@ -216,8 +230,9 @@ signalements. Pour chacun, deux gestes possibles :
   placez le repère ; touchez **Confirmer** pour enregistrer la position.
   Le signalement quitte alors la liste et apparaît sur la carte
   principale.
-- **Résolu / Doublon** — si le signalement est déjà obsolète, vous pouvez
-  le clôturer sans le localiser.
+- **✓ Clôturer / Doublon** — si le signalement est déjà obsolète, vous
+  pouvez le clôturer sans le localiser. (S'il fait partie d'un projet,
+  la balise « 📁 … » remplace ces boutons.)
 
 ---
 
@@ -275,14 +290,122 @@ chargé au moins chargé. Chacune affiche :
 
 ---
 
-## 4. Bon à savoir
+## 4. Organiser les projets (mode comité)
+
+La page **Projets** est l'agenda du comité : on y regroupe les
+signalements en **projets d'entretien**, chacun avec une période visée.
+C'est la réponse à « *comment on s'organise pour le faire?* » — là où
+Corvées répond à « *qu'est-ce qu'il y a à faire?* ».
+
+![La liste des projets triés par date, avec la section À planifier et les terminés repliés](docs/screenshots/projets-vue-densemble.png)
+
+### La liste des projets
+
+Les projets sont **triés par date** : le plus proche en haut. Chaque
+carte montre la **période visée** (badge), le **titre**, les **sentiers**
+concernés, le nombre de **signalements** rattachés et les
+**participants**. En bas :
+
+- **À planifier** — les projets sans date encore décidée.
+- **Terminés et abandonnés** — repliés, cliquez pour les consulter.
+
+> Un badge de date **teinté brun-rouge** signale une échéance passée —
+> le projet est en retard ou sa date est à revoir.
+
+### Créer un projet
+
+Touchez **« + Nouveau projet »**. Seuls **le but** et **la période**
+sont obligatoires — créer un projet prend 30 secondes :
+
+- **But du projet** : une phrase concrète et actionnable, par exemple
+  « Remplacer les 3 panneaux de départ manquants ».
+- **Quand pense-t-on le faire?** : choisissez la précision qui vous
+  convient — **une date précise** (« le 20 juin »), **un mois**
+  (« en août »), **une saison** (« cet été »), **une année**
+  (« en 2027 »)… ou **À planifier** si ce n'est pas encore décidé.
+- **Description** (facultatif) : le champ propose un petit modèle —
+  problème, solution retenue, **matériel nécessaire**, **budget**. Tout
+  ce qu'il faut savoir pour la tâche, au même endroit.
+- **Sentiers** et **participants** : facultatifs, modifiables en tout
+  temps.
+
+### La fiche d'un projet
+
+Cliquez un projet pour ouvrir sa fiche : description, signalements
+rattachés, journal de suivi, et les boutons **Modifier** et **✓ Clôturer
+le projet**.
+
+> Dès qu'un signalement est rattaché à un projet, **c'est le projet qui
+> le gère** : sur la carte, son popup n'offre plus ni commentaire ni
+> clôture individuelle — seulement la balise vers la fiche. Tout se
+> décide ici.
+
+![La fiche d'un projet : période, sentiers, participants, description, signalements rattachés et journal](docs/screenshots/projets-fiche.png)
+
+### Rattacher des signalements — sur la carte
+
+Le bouton **« Rattacher des signalements sur la carte »** ouvre la carte
+dans un **mode spécial d'assignation** : une bannière en haut rappelle
+le projet en cours, et la carte est déjà filtrée sur ses sentiers.
+
+![La carte en mode assignation : bannière du projet en haut et bouton Terminer](docs/screenshots/carte-mode-assignation.png)
+
+Dans ce mode, ouvrez un repère : un seul gros bouton **« Assigner à ce
+projet »** fait tout.
+
+<p align="center">
+  <img src="docs/screenshots/carte-popup-assigner.png"
+       alt="Le popup d'un signalement en mode assignation, avec le bouton Assigner à ce projet"
+       width="300">
+</p>
+
+La couleur des repères indique leur état :
+
+| Couleur du repère | Signification |
+|---|---|
+| Brun-rouge | Signalement libre — bouton « Assigner à ce projet » |
+| **Orangé (ocre)** | Déjà dans **ce** projet — bouton « Retirer du projet » |
+| **Gris** | Déjà dans **un autre** projet — il faut d'abord l'en retirer |
+
+Quand vous avez terminé, le bouton **« Terminer »** de la bannière vous
+ramène à la fiche du projet.
+
+### Le journal de suivi du projet
+
+Comme pour les signalements, chaque projet a son **journal** : décisions
+prises, budget approuvé, matériel commandé, avancement… C'est **le même
+outil que sur la carte** : écrivez votre note, vérifiez la pastille
+« au nom de ⟨ votre nom ✎ ⟩ », touchez **« Ajouter »**. Les entrées sont
+datées (« **Jean** · 5 juin ») et ne s'effacent jamais.
+
+### Clôturer un projet
+
+Quand le travail est fait, touchez **« ✓ Clôturer le projet »** sur la
+fiche. Une confirmation liste les signalements ouverts du projet, **tous
+cochés** :
+
+![Le dialogue de clôture : les signalements cochés seront clôturés avec le projet](docs/screenshots/projets-cloture.png)
+
+- Les signalements **cochés** sont **clôturés** en même temps que le
+  projet — une seule action ferme tout.
+- **Décochez** un signalement s'il n'a finalement pas été réglé : il est
+  **détaché** du projet et retourne au triage (il reste « Nouveau »).
+
+> **Toute la gestion des projets demande le mot de passe du comité**
+> (créer, modifier, assigner, journal, terminer). La consultation reste
+> libre, comme partout.
+
+---
+
+## 5. Bon à savoir
 
 ### Où sont les données
 
-Tout est stocké dans une **feuille Google Sheets** : une ligne = un
-signalement. Les photos sont sauvegardées dans un **dossier Google
-Drive** lié à la feuille. Le site se contente d'afficher et de modifier
-ce qui s'y trouve.
+Tout est stocké dans une **feuille Google Sheets** : un onglet pour les
+signalements (une ligne = un signalement) et un onglet pour les projets
+(une ligne = un projet). Les photos sont sauvegardées dans un **dossier
+Google Drive** lié à la feuille. Le site se contente d'afficher et de
+modifier ce qui s'y trouve.
 
 ### Le mot de passe
 
@@ -293,7 +416,7 @@ mots de passe, et le site reconnaît tout seul lequel vous tapez :
 | Mot de passe | Donne accès à |
 |---|---|
 | **Communauté** | envoyer un signalement |
-| **Comité** | tout : clôturer, suivi, placer un repère — *et* signaler |
+| **Comité** | tout : clôturer, suivi, placer un repère, gérer les projets — *et* signaler |
 
 Vous le tapez **une seule fois** : il est ensuite mémorisé sur votre
 appareil. Un membre du comité qui aurait d'abord tapé le mot de passe
@@ -307,9 +430,12 @@ première fois qu'il fait une action de comité.
 ### Qui peut faire quoi
 
 - **Tout le monde** (avec le mot de passe communauté) : signaler, et bien
-  sûr consulter la carte et les corvées sans aucun mot de passe.
+  sûr consulter la carte, les corvées et les projets sans aucun mot de
+  passe.
 - **Le comité** (avec le mot de passe comité) : clôturer un signalement,
-  ajouter un suivi, et placer un repère sur un signalement « à localiser ».
+  ajouter un suivi, placer un repère sur un signalement « à localiser »,
+  et **gérer les projets** (créer, modifier, assigner des signalements,
+  journal, marquer terminé).
 
 ### Le numéro de ligne
 

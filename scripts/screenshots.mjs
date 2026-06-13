@@ -38,7 +38,7 @@ const FAKE_REPORTS = [
     photoThumb: 'https://picsum.photos/seed/sap-arbre/600/400',
     photoName: '', reporterName: 'Jacques L.',
     notes: 'Gros bouleau en travers juste avant le belvédère.',
-    priority: 'Haute', status: 'En cours',
+    priority: 'Haute', status: 'Nouveau',
     followup: '[2026-05-20 09:15 · Comité] Équipe sur place samedi prochain avec la tronçonneuse.\n[2026-05-23 18:00 · Patrick] Arbre coupé ; à dégager dimanche matin.' },
 
   // Sentier des Ruisseaux — plusieurs déchets + une pancarte
@@ -48,7 +48,7 @@ const FAKE_REPORTS = [
     photoThumb: 'https://picsum.photos/seed/ru-dechets-1/600/400',
     photoName: '', reporterName: 'Sophie R.',
     notes: 'Sac de canettes près du petit pont.',
-    priority: '', status: 'Nouveau', followup: '' },
+    priority: '', status: 'Nouveau', project: 'P-2', followup: '' },
   { rowIndex: 5, timestamp: '2026-05-15T11:05:00Z', trail: 'Sentier des Ruisseaux',
     category: 'Déchets', latitude: 45.3022, longitude: -72.2673, accuracy: 10,
     gpsSource: 'Photo EXIF', photoUrl: '',
@@ -70,14 +70,15 @@ const FAKE_REPORTS = [
     notes: "Le sentier s'enfonce après la côte du castor.",
     priority: '', status: 'Nouveau', followup: '' },
 
-  // Sentier de l'Écurie — pont (avec un beau journal de suivi)
+  // Sentier de l'Écurie — pont (avec un beau journal de suivi), rattaché au
+  // projet P-1 pour montrer la balise « Projet » dans le popup.
   { rowIndex: 8, timestamp: '2026-05-08T16:45:00Z', trail: "Sentier de l'Écurie",
     category: 'Pont/passerelle', latitude: 45.3058, longitude: -72.2805, accuracy: 6,
     gpsSource: 'Appareil', photoUrl: '',
     photoThumb: 'https://picsum.photos/seed/ec-pont/600/400',
     photoName: '', reporterName: 'Anne P.',
     notes: 'Planche cassée au milieu du pont, vraiment dangereux.',
-    priority: 'Haute', status: 'En cours',
+    priority: 'Haute', status: 'Nouveau', project: 'P-1',
     followup: '[2026-05-09 18:00 · Comité] Bois commandé chez Patrick. Pose prévue le 23 mai.\n[2026-05-23 14:30 · Patrick] Pose terminée ; un coup de peinture la semaine prochaine.' },
 
   // Sentier Vertendre — un résolu (pour démontrer le filtre)
@@ -107,7 +108,37 @@ const FAKE_REPORTS = [
     priority: '', status: 'Doublon', followup: '' },
 ];
 
-const FAKE_GET = JSON.stringify({ ok: true, count: FAKE_REPORTS.length, reports: FAKE_REPORTS });
+// ----- Projets synthétiques (pour la page Projets + le mode assignation) --
+const FAKE_PROJECTS = [
+  { id: 'P-1', timestamp: '2026-05-09T12:00:00Z',
+    title: "Réparer la passerelle de l'Écurie",
+    description: 'Problème / historique :\nPlanche cassée signalée le 8 mai, dangereuse.\nSolution retenue :\nRemplacer les 3 planches du centre et repeindre.\nMatériel nécessaire :\nBois traité (commandé), visseuse, peinture.\nBudget (si requis) :\n80 $ approuvés le 12 mai.',
+    trails: ["Sentier de l'Écurie"], start: '2026-06-20', end: '2026-06-20',
+    status: 'Actif', participants: 'Patrick, Anne',
+    followup: '[2026-05-12 19:00 · Comité] Budget de 80 $ approuvé.\n[2026-05-23 14:30 · Patrick] Planches posées — reste la peinture.' },
+  { id: 'P-2', timestamp: '2026-05-16T12:00:00Z',
+    title: 'Grand ménage du sentier des Ruisseaux',
+    description: 'Tournée de ramassage des déchets accumulés le long du ruisseau.',
+    trails: ['Sentier des Ruisseaux'], start: '2026-08-01', end: '2026-08-31',
+    status: 'Actif', participants: 'Sophie', followup: '' },
+  { id: 'P-3', timestamp: '2026-05-20T12:00:00Z',
+    title: 'Drainage de la section nord',
+    description: '', trails: ['Sentier des Ruisseaux'],
+    start: '2027-01-01', end: '2027-12-31', status: 'Actif', participants: '', followup: '' },
+  { id: 'P-4', timestamp: '2026-05-22T12:00:00Z',
+    title: 'Banc au belvédère',
+    description: '', trails: ['Sentier de la Sapinière'],
+    start: '', end: '', status: 'Actif', participants: '', followup: '' },
+  { id: 'P-5', timestamp: '2026-04-02T12:00:00Z',
+    title: 'Corvée de nettoyage printanière',
+    description: '', trails: [], start: '2026-05-01', end: '2026-05-31',
+    status: 'Terminé', participants: 'Tout le comité', followup: '' },
+];
+
+const FAKE_GET = JSON.stringify({
+  ok: true, count: FAKE_REPORTS.length,
+  reports: FAKE_REPORTS, projects: FAKE_PROJECTS,
+});
 
 // ----- Helpers ---------------------------------------------------------
 async function shot(target, name) {
@@ -169,7 +200,8 @@ async function main() {
   });
   console.log('   carte-legende-tooltip.png');
 
-  // ----- Carte — popup ouvert (Pont/passerelle de l'Écurie) -----------
+  // ----- Carte — popup ouvert (Pont/passerelle de l'Écurie, assigné au
+  // projet P-1 : l'accordéon fermé + la vue d'ensemble du popup) ---------
   await page.goto(BASE + '/map.html?trail=' + encodeURIComponent("Sentier de l'Écurie"),
     { waitUntil: 'networkidle' });
   await page.waitForSelector('.leaflet-marker-icon');
@@ -180,30 +212,22 @@ async function main() {
   await page.waitForTimeout(700);
   await shot(page, 'carte-popup');
 
-  // Pour le gros plan sur le « Suivi & résolution », on ouvre l'accordéon
-  // (fermé par défaut) en cliquant sur son en-tête.
-  await page.locator('.leaflet-popup .fa__head').click();
-  await page.waitForSelector('.leaflet-popup details[open]');
-  await page.waitForTimeout(400);
-  const followup = page.locator('.leaflet-popup .fa');
-  await shot(followup, 'carte-suivi');
-
-  // ----- Carte — popup d'un Nouveau (montre les boutons Résolu/Doublon).
-  // On utilise la Sapinière : ses deux pins sont assez espacés pour ne pas
-  // se regrouper en cluster au zoom par défaut.
+  // ----- Carte — popup d'un Nouveau NON assigné (Sapinière) : journal
+  // complet (composeur + boutons ✓ Clôturer / Doublon). Ses deux pins sont
+  // assez espacés pour ne pas se regrouper en cluster au zoom par défaut.
   await page.goto(BASE + '/map.html?trail=' + encodeURIComponent('Sentier de la Sapinière'),
     { waitUntil: 'networkidle' });
   await page.waitForSelector('.marker-pin', { timeout: 10000 });
   await page.waitForTimeout(1000);
   await page.locator('.marker-pin').first().click();
   await page.waitForSelector('.leaflet-popup .fa__head', { timeout: 10000 });
-  // Les boutons Résolu/Doublon sont dans l'accordéon — on l'ouvre.
   await page.locator('.leaflet-popup .fa__head').click();
   await page.waitForSelector('.leaflet-popup .close-row', { timeout: 5000 });
   await page.waitForTimeout(500);
-  // On capture juste le corps de l'accordéon ouvert : le journal, la zone
-  // de saisie + le bouton envoyer + le nom, et les boutons Résolu/Doublon.
-  // C'est l'élément à mettre en lumière, sans bruit autour.
+  // Gros plan sur tout l'accordéon (journal + composeur + clôture)…
+  const followup = page.locator('.leaflet-popup .fa');
+  await shot(followup, 'carte-suivi');
+  // …et sur son corps seul (pour la section « Clôturer un signalement »).
   const closePopup = page.locator('.leaflet-popup .fa__body');
   await shot(closePopup, 'carte-popup-cloture');
 
@@ -232,6 +256,52 @@ async function main() {
   await page.waitForSelector('.leaflet-marker-icon');
   await page.waitForTimeout(1200);
   await shot(page, 'corvees-vers-carte');
+
+  // ----- Carte — anciens tracés en transparence ----------------------
+  await page.goto(BASE + '/map.html', { waitUntil: 'networkidle' });
+  await page.waitForSelector('.leaflet-marker-icon');
+  await page.waitForTimeout(800);
+  await page.click('#oldTracesToggle');
+  await page.waitForTimeout(1200); // laisse charger les images du calque
+  await shot(page, 'carte-anciens-traces');
+
+  // ----- Projets — liste ---------------------------------------------
+  await page.goto(BASE + '/projets.html', { waitUntil: 'networkidle' });
+  await page.waitForSelector('.project-card');
+  await page.waitForTimeout(800);
+  await shot(page, 'projets-vue-densemble');
+
+  // ----- Projets — fiche (signalements rattachés + journal) ----------
+  await page.goto(BASE + '/projets.html?id=P-1', { waitUntil: 'networkidle' });
+  await page.waitForSelector('.fiche');
+  await page.waitForTimeout(800);
+  await shot(page, 'projets-fiche');
+
+  // ----- Projets — dialogue « Marquer terminé » ----------------------
+  await page.click('#btnCloseProject');
+  await page.waitForSelector('#closeOverlay:not([hidden])');
+  await page.waitForTimeout(400);
+  await shot(page.locator('.overlay-card'), 'projets-cloture');
+  await page.click('#closeCancel');
+
+  // ----- Carte — mode assignation (?assigner=) ------------------------
+  await page.goto(BASE + '/map.html?assigner=P-2', { waitUntil: 'networkidle' });
+  // Les pins peuvent arriver regroupés en bulle (cluster).
+  await page.waitForSelector('.marker-pin, .marker-cluster', { timeout: 10000 });
+  await page.waitForTimeout(1200);
+  await shot(page, 'carte-mode-assignation');
+
+  // Popup d'un signalement assignable : si les pins sont regroupés en
+  // bulle, on clique la bulle (zoom/dépliage) jusqu'à voir un pin individuel.
+  for (let i = 0; i < 4; i++) {
+    if (await page.locator('.marker-pin:not(.pin-mine):not(.pin-other)').count() > 0) break;
+    await page.locator('.marker-cluster').first().click();
+    await page.waitForTimeout(900);
+  }
+  await page.locator('.marker-pin:not(.pin-mine):not(.pin-other)').first().click();
+  await page.waitForSelector('.leaflet-popup .assign-btn', { timeout: 10000 });
+  await page.waitForTimeout(500);
+  await shot(page.locator('.leaflet-popup'), 'carte-popup-assigner');
 
   await desktop.close();
 

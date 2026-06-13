@@ -83,6 +83,7 @@ Pages disponibles une fois le serveur lancé :
 - http://localhost:8765/index.html — **Signaler** (formulaire)
 - http://localhost:8765/map.html — **Carte**
 - http://localhost:8765/corvees.html — **Corvées**
+- http://localhost:8765/projets.html — **Projets**
 - http://localhost:8765/guide.html — **Guide**
 
 ### Option sans dépendance — Python (pas d'auto-reload)
@@ -107,6 +108,10 @@ Il faut alors **rafraîchir le navigateur à la main** après chaque modificatio
   - `?type=dechets` — ne montre qu'un type (`nature`, `signalisation`,
     `infrastructure`, `terrain`, `dechets`, `autre`).
   - Les deux se combinent : `?trail=…&type=dechets`.
+  - `?assigner=P-3` — **mode assignation** (depuis une fiche projet) :
+    bannière de contexte, pré-filtre sur les sentiers du projet, et une
+    action « Assigner / Retirer » dans chaque popup. `?projet=` est
+    **réservé** à un futur filtre d'affichage par projet.
 
 ---
 
@@ -115,8 +120,9 @@ Il faut alors **rafraîchir le navigateur à la main** après chaque modificatio
 ```
 .
 ├── index.html            # Page « Signaler » (formulaire mobile)
-├── map.html              # Carte des signalements (+ outils comité)
+├── map.html              # Carte des signalements (+ outils comité, mode assignation)
 ├── corvees.html          # Console d'organisation (matrice sentier × type)
+├── projets.html          # Projets d'entretien (liste, fiche, création, clôture)
 ├── guide.html            # Rend GUIDE.md en page web
 ├── code.gs               # Back-end Google Apps Script (à déployer côté Google)
 │
@@ -126,8 +132,10 @@ Il faut alors **rafraîchir le navigateur à la main** après chaque modificatio
 │   ├── theme.css         #   thème visuel commun (couleurs, typo, composants)
 │   ├── masthead.js       #   <site-masthead> — bandeau de navigation du haut
 │   ├── footer.js         #   <site-footer> — pied de page commun
-│   ├── trails.js         #   chargeur GeoJSON + ORFORD.addTrailsToMap(map)
+│   ├── trails.js         #   chargeur GeoJSON + addTrailsToMap + getTrailList
 │   ├── categories.js     #   catégorie → famille visuelle → icône (6 familles)
+│   ├── horizon.js        #   plage de dates d'un projet → libellé humain
+│   ├── journal.js        #   journal de suivi partagé (entrées + composeur)
 │   └── trails.geojson    #   tracés GPS des sentiers (source de vérité)
 │
 ├── scripts/
@@ -282,8 +290,16 @@ L'ordre des colonnes de `appendRow()` doit correspondre à celui de
 | K   | Nom du déclarant    | |
 | L   | Notes               | |
 | M   | Priorité            | rempli manuellement |
-| N   | **Statut**          | `Nouveau` / `En cours` / `Résolu` / `Doublon` |
+| N   | **Statut**          | `Nouveau` / `Clôturé` / `Doublon` (`Résolu` = ancien vocabulaire, toujours reconnu) |
 | O   | **Suivi**           | journal append-only, une ligne `[date · auteur] texte` par entrée |
+| P   | **Projet**          | ID du projet (`P-3`) ou vide — un signalement appartient à au plus un projet |
+
+Un second onglet **`Projets`** (1 ligne = 1 projet d'entretien) porte :
+`ID` (stable, `P-1`, `P-2`…) · `Horodatage` · `Titre` · `Description` ·
+`Sentiers` (noms séparés par virgules) · `Début` / `Fin` (`yyyy-MM-dd`, plage
+d'horizon) · `Statut` (`Actif` / `Clôturé` / `Abandonné` — `Terminé` hérité,
+toujours reconnu) · `Participants` · `Suivi`. L'en-tête est créé par `setupProjectsSheet()` (non destructif) et
+auto-réparé à la première création si besoin.
 
 ### Routes (`doPost`, routées par le champ `action`)
 
@@ -291,8 +307,13 @@ L'ordre des colonnes de `appendRow()` doit correspondre à celui de
 |------------------|---------------|-------|
 | *(aucune)*       | communauté ou comité | `createReport` — nouveau signalement (statut `Nouveau`). |
 | `updateLocation` | **comité** | Met à jour lat/lng/source/lien Maps d'une ligne existante (repère posé a posteriori depuis le tiroir « à localiser »). |
-| `updateStatus`   | **comité** | Clôt un signalement — uniquement `Résolu` ou `Doublon` (liste blanche). |
+| `updateStatus`   | **comité** | Clôt un signalement — uniquement `Clôturé` ou `Doublon` (liste blanche ; `Résolu` accepté en héritage). |
 | `appendFollowup` | **comité** | Ajoute une entrée datée au journal de suivi (col. O), **sans jamais écraser** l'existant. |
+| `createProject`  | **comité** | Nouveau projet (onglet `Projets`, ID auto-incrémenté, statut `Actif`). |
+| `updateProject`  | **comité** | Met à jour titre/description/sentiers/horizon/statut/participants (par ID). |
+| `setReportProject` | **comité** | Assigne (`projectId: "P-3"`) ou détache (`projectId: ""`) un signalement — col. P. |
+| `closeProject`   | **comité** | Clôt un projet : statut `Clôturé`, signalements `resolve[]` → `Clôturé`, `detach[]` → détachés. |
+| `appendProjectFollowup` | **comité** | Ajoute une entrée datée au journal d'un projet (col. J), append-only. |
 
 Chaque écriture transporte un champ `password` ; le serveur le revalide à chaque
 requête via `checkRole()` (jamais de confiance au rôle annoncé côté client). Un
@@ -383,7 +404,13 @@ capture ait la bonne taille.
 - **Auth légère** : consultation libre ; écrire demande un mot de passe partagé
   (communauté pour signaler, comité pour statut/suivi/position). Détails dans
   [« Authentification »](#authentification-deux-mots-de-passe).
-- **Modèle de statut** consolidé à `Nouveau / En cours / Résolu / Doublon`.
+- **Modèle de statut** consolidé à `Nouveau / Clôturé / Doublon` — vocabulaire
+  commun avec les projets (« Résolu » et « Terminé », anciens noms, restent
+  reconnus ; « En cours », jamais utilisé, a été retiré — l'appartenance à un
+  projet joue ce rôle, dérivée de la colonne P).
+- **Signalement assigné à un projet** : plus de clôture ni de commentaire
+  individuels — son popup renvoie à la fiche du projet, qui centralise suivi
+  et clôture (au besoin, le retirer du projet rend les actions individuelles).
 - **Numéro de ligne** : chaque popup expose discrètement le numéro de ligne de
   la feuille Google — pratique pour corriger un détail directement dans le
   tableur.

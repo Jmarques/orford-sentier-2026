@@ -43,6 +43,7 @@
   <script defer src="shared/footer.js"></script>
   <script src="shared/trails.js"></script>
   <script src="shared/categories.js"></script>
+  <script src="shared/journal.js"></script>
 
   <style>
     /* Map page uses a flex column so the map fills the remaining viewport height. */
@@ -192,8 +193,10 @@
       align-items: center;
       justify-content: center;
     }
-    .marker-pin.status-encours { background: var(--ochre); }
     .marker-pin.status-clos    { background: var(--moss); }
+    /* Mode assignation : ocre = déjà dans CE projet ; gris = dans un autre. */
+    .marker-pin.pin-mine  { background: var(--ochre); }
+    .marker-pin.pin-other { background: #98a39c; opacity: 0.8; }
     .marker-pin__icon {
       /* Counter-rotate so the icon stays upright inside the tilted pin */
       transform: rotate(45deg);
@@ -315,8 +318,108 @@
       margin-top: 6px;
     }
     .popup .badge.nouveau { background: rgba(164, 87, 46, 0.14); color: var(--clay); }
-    .popup .badge.encours { background: rgba(192, 138, 47, 0.16); color: #8a6120; }
     .popup .badge.clos    { background: rgba(74, 107, 82, 0.18);  color: var(--success); }
+
+    /* Renvoi court vers la fiche du projet (dans « Suivi & résolution »). */
+    .popup .jr-redirect {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 2px 0 6px;
+    }
+    /* Chip « Projet : … » — la balise qui mène à la fiche du projet.
+       (Utilisée dans l'accordéon du popup ET dans le tiroir « à localiser ».) */
+    .popup .project-chip,
+    .todo-item .project-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin: 0;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 9px;
+      border-radius: 10px;
+      background: rgba(31, 58, 46, 0.08);
+      border: 1px solid rgba(31, 58, 46, 0.15);
+      color: var(--forest-deep);
+      text-decoration: none;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .popup .project-chip:hover,
+    .todo-item .project-chip:hover { background: rgba(31, 58, 46, 0.14); }
+    .popup .project-chip wa-icon,
+    .todo-item .project-chip wa-icon { font-size: 11px; color: var(--moss); flex-shrink: 0; }
+
+    /* Actions du mode assignation, dans le popup. */
+    .popup .assign-btn {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background: var(--forest);
+      color: var(--paper);
+      margin-top: 10px;
+    }
+    .popup .assign-btn:hover { background: var(--forest-deep); }
+    .popup .assign-btn:disabled { opacity: 0.6; cursor: wait; }
+    .popup .assign-btn--remove {
+      background: rgba(164, 87, 46, 0.12);
+      color: var(--clay);
+      border: 1px solid rgba(164, 87, 46, 0.35);
+    }
+    .popup .assign-btn--remove:hover { background: rgba(164, 87, 46, 0.2); }
+    .popup .assign-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .popup .assign-note wa-icon { flex-shrink: 0; }
+
+    /* ---------- Bannière du mode assignation ---------- */
+    .assign-banner[hidden] { display: none; } /* display:flex écraserait [hidden] */
+    .assign-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: rgba(192, 138, 47, 0.15);
+      border-bottom: 1px solid rgba(192, 138, 47, 0.3);
+      color: #6e4c14;
+      font-size: 13.5px;
+    }
+    .assign-banner > wa-icon { color: #8a6120; flex-shrink: 0; }
+    .assign-banner__text { flex: 1; min-width: 0; }
+    .assign-banner__text strong { color: var(--forest-deep); }
+    .assign-banner__exit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      background: var(--forest);
+      color: var(--paper);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 999px;
+      transition: background 0.12s ease;
+    }
+    .assign-banner__exit:hover { background: var(--forest-deep); }
+    .assign-banner__exit wa-icon { font-size: 12px; }
 
     /* ---------- Close-report controls (popup + drawer) ---------- */
     .close-row {
@@ -329,18 +432,24 @@
       font-size: 12px;
       color: var(--muted);
     }
+    /* « ✓ Clôturer » est l'action PRINCIPALE de sa rangée → pilule pleine.
+       (Le bouton « Ajouter » du journal est volontairement plus discret.) */
     .close-btn {
       font: inherit;
       font-size: 12px;
       font-weight: 600;
-      padding: 3px 10px;
+      padding: 3px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(74, 107, 82, 0.4);
-      background: rgba(74, 107, 82, 0.12);
-      color: var(--success);
+      border: 1px solid var(--success);
+      background: var(--success);
+      color: var(--paper);
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
-    .close-btn:hover { background: rgba(74, 107, 82, 0.2); }
+    .close-btn wa-icon { font-size: 11px; }
+    .close-btn:hover { background: #245840; }
     .close-btn--dup {
       border-color: rgba(31, 58, 46, 0.25);
       background: rgba(31, 58, 46, 0.06);
@@ -386,55 +495,6 @@
       text-transform: none;
     }
     .popup .fa__body { padding-bottom: 4px; }
-    /* Action row : envoyer (icône) + « au nom de ⟨chip⟩ » — toujours UNE ligne. */
-    .popup .fa__actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: nowrap;
-      margin-bottom: 8px;
-    }
-    .popup .fa__send {
-      flex-shrink: 0;
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      border: none;
-      border-radius: 8px;
-      background: var(--forest);
-      color: var(--paper);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.12s ease;
-    }
-    .popup .fa__send:hover { background: var(--forest-deep); }
-    .popup .fa__send:disabled { opacity: 0.55; cursor: not-allowed; }
-    .popup .fa__send wa-icon { font-size: 13px; }
-    .popup .fa__send.is-loading wa-icon { display: none; }
-    .popup .fa__send.is-loading::before {
-      content: '';
-      display: block;
-      width: 12px; height: 12px;
-      border: 2px solid var(--paper);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: fa-spin 0.7s linear infinite;
-    }
-    @keyframes fa-spin { to { transform: rotate(360deg); } }
-    .popup .fa__by {
-      font-size: 11px;
-      color: var(--muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      min-width: 0;
-      flex: 1;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .popup .fa__by-icon { font-size: 12px; color: var(--moss); flex-shrink: 0; }
     /* Clôturer — séparé visuellement à l'intérieur du panneau. */
     .popup .fa__body .close-row {
       margin-top: 10px;
@@ -442,63 +502,16 @@
       border-top: 1px solid rgba(31, 58, 46, 0.08);
     }
 
+    /* Densité compacte du journal partagé (.jr-*, voir shared/theme.css)
+       dans le popup : tout est en em, la taille suit ce conteneur. */
     .popup .followup__log {
       font-size: 12px;
       color: var(--text);
-      white-space: pre-wrap;
       max-height: 140px;
       overflow-y: auto;
       margin: 0 0 8px;
-      line-height: 1.4;
     }
-    .popup .fu-entry { margin-bottom: 5px; }
-    .popup .fu-entry:last-child { margin-bottom: 0; }
-    .popup .fu-entry--auto { color: var(--muted); font-style: italic; }
-    .popup .fu-author {
-      font-weight: 600;
-      font-style: normal;
-      color: var(--forest-deep);
-      cursor: help;
-      border-bottom: 1px dotted rgba(31, 58, 46, 0.4);
-    }
-    .popup .followup__input {
-      width: 100%;
-      box-sizing: border-box;
-      font: inherit;
-      font-size: 12px;
-      border: 1px solid rgba(31, 58, 46, 0.25);
-      border-radius: 6px;
-      padding: 5px 7px;
-      background: var(--paper-warm);
-      resize: vertical;
-      margin-bottom: 8px;
-    }
-    .popup .followup__namechip {
-      font: inherit;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--forest-deep);
-      background: var(--paper-warm);
-      border: 1px solid rgba(31, 58, 46, 0.3);
-      border-radius: 999px;
-      padding: 2px 9px;
-      cursor: pointer;
-      max-width: 110px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .popup .followup__namechip:hover { background: rgba(31, 58, 46, 0.1); }
-    .popup .followup__name {
-      font: inherit;
-      font-size: 11px;
-      border: 1px solid rgba(31, 58, 46, 0.3);
-      border-radius: 999px;
-      padding: 2px 9px;
-      background: var(--paper-warm);
-      width: 100%;
-      max-width: 50vw;
-    }
+    .popup .jr-composer { font-size: 12px; }
 
     /* ---------- "À localiser" chip in the hero ---------- */
     .todo-chip {
@@ -738,14 +751,26 @@
     </p>
   </header>
 
+  <!-- Bannière du mode assignation (?assigner=P-x) : rappelle le contexte et
+       offre une sortie évidente vers la fiche du projet. Masquée en mode
+       normal — le popup du quotidien ne gagne aucun bruit. -->
+  <div id="assignBanner" class="assign-banner" hidden>
+    <wa-icon name="folder-open" variant="solid"></wa-icon>
+    <span class="assign-banner__text">Mode assignation — projet <strong id="assignBannerTitle"></strong>.
+      Ouvrez un repère pour l'assigner.</span>
+    <a class="assign-banner__exit" id="assignExit" href="projets.html">
+      Terminer
+      <wa-icon name="arrow-right" variant="solid"></wa-icon>
+    </a>
+  </div>
+
   <!-- Trois pilules de filtres au traitement identique (statut · type ·
        sentier), sans libellé : les pastilles/icônes + tooltips parlent
        d'elles-mêmes, et le contenant commun assure la continuité visuelle. -->
   <div class="legend" aria-label="Filtres de la carte">
     <div class="legend-group" role="group" aria-label="Filtrer par statut">
       <button type="button" class="legend-item" data-status="nouveau" data-tip="Nouveau" aria-label="Nouveau"><span class="legend-dot" style="background: var(--clay);"></span></button>
-      <button type="button" class="legend-item" data-status="encours" data-tip="En cours" aria-label="En cours"><span class="legend-dot" style="background: var(--ochre);"></span></button>
-      <button type="button" class="legend-item" data-status="resolu" data-tip="Résolu" aria-label="Résolu"><span class="legend-dot" style="background: var(--moss);"></span></button>
+      <button type="button" class="legend-item" data-status="cloture" data-tip="Clôturé" aria-label="Clôturé"><span class="legend-dot" style="background: var(--moss);"></span></button>
       <button type="button" class="legend-item" data-status="doublon" data-tip="Doublon" aria-label="Doublon"><span class="legend-dot" style="background: var(--moss);"></span></button>
     </div>
     <div class="legend-group" role="group" aria-label="Filtrer par type">
@@ -824,6 +849,20 @@
     const MAP_ZOOM     = window.ORFORD.MAP_ZOOM;
 
     // =========================================================
+    // Mode assignation — map.html?assigner=P-3
+    // ---------------------------------------------------------
+    // La carte connaît alors LE projet cible : chaque popup gagne une seule
+    // action contextuelle (assigner / retirer), sans menu de choix. Le
+    // paramètre ?projet= reste réservé à un futur filtre d'affichage.
+    // `assignProject` est résolu après le chargement (il faut la liste des
+    // projets) ; null = mode normal.
+    // =========================================================
+    const ASSIGN_ID = new URLSearchParams(location.search).get('assigner');
+    let assignProject = null;   // { id, title, trails, … } ou null
+    let allProjects   = [];
+    let projectsById  = {};
+
+    // =========================================================
     // Init map
     // =========================================================
     const map = L.map('map', { zoomControl: true }).setView(MAP_CENTER, MAP_ZOOM);
@@ -886,10 +925,17 @@
       if (!trailsLayer) return;
       const filtering = activeTrail !== null && activeTrail !== '';
       const target = normTrail(activeTrail);
+      // '@projet' (mode assignation) : les tracés de TOUS les sentiers du
+      // projet restent visibles, accès compris.
+      const projectTargets = (activeTrail === '@projet' && assignProject)
+        ? assignProject.trails.map(normTrail)
+        : null;
       trailSublayers.forEach(function (s) {
         const show = !filtering
-          || normTrail(s.name) === target
-          || normTrail(s.parent) === target;
+          || (projectTargets
+              ? (projectTargets.indexOf(normTrail(s.name)) !== -1
+                 || projectTargets.indexOf(normTrail(s.parent)) !== -1)
+              : (normTrail(s.name) === target || normTrail(s.parent) === target));
         if (show && !trailsLayer.hasLayer(s.layer)) trailsLayer.addLayer(s.layer);
         else if (!show && trailsLayer.hasLayer(s.layer)) trailsLayer.removeLayer(s.layer);
       });
@@ -903,17 +949,21 @@
     // Canonical status key — drives the legend filters.
     function statusKey(status) {
       const s = String(status || '').toLowerCase();
-      if (s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0) return 'resolu';
+      // « Clôturé » est la valeur courante ; « Résolu » (ancien vocabulaire)
+      // reste reconnu tant que les vieilles lignes ne sont pas renommées.
+      if (s.indexOf('clôtur') === 0 || s.indexOf('clotur') === 0
+          || s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0) return 'cloture';
       if (s.indexOf('doublon') === 0) return 'doublon';
-      if (s.indexOf('en cours') === 0) return 'encours';
+      // « En cours » a été retiré du modèle (jamais utilisé) — une éventuelle
+      // vieille ligne retombe sur « Nouveau ».
       return 'nouveau';
     }
 
     // Colour bucket for pins/badges. 'clos' is the umbrella for closed
-    // reports (Résolu + Doublon), which both render green.
+    // reports (Clôturé + Doublon), which both render green.
     function statusClass(status) {
       const k = statusKey(status);
-      return (k === 'resolu' || k === 'doublon') ? 'clos' : k;
+      return (k === 'cloture' || k === 'doublon') ? 'clos' : k;
     }
 
     // Category → family → icon mapping is defined in shared/categories.js
@@ -921,12 +971,18 @@
     const categoryFamily = window.ORFORD.categoryFamily;
     const FAMILY_ICONS   = window.ORFORD.FAMILY_ICONS;
 
-    function makeIcon(status, category) {
-      const iconName = FAMILY_ICONS[categoryFamily(category)];
+    function makeIcon(r) {
+      const iconName = FAMILY_ICONS[categoryFamily(r.category)];
+      // En mode assignation, l'appartenance au projet prime sur le statut :
+      // ocre = déjà dans CE projet, gris = dans un autre projet.
+      let pinClass = 'status-' + statusClass(r.status);
+      if (assignProject && !isClosed(r) && r.project) {
+        pinClass = r.project === assignProject.id ? 'pin-mine' : 'pin-other';
+      }
       return L.divIcon({
         className: '',
         html:
-          '<div class="marker-pin status-' + statusClass(status) + '">' +
+          '<div class="marker-pin ' + pinClass + '">' +
             '<span class="marker-pin__icon">' +
               '<wa-icon name="' + iconName + '" variant="solid"></wa-icon>' +
             '</span>' +
@@ -952,26 +1008,15 @@
       return date + ' · ' + time;
     }
 
-    // Render the follow-up log (one "[date · author] text" entry per line)
-    // as HTML where only the author + text show; the date is a tooltip on the
-    // author name so it stays out of the way.
-    function renderFollowupHtml(blob) {
-      return String(blob || '').split('\n')
-        .filter(function (l) { return l.trim(); })
-        .map(function (line) {
-          const m = line.match(/^\[(.*?) · (.*?)\] (.*)$/);
-          if (!m) return '<div class="fu-entry">' + escapeHtml(line) + '</div>';
-          return '<div class="fu-entry">'
-            + '<span class="fu-author" title="' + escapeHtml(m[1]) + '">' + escapeHtml(m[2]) + '</span> '
-            + escapeHtml(m[3])
-            + '</div>';
-        }).join('');
-    }
-
-    // Last name used (shared with the report form via localStorage), for
-    // prefilling the follow-up author field. Guarded — some webviews throw.
-    function savedName() {
-      try { return localStorage.getItem('orford.reporterName') || ''; } catch (e) { return ''; }
+    // First entry of every journal: auto-derived from the original report
+    // (reporter + date). Same .jr-entry shape as the rest of the log.
+    function autoEntryHtml(r) {
+      return window.ORFORD.journal.entryHtml({
+        author: r.reporterName || 'Anonyme',
+        date: r.timestamp,
+        text: 'A signalé le problème.',
+        auto: true,
+      });
     }
 
     function popupHtml(r) {
@@ -1004,33 +1049,40 @@
         ? '<p class="notes">' + escapeHtml(r.notes) + '</p>'
         : '';
 
-      // First entry of the follow-up log is auto-derived from the original
-      // report (reporter + timestamp). It tells the story chronologically and
-      // moves the metadata out of the default view.
-      const autoEntry = '<div class="fu-entry fu-entry--auto">'
-        + '<span class="fu-author" title="' + escapeHtml(formatDate(r.timestamp)) + '">'
-        +   escapeHtml(r.reporterName || 'Anonyme')
-        + '</span> a signalé le problème.'
-        + '</div>';
+      // Balise cliquable vers la fiche du projet — elle vit DANS l'accordéon
+      // « Suivi & résolution » : suivi et clôture d'un signalement assigné se
+      // font sur la fiche du projet, le popup n'offre qu'un renvoi court.
+      let projectChip = '';
+      if (r.project) {
+        const proj = projectsById[r.project];
+        projectChip = '<a class="project-chip" href="projets.html?id=' + encodeURIComponent(r.project)
+          + '" title="Voir la fiche du projet">'
+          + '<wa-icon name="folder-open" variant="solid"></wa-icon>'
+          + escapeHtml(proj ? proj.title : r.project) + '</a>';
+      }
+
+      // Journal — rendu par le composant partagé (shared/journal.js), comme
+      // sur la fiche projet. Le composeur est branché au popupopen.
       const fuCount = r.followup ? r.followup.split('\n').filter(function (l) { return l.trim(); }).length : 0;
       const countBadge = fuCount > 0 ? '<span class="fa__count">' + fuCount + '</span>' : '';
-      const fuLogHtml = autoEntry + renderFollowupHtml(r.followup);
-
-      // Attribution chip beside the send button (one line, even on mobile).
-      const nm = savedName();
-      const nameInner = nm
-        ? '<button type="button" class="followup__namechip" id="fu-chip-' + r.rowIndex + '" onclick="editFollowupName(' + r.rowIndex + ')">' + escapeHtml(nm) + '</button>'
-          + '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" value="' + escapeHtml(nm) + '" hidden />'
-        : '<input type="text" class="followup__name" id="fu-name-' + r.rowIndex + '" placeholder="Votre nom" value="" />';
+      const fuLogHtml = autoEntryHtml(r) + window.ORFORD.journal.entriesHtml(r.followup);
 
       // Closure controls live INSIDE the expanded accordion — closing is part
       // of the resolution workflow (write a final follow-up, then mark closed).
       const closeRow = sc === 'clos' ? '' :
         '<div class="close-row">'
-        +   '<span class="close-row__label">Clôturer :</span>'
-        +   '<button type="button" class="close-btn" onclick="closeReport(' + r.rowIndex + ', \'Résolu\')">Résolu</button>'
+        +   '<button type="button" class="close-btn" onclick="closeReport(' + r.rowIndex + ', \'Clôturé\')">'
+        +     '<wa-icon name="circle-check" variant="solid"></wa-icon>Clôturer</button>'
         +   '<button type="button" class="close-btn close-btn--dup" onclick="closeReport(' + r.rowIndex + ', \'Doublon\')">Doublon</button>'
         + '</div>';
+
+      // Signalement assigné : le projet est le lieu du suivi et de la
+      // clôture. Le journal reste lisible, mais composeur et boutons sont
+      // remplacés par un court renvoi vers la fiche.
+      const accordionActions = r.project
+        ? '<div class="jr-redirect">Suivi et clôture sur la fiche du projet :</div>' + projectChip
+        : window.ORFORD.journal.composerHtml(r.rowIndex, { placeholder: 'Proposer une solution, ajouter une info…' })
+          + closeRow;
 
       const accordion =
         '<details class="fa">'
@@ -1040,17 +1092,30 @@
         +   countBadge
         + '</summary>'
         + '<div class="fa__body">'
-        +   '<div class="followup__log" id="fu-log-' + r.rowIndex + '">' + fuLogHtml + '</div>'
-        +   '<textarea class="followup__input" id="fu-in-' + r.rowIndex + '" rows="2" placeholder="Proposer une solution, ajouter une info…"></textarea>'
-        +   '<div class="fa__actions">'
-        +     '<button type="button" class="fa__send" aria-label="Ajouter le suivi" onclick="addFollowup(' + r.rowIndex + ', this)">'
-        +       '<wa-icon name="paper-plane" variant="solid"></wa-icon>'
-        +     '</button>'
-        +     '<span class="fa__by"><wa-icon class="fa__by-icon" name="user" variant="solid" aria-label="au nom de"></wa-icon>' + nameInner + '</span>'
-        +   '</div>'
-        +   closeRow
+        +   '<div class="followup__log" id="jr-log-' + r.rowIndex + '">' + fuLogHtml + '</div>'
+        +   accordionActions
         + '</div>'
         + '</details>';
+
+      // Mode assignation : une seule action contextuelle, pas de menu.
+      let assignAction = '';
+      if (assignProject && sc !== 'clos') {
+        if (r.project === assignProject.id) {
+          assignAction = '<button type="button" class="assign-btn assign-btn--remove" '
+            + 'onclick="setReportProjectUI(' + r.rowIndex + ', \'\', this)">'
+            + '<wa-icon name="folder-minus" variant="solid"></wa-icon>Retirer du projet</button>';
+        } else if (!r.project) {
+          assignAction = '<button type="button" class="assign-btn" '
+            + 'onclick="setReportProjectUI(' + r.rowIndex + ', \'' + escapeHtml(assignProject.id) + '\', this)">'
+            + '<wa-icon name="folder-plus" variant="solid"></wa-icon>Assigner à ce projet</button>';
+        } else {
+          const other = projectsById[r.project];
+          assignAction = '<div class="assign-note">'
+            + '<wa-icon name="lock" variant="solid"></wa-icon>'
+            + 'Déjà dans : ' + escapeHtml(other ? other.title : r.project)
+            + ' — retirez-le de ce projet d\'abord.</div>';
+        }
+      }
 
       return '<div class="popup">'
         + titleHtml
@@ -1058,6 +1123,7 @@
         + img
         + '<span class="badge ' + sc + '">' + escapeHtml(label) + '</span>'
         + notes
+        + assignAction
         + accordion
         + '</div>';
     }
@@ -1103,15 +1169,27 @@
     const FAMILY_KEYS = ['nature', 'signalisation', 'infrastructure', 'terrain', 'dechets', 'autre'];
     // Legend filters. Closed statuses (resolu/doublon) start hidden — the
     // map is a triage view, so by default it shows only open work.
-    const activeStatuses = new Set(['nouveau', 'encours']);
+    const activeStatuses = new Set(['nouveau']);
     const activeFamilies = new Set(FAMILY_KEYS);
     let activeTrail = null; // null = all trails; '' matches reports with no trail
 
     function isClosed(r) { return statusClass(r.status) === 'clos'; }
+    // La valeur spéciale '@projet' du filtre sentier (mode assignation,
+    // projet à plusieurs sentiers) matche tous les sentiers du projet.
+    function trailMatches(reportTrail) {
+      if (activeTrail === null) return true;
+      const t = normTrail(reportTrail);
+      if (activeTrail === '@projet') {
+        return !!assignProject && assignProject.trails.some(function (name) {
+          return normTrail(name) === t;
+        });
+      }
+      return t === normTrail(activeTrail);
+    }
     function isVisibleOnMap(r) {
       return activeStatuses.has(statusKey(r.status)) &&
              activeFamilies.has(categoryFamily(r.category)) &&
-             (activeTrail === null || (r.trail || '').trim() === activeTrail);
+             trailMatches((r.trail || '').trim());
     }
 
     // Initial filters can be driven by URL params (e.g. when opened from the
@@ -1127,9 +1205,12 @@
       }
       const status = p.get('status');
       if (status === 'all') {
-        ['nouveau', 'encours', 'resolu', 'doublon'].forEach(function (s) { activeStatuses.add(s); });
+        ['nouveau', 'cloture', 'doublon'].forEach(function (s) { activeStatuses.add(s); });
       } else if (status) {
-        const sts = status.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        const sts = status.split(',').map(function (s) {
+          const k = s.trim();
+          return k === 'resolu' ? 'cloture' : k; // alias historique
+        }).filter(Boolean);
         if (sts.length) { activeStatuses.clear(); sts.forEach(function (s) { activeStatuses.add(s); }); }
       }
     }
@@ -1147,7 +1228,7 @@
     }
 
     function addPlacedMarker(r) {
-      const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r.status, r.category) });
+      const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r) });
       m.bindPopup(popupHtml(r), { minWidth: 260, maxWidth: 300, maxHeight: 460 });
       cluster.addLayer(m);
       placedCount++;
@@ -1192,6 +1273,10 @@
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Réponse invalide');
         allReports = data.reports || [];
+        allProjects = data.projects || [];
+        projectsById = {};
+        allProjects.forEach(function (p) { projectsById[p.id] = p; });
+        setupAssignMode();
         populateTrailFilter();
         // Pre-fetch the colour of every trail present in the data so the popup
         // can render the trail-dot synchronously.
@@ -1209,6 +1294,31 @@
       }
     }
 
+    // Active le mode assignation une fois les projets connus : bannière,
+    // hero, lien de sortie, et pré-filtre sur les sentiers du projet.
+    // Si l'ID est inconnu (projet supprimé, faute de frappe), on reste en
+    // mode normal avec un message clair.
+    function setupAssignMode() {
+      if (!ASSIGN_ID) return;
+      assignProject = projectsById[ASSIGN_ID] || null;
+      if (!assignProject) {
+        showToast('Projet introuvable : ' + ASSIGN_ID, true);
+        return;
+      }
+      document.querySelector('.page-hero h1').innerHTML =
+        'Assigner des <em>signalements</em>';
+      document.getElementById('assignBannerTitle').textContent = assignProject.title;
+      document.getElementById('assignExit').href =
+        'projets.html?id=' + encodeURIComponent(assignProject.id);
+      document.getElementById('assignBanner').hidden = false;
+      // Pré-filtre : le(s) sentier(s) du projet. Débrayable via le menu.
+      if (assignProject.trails.length === 1) {
+        activeTrail = assignProject.trails[0];
+      } else if (assignProject.trails.length > 1) {
+        activeTrail = '@projet';
+      }
+    }
+
     applyUrlFilters();
     load();
     wireLegendFilters();
@@ -1223,8 +1333,14 @@
         if (b === '') return -1;
         return a.localeCompare(b, 'fr');
       });
-      if (activeTrail !== null && names.indexOf(activeTrail) === -1) activeTrail = null;
+      const projectOption = (assignProject && assignProject.trails.length > 1)
+        ? '<option value="@projet">Sentiers du projet (' + assignProject.trails.length + ')</option>'
+        : '';
+      if (activeTrail === '@projet' && !projectOption) activeTrail = null;
+      if (activeTrail !== null && activeTrail !== '@projet'
+          && names.indexOf(activeTrail) === -1) activeTrail = null;
       sel.innerHTML = '<option value="*">Tous les sentiers</option>'
+        + projectOption
         + names.map(function (n) {
             const label = n === '' ? 'Sans sentier précisé' : escapeHtml(n);
             return '<option value="' + escapeHtml(n) + '">' + label + '</option>';
@@ -1351,6 +1467,23 @@
         ? '<p class="todo-item__sub" style="font-style: italic;">par ' + escapeHtml(r.reporterName) + '</p>'
         : '';
 
+      // Tâche dans un projet : pas de clôture individuelle ici non plus —
+      // renvoi vers la fiche (même règle que le popup).
+      let closeRow;
+      if (r.project) {
+        const proj = projectsById[r.project];
+        closeRow = '<div class="todo-item__close">'
+          + '<a class="project-chip" href="projets.html?id=' + encodeURIComponent(r.project) + '">'
+          + '<wa-icon name="folder-open" variant="solid"></wa-icon>'
+          + escapeHtml(proj ? proj.title : r.project) + '</a></div>';
+      } else {
+        closeRow = '<div class="todo-item__close close-row">'
+          + '<button type="button" class="close-btn" data-close-row="' + r.rowIndex + '" data-reason="Clôturé">'
+          +   '<wa-icon name="circle-check" variant="solid"></wa-icon>Clôturer</button>'
+          + '<button type="button" class="close-btn close-btn--dup" data-close-row="' + r.rowIndex + '" data-reason="Doublon">Doublon</button>'
+          + '</div>';
+      }
+
       return '<div class="todo-item">' +
         '<div class="todo-item__thumb">' + thumb + '</div>' +
         '<div class="todo-item__body">' +
@@ -1365,11 +1498,7 @@
             '<wa-icon slot="start" name="map-pin" variant="solid"></wa-icon>' +
             'Localiser sur la carte' +
           '</wa-button>' +
-          '<div class="todo-item__close close-row">' +
-            '<span class="close-row__label">Clôturer :</span>' +
-            '<button type="button" class="close-btn" data-close-row="' + r.rowIndex + '" data-reason="Résolu">Résolu</button>' +
-            '<button type="button" class="close-btn close-btn--dup" data-close-row="' + r.rowIndex + '" data-reason="Doublon">Doublon</button>' +
-          '</div>' +
+          closeRow +
         '</div>' +
       '</div>';
     }
@@ -1483,7 +1612,7 @@
     async function postStatus(rowIndex, reason) {
       const msg = reason === 'Doublon'
         ? 'Marquer ce signalement comme doublon et le clôturer ?'
-        : 'Marquer ce signalement comme résolu et le clôturer ?';
+        : 'Clôturer ce signalement (tâche faite) ?';
       if (!window.confirm(msg)) return false;
       const data = await ORFORD_AUTH.post(
         { action: 'updateStatus', rowIndex: rowIndex, status: reason },
@@ -1502,7 +1631,7 @@
         const r = allReports.find((x) => x.rowIndex === rowIndex);
         if (r) r.status = reason;
         render(false);
-        showToast('Signalement clôturé : ' + reason);
+        showToast(reason === 'Doublon' ? 'Signalement marqué doublon' : 'Signalement clôturé');
       } catch (err) {
         console.error(err);
         showToast('Échec : ' + err.message, true);
@@ -1510,56 +1639,64 @@
     }
     window.closeReport = closeReport; // referenced by inline onclick in popups
 
-    // Append a follow-up entry to a report. Updates the open popup's log in
-    // place (no re-render) so the popup stays open while you read/add more.
-    async function addFollowup(rowIndex, btn) {
-      const input = document.getElementById('fu-in-' + rowIndex);
-      if (!input) return;
-      const text = input.value.trim();
-      if (!text) return;
-
-      const nameEl = document.getElementById('fu-name-' + rowIndex);
-      const author = nameEl ? nameEl.value.trim() : '';
-      // Remember the name so it prefills next time (and the report form too).
-      if (author) { try { localStorage.setItem('orford.reporterName', author); } catch (e) {} }
-
-      input.setAttribute('disabled', '');
-      if (btn) { btn.classList.add('is-loading'); btn.setAttribute('disabled', ''); }
+    // Mode assignation : assigne (projectId = ID du projet) ou retire
+    // (projectId = '') un signalement, puis re-rend la carte — le repère
+    // change de couleur, l'état est toujours lisible d'un coup d'œil.
+    async function setReportProjectUI(rowIndex, projectId, btn) {
+      if (btn) btn.disabled = true;
       try {
         const data = await ORFORD_AUTH.post(
-          { action: 'appendFollowup', rowIndex: rowIndex, text: text, author: author },
+          { action: 'setReportProject', rowIndex: rowIndex, projectId: projectId },
           { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' }
         );
         if (data.cancelled) return;
         if (!data.ok) throw new Error(data.error || 'Échec.');
-
         const r = allReports.find(function (x) { return x.rowIndex === rowIndex; });
-        const updated = data.followup || ((r && r.followup ? r.followup + '\n' : '')
-          + '[' + author + '] ' + text);
-        if (r) r.followup = updated;
-        const log = document.getElementById('fu-log-' + rowIndex);
-        if (log) { log.innerHTML = renderFollowupHtml(updated); log.classList.remove('followup__log--empty'); }
-        input.value = '';
-        showToast('Suivi ajouté');
+        if (r) r.project = projectId;
+        render(false);
+        showToast(projectId ? 'Signalement assigné au projet' : 'Signalement retiré du projet');
       } catch (err) {
         console.error(err);
         showToast('Échec : ' + err.message, true);
       } finally {
-        input.removeAttribute('disabled');
-        if (btn) { btn.classList.remove('is-loading'); btn.removeAttribute('disabled'); }
+        if (btn) btn.disabled = false;
       }
     }
-    window.addFollowup = addFollowup; // referenced by inline onclick in popups
+    window.setReportProjectUI = setReportProjectUI; // referenced by inline onclick
 
-    // Reveal the name input when the user taps « modifier » on the
-    // "Au nom de X" line (the input was prefilled + hidden).
-    function editFollowupName(rowIndex) {
-      const chip = document.getElementById('fu-chip-' + rowIndex);
-      const inp  = document.getElementById('fu-name-' + rowIndex);
-      if (chip) chip.hidden = true;
-      if (inp) { inp.hidden = false; inp.focus(); inp.select(); }
-    }
-    window.editFollowupName = editFollowupName;
+    // Branche le composeur du journal quand un popup s'ouvre (le HTML du
+    // popup est une chaîne statique — on ne peut attacher les écouteurs
+    // qu'une fois l'élément dans le DOM). wireComposer est idempotent :
+    // rouvrir le même popup ne double pas les écouteurs.
+    map.on('popupopen', function (e) {
+      const el = e.popup.getElement();
+      const composer = el && el.querySelector('.jr-composer');
+      if (!composer) return;
+      const rowIndex = parseInt(composer.dataset.uid, 10);
+      window.ORFORD.journal.wireComposer(rowIndex, async function (text, author) {
+        try {
+          const data = await ORFORD_AUTH.post(
+            { action: 'appendFollowup', rowIndex: rowIndex, text: text, author: author },
+            { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' }
+          );
+          if (data.cancelled) return false;
+          if (!data.ok) throw new Error(data.error || 'Échec.');
+
+          const r = allReports.find(function (x) { return x.rowIndex === rowIndex; });
+          const updated = data.followup || ((r && r.followup ? r.followup + '\n' : '')
+            + '[' + window.ORFORD.journal.stamp() + ' · ' + (author || 'Anonyme') + '] ' + text);
+          if (r) r.followup = updated;
+          const log = document.getElementById('jr-log-' + rowIndex);
+          if (log && r) log.innerHTML = autoEntryHtml(r) + window.ORFORD.journal.entriesHtml(updated);
+          showToast('Suivi ajouté');
+          return true;
+        } catch (err) {
+          console.error(err);
+          showToast('Échec : ' + err.message, true);
+          return false;
+        }
+      });
+    });
 
     // Pending (no-GPS) report from the drawer: mark closed, refresh the list.
     async function closePending(rowIndex, reason) {

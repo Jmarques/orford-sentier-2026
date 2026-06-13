@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1f3a2e" />
+  <title>Projets — Orford-sur-le-Lac</title>
+
+  <!-- Web Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/styles/themes/default.css"
+  />
+  <script
+    type="module"
+    src="https://early.webawesome.com/webawesome@3.0.0-beta.6/dist/webawesome.loader.js"
+  ></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Shared theme + config + masthead/footer + trails + horizon + auth -->
+  <link rel="stylesheet" href="shared/theme.css" />
+  <script src="shared/config.js"></script>
+  <script defer src="shared/masthead.js"></script>
+  <script defer src="shared/footer.js"></script>
+  <script src="shared/trails.js"></script>
+  <script src="shared/categories.js"></script>
+  <script src="shared/horizon.js"></script>
+  <script src="shared/journal.js"></script>
+  <script src="shared/auth.js"></script>
+
+  <style>
+    body.projets-page {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    main.projets {
+      flex: 1;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 16px 32px;
+    }
+
+    .panel { margin-top: 22px; }
+    .panel__title {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--forest-deep);
+      margin: 0 0 4px;
+    }
+    .panel__hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    /* ---------- Project cards (list view) ---------- */
+    .project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    a.project-card {
+      display: block;
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+    a.project-card:hover {
+      border-color: var(--moss);
+      box-shadow: 0 2px 8px rgba(31, 58, 46, 0.1);
+    }
+    .project-card__top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .project-card__title {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--forest-deep);
+      margin: 0;
+      flex: 1;
+      min-width: 200px;
+    }
+    .project-card__meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      margin-top: 8px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .trail-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .trail-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1.5px solid var(--paper);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Badges (horizon + statut) — du texte, pas des pictogrammes. */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 2px 10px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .badge--horizon { background: var(--paper-warm); color: var(--forest-deep); border: 1px solid rgba(31, 58, 46, 0.14); }
+    .badge--horizon.is-late { background: rgba(164, 87, 46, 0.14); color: var(--clay); border-color: rgba(164, 87, 46, 0.3); }
+    .badge--statut-termine  { background: rgba(45, 106, 79, 0.14); color: var(--success); }
+    .badge--statut-abandonne { background: rgba(90, 108, 100, 0.16); color: var(--muted); }
+
+    .list-divider {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 18px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .list-divider::after {
+      content: '';
+      flex: 1;
+      border-top: 1px solid rgba(31, 58, 46, 0.12);
+    }
+    details.closed-projects { margin-top: 18px; }
+    details.closed-projects summary {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 6px 0;
+    }
+    details.closed-projects .project-list { margin-top: 10px; }
+    details.closed-projects a.project-card { opacity: 0.75; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 40px 20px;
+      font-size: 14px;
+      background: var(--paper);
+      border: 1px dashed rgba(31, 58, 46, 0.2);
+      border-radius: 10px;
+    }
+    .empty wa-icon { font-size: 30px; color: var(--moss); display: block; margin: 0 auto 10px; }
+
+    /* ---------- Fiche (detail view) ---------- */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 18px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--forest-deep);
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .fiche {
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.12);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 12px;
+    }
+    .fiche__head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .fiche__title {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 22px;
+      line-height: 1.2;
+      color: var(--forest-deep);
+      margin: 0;
+      flex: 1;
+      min-width: 220px;
+    }
+    .fiche__badges { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 3px; }
+    .fiche__meta {
+      margin: 14px 0 0;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 14px;
+      font-size: 14px;
+    }
+    .fiche__meta dt { color: var(--muted); font-size: 13px; padding-top: 1px; }
+    .fiche__meta dd { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; }
+    .fiche__desc {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+      font-size: 14.5px;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+    .fiche__desc.is-empty { color: var(--muted); font-style: italic; }
+    .fiche__actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+    }
+
+    /* ---------- Signalements rattachés (fiche) ---------- */
+    .fiche__section {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+    }
+    .fiche__section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--forest-deep);
+      margin: 0 0 10px;
+    }
+    .report-list { display: flex; flex-direction: column; gap: 8px; }
+    .report-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--paper-warm);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .report-item__thumb {
+      flex-shrink: 0;
+      width: 40px; height: 40px;
+      border-radius: 6px;
+      background: rgba(31, 58, 46, 0.07);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--moss);
+      position: relative;
+    }
+    .report-item__thumb img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .report-item__body { flex: 1; min-width: 0; }
+    .report-item__cat { font-weight: 600; color: var(--forest-deep); }
+    .report-item__sub { font-size: 12px; color: var(--muted); }
+    .report-item .badge { flex-shrink: 0; }
+    .badge--report-ouvert { background: rgba(164, 87, 46, 0.14); color: var(--clay); }
+    .badge--report-clos   { background: rgba(74, 107, 82, 0.18); color: var(--success); }
+    .report-empty { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* ---------- Journal de suivi (fiche) ----------
+       Rendu par le composant partagé (.jr-*, shared/journal.js) — ici on ne
+       règle que la densité de la fiche et le message « vide ». */
+    .fiche__section--journal { font-size: 13.5px; }
+    .fu-log { margin-bottom: 14px; }
+    .fu-empty { font-size: 13px; color: var(--muted); font-style: italic; margin: 0 0 12px; }
+
+    /* ---------- Dialogue de clôture ---------- */
+    .overlay[hidden] { display: none; } /* display:flex écraserait [hidden] */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(20, 30, 25, 0.55);
+      backdrop-filter: blur(2px);
+    }
+    .overlay-card {
+      background: var(--paper);
+      border-radius: 14px;
+      max-width: 30rem;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 22px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    }
+    .overlay-card h3 {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 19px;
+      color: var(--forest-deep);
+      margin: 0 0 8px;
+    }
+    .overlay-card p { font-size: 13.5px; color: var(--text); margin: 0 0 12px; }
+    .overlay-hint { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+    .close-list { display: flex; flex-direction: column; gap: 8px; }
+    .close-list label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      background: var(--paper-warm);
+      border: 1.5px solid rgba(31, 58, 46, 0.15);
+      border-radius: 8px;
+      font-size: 13.5px;
+      cursor: pointer;
+    }
+    .close-list label:has(input:checked) { border-color: var(--success); }
+    .close-list input { accent-color: var(--success); width: 17px; height: 17px; margin: 0; flex-shrink: 0; }
+    .close-list .close-list__text { flex: 1; min-width: 0; }
+    .close-list .close-list__sub { font-size: 12px; color: var(--muted); }
+    .overlay-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    /* ---------- Formulaire (création / édition) ---------- */
+    .form-card {
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.12);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 12px;
+    }
+    .form-card h2 {
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+      font-size: 20px;
+      color: var(--forest-deep);
+      margin: 0 0 16px;
+    }
+    .form-field { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--forest-deep);
+      margin-bottom: 6px;
+    }
+    .form-label .optional { font-weight: 400; color: var(--muted); }
+
+    /* Gros boutons radio pour l'horizon — pas de date-pickers nus. */
+    .seg {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .seg button {
+      font: inherit;
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(31, 58, 46, 0.25);
+      background: var(--paper-warm);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease;
+    }
+    .seg button:hover { border-color: var(--moss); }
+    .seg button[aria-pressed="true"] {
+      background: var(--forest);
+      border-color: var(--forest);
+      color: var(--paper);
+      font-weight: 600;
+    }
+    .horizon-inputs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .horizon-inputs wa-select, .horizon-inputs wa-input { min-width: 150px; }
+    .horizon-preview {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .horizon-preview strong { color: var(--forest-deep); }
+
+    /* Sentiers — cases à cocher en chips colorées. */
+    .trail-checks { display: flex; flex-wrap: wrap; gap: 8px; }
+    .trail-checks label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13.5px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(31, 58, 46, 0.2);
+      background: var(--paper-warm);
+      cursor: pointer;
+      user-select: none;
+    }
+    .trail-checks label:has(input:checked) {
+      border-color: var(--forest);
+      background: rgba(31, 58, 46, 0.1);
+      font-weight: 600;
+    }
+    .trail-checks input { accent-color: var(--forest); width: 15px; height: 15px; margin: 0; }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(31, 58, 46, 0.1);
+    }
+
+    /* ---------- State overlay + toast ---------- */
+    .state {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--paper);
+      padding: 16px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--forest-deep);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      z-index: 1000;
+      max-width: 80%;
+      text-align: center;
+    }
+    .state.err { background: #f7e4e0; color: var(--clay); border-color: #ebc9c2; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--forest-deep);
+      color: var(--paper);
+      font-size: 14px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      z-index: 1100;
+      display: none;
+    }
+  </style>
+</head>
+<body class="projets-page">
+  <site-masthead page="projets"></site-masthead>
+
+  <header class="page-hero">
+    <h1>Organiser les <em>projets</em> d'entretien</h1>
+    <p class="page-hero__subtitle"><span id="stats">Chargement…</span></p>
+  </header>
+
+  <main class="projets">
+
+    <!-- ===== Vue liste ===== -->
+    <section id="viewList" hidden>
+      <div class="toolbar">
+        <wa-button id="btnNew" variant="brand" appearance="filled" size="small">
+          <wa-icon slot="start" name="plus" variant="solid"></wa-icon>
+          Nouveau projet
+        </wa-button>
+      </div>
+      <div class="panel">
+        <div id="listActive" class="project-list"></div>
+        <div id="listClosed"></div>
+      </div>
+    </section>
+
+    <!-- ===== Vue fiche ===== -->
+    <section id="viewFiche" hidden>
+      <a class="back-link" href="projets.html">
+        <wa-icon name="arrow-left" variant="solid"></wa-icon>
+        Tous les projets
+      </a>
+      <div id="ficheBody"></div>
+    </section>
+
+    <!-- ===== Vue formulaire (création / édition) ===== -->
+    <section id="viewForm" hidden>
+      <div class="form-card">
+        <h2 id="formTitle">Nouveau projet</h2>
+
+        <div class="form-field">
+          <label class="form-label" for="fTitle">But du projet</label>
+          <wa-input id="fTitle" placeholder="Ex. : Remplacer les 3 panneaux de départ manquants"></wa-input>
+        </div>
+
+        <div class="form-field">
+          <span class="form-label">Quand pense-t-on le faire?</span>
+          <div class="seg" id="horizonSeg" role="group" aria-label="Type d'horizon">
+            <button type="button" data-kind="day">Date précise</button>
+            <button type="button" data-kind="month">Un mois</button>
+            <button type="button" data-kind="season">Une saison</button>
+            <button type="button" data-kind="year">Une année</button>
+            <button type="button" data-kind="none" aria-pressed="true">À planifier</button>
+          </div>
+          <div class="horizon-inputs" id="horizonInputs"></div>
+          <p class="horizon-preview" id="horizonPreview"></p>
+        </div>
+
+        <div class="form-field">
+          <span class="form-label">Sentiers concernés <span class="optional">(facultatif)</span></span>
+          <div class="trail-checks" id="trailChecks"></div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="fDesc">Description <span class="optional">(facultatif — tout ce qu'il faut savoir pour la tâche)</span></label>
+          <wa-textarea id="fDesc" rows="7" resize="vertical"
+            placeholder="Problème / historique :&#10;Solution retenue :&#10;Matériel nécessaire :&#10;Budget (si requis) :"></wa-textarea>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label" for="fParticipants">Participants <span class="optional">(facultatif)</span></label>
+          <wa-input id="fParticipants" placeholder="Ex. : Jean, Lise, Marc"></wa-input>
+        </div>
+
+        <div class="form-field" id="statusField" hidden>
+          <label class="form-label" for="fStatus">Statut</label>
+          <wa-select id="fStatus" value="Actif">
+            <wa-option value="Actif">Actif</wa-option>
+            <wa-option value="Clôturé">Clôturé</wa-option>
+            <wa-option value="Abandonné">Abandonné</wa-option>
+          </wa-select>
+        </div>
+
+        <div class="form-actions">
+          <wa-button id="btnCancel" appearance="outlined">Annuler</wa-button>
+          <wa-button id="btnSave" variant="brand" appearance="filled">Enregistrer</wa-button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <site-footer></site-footer>
+
+  <!-- Dialogue « Clôturer le projet » : liste les signalements ouverts du
+       projet, cochés = clôturés avec lui, décochés = détachés (retour au triage). -->
+  <div id="closeOverlay" class="overlay" hidden>
+    <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="closeTitle">
+      <h3 id="closeTitle">Clôturer le projet</h3>
+      <p id="closeIntro"></p>
+      <div id="closeList" class="close-list"></div>
+      <p class="overlay-hint" id="closeHint">Décochez un signalement s'il n'a finalement pas été réglé :
+        il sera détaché du projet et retournera au triage (statut Nouveau).</p>
+      <div class="overlay-actions">
+        <wa-button id="closeCancel" appearance="outlined">Annuler</wa-button>
+        <wa-button id="closeConfirm" variant="brand" appearance="filled">
+          <wa-icon slot="start" name="circle-check" variant="solid"></wa-icon>
+          Clôturer le projet
+        </wa-button>
+      </div>
+    </div>
+  </div>
+
+  <div id="stateBox" class="state">Chargement…</div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const ENDPOINT_URL      = window.ORFORD.ENDPOINT_URL;
+    const formatHorizon     = window.ORFORD.formatHorizon;
+    const horizonSortKey    = window.ORFORD.horizonSortKey;
+    const detectHorizonKind = window.ORFORD.detectHorizonKind;
+    const seasonRange       = window.ORFORD.seasonRange;
+    const getTrailList      = window.ORFORD.getTrailList;
+    const categoryFamily    = window.ORFORD.categoryFamily;
+    const FAMILY_ICONS      = window.ORFORD.FAMILY_ICONS;
+
+    let projects  = [];
+    let reports   = []; // signalements (pour la section « rattachés » des fiches)
+    let trailList = []; // [{ name, color, rough }] dérivé du GeoJSON
+
+    // Même définition de « clos » que la carte et Corvées. « Clôturé » est
+    // la valeur courante ; « Résolu » (ancien vocabulaire) reste reconnu.
+    function isReportClosed(r) {
+      const s = String(r.status || '').toLowerCase();
+      return s.indexOf('clôtur') === 0 || s.indexOf('clotur') === 0
+        || s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0
+        || s.indexOf('doublon') === 0;
+    }
+    // Idem côté projets : « Terminé » est l'ancien vocabulaire de « Clôturé ».
+    function isProjectDone(p) {
+      return p.status === 'Clôturé' || p.status === 'Terminé';
+    }
+    function attachedReports(projectId) {
+      return reports.filter(function (r) { return r.project === projectId; });
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    const stateBox = document.getElementById('stateBox');
+    function showState(msg, isError) {
+      stateBox.textContent = msg;
+      stateBox.className = 'state' + (isError ? ' err' : '');
+      stateBox.style.display = 'block';
+    }
+    function hideState() { stateBox.style.display = 'none'; }
+
+    let toastTimer = null;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { el.style.display = 'none'; }, 3200);
+    }
+
+    // ---------- Navigation entre les vues ------------------------------
+    // La fiche a une vraie URL (?id=P-3) pour que le bouton retour du
+    // navigateur fonctionne ; le formulaire est un état transitoire.
+    const views = {
+      list:  document.getElementById('viewList'),
+      fiche: document.getElementById('viewFiche'),
+      form:  document.getElementById('viewForm'),
+    };
+    function showView(name) {
+      Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
+      window.scrollTo(0, 0);
+    }
+
+    function currentId() {
+      return new URLSearchParams(location.search).get('id');
+    }
+    function findProject(id) {
+      return projects.find(function (p) { return p.id === id; }) || null;
+    }
+    function trailColor(name) {
+      const t = trailList.find(function (x) { return x.name === name; });
+      return t ? t.color : window.ORFORD.TRAIL_FALLBACK_COLOR;
+    }
+
+    // ---------- Rendu commun -------------------------------------------
+    function horizonBadge(p) {
+      const label = formatHorizon(p.start, p.end);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const isLate = p.status === 'Actif' && p.end &&
+        new Date(p.end + 'T23:59:59') < today;
+      return '<span class="badge badge--horizon' + (isLate ? ' is-late" title="Échéance passée' : '') + '">'
+        + escapeHtml(label) + '</span>';
+    }
+    function statusBadge(p) {
+      if (isProjectDone(p))         return '<span class="badge badge--statut-termine">Clôturé</span>';
+      if (p.status === 'Abandonné') return '<span class="badge badge--statut-abandonne">Abandonné</span>';
+      return '';
+    }
+    function trailTags(p) {
+      return (p.trails || []).map(function (name) {
+        return '<span class="trail-tag"><span class="trail-dot" style="background:'
+          + trailColor(name) + ';"></span>' + escapeHtml(name) + '</span>';
+      }).join('');
+    }
+
+    // Sous-titre du hero — identique quelle que soit la vue affichée.
+    function updateStats() {
+      const active = projects.filter(function (p) { return p.status === 'Actif'; })
+        .sort(function (a, b) { return horizonSortKey(a.start) - horizonSortKey(b.start); });
+      const next = active.find(function (p) { return p.start; });
+      document.getElementById('stats').textContent = active.length === 0
+        ? 'Aucun projet actif'
+        : active.length + (active.length === 1 ? ' projet actif' : ' projets actifs')
+          + (next ? ' · prochain : ' + formatHorizon(next.start, next.end) : '');
+    }
+
+    // ---------- Vue liste ----------------------------------------------
+    function projectCard(p) {
+      const meta = [];
+      const tags = trailTags(p);
+      if (tags) meta.push(tags);
+      const nReports = attachedReports(p.id).length;
+      if (nReports) {
+        meta.push('<span>' + nReports + (nReports === 1 ? ' signalement' : ' signalements') + '</span>');
+      }
+      if (p.participants) meta.push('<span>' + escapeHtml(p.participants) + '</span>');
+      return '<a class="project-card" href="projets.html?id=' + encodeURIComponent(p.id) + '">'
+        + '<div class="project-card__top">'
+        +   horizonBadge(p) + statusBadge(p)
+        +   '<h3 class="project-card__title">' + escapeHtml(p.title) + '</h3>'
+        + '</div>'
+        + (meta.length ? '<div class="project-card__meta">' + meta.join('') + '</div>' : '')
+        + '</a>';
+    }
+
+    function renderList() {
+      const active = projects.filter(function (p) { return p.status === 'Actif'; })
+        .sort(function (a, b) { return horizonSortKey(a.start) - horizonSortKey(b.start); });
+      const closed = projects.filter(function (p) { return p.status !== 'Actif'; })
+        .sort(function (a, b) { return horizonSortKey(b.start) - horizonSortKey(a.start); });
+
+      const planned   = active.filter(function (p) { return p.start; });
+      const unplanned = active.filter(function (p) { return !p.start; });
+
+      let html = planned.map(projectCard).join('');
+      if (unplanned.length) {
+        html += '<div class="list-divider">À planifier</div>' + unplanned.map(projectCard).join('');
+      }
+      if (!active.length) {
+        html = '<div class="empty"><wa-icon name="seedling" variant="solid"></wa-icon>'
+          + 'Aucun projet pour l\'instant. Créez le premier avec « Nouveau projet ».</div>';
+      }
+      document.getElementById('listActive').innerHTML = html;
+
+      document.getElementById('listClosed').innerHTML = closed.length
+        ? '<details class="closed-projects"><summary>Clôturés et abandonnés ('
+          + closed.length + ')</summary><div class="project-list">'
+          + closed.map(projectCard).join('') + '</div></details>'
+        : '';
+
+      showView('list');
+    }
+
+    // ---------- Vue fiche ----------------------------------------------
+    function renderFiche(id) {
+      const p = findProject(id);
+      const body = document.getElementById('ficheBody');
+      if (!p) {
+        body.innerHTML = '<div class="empty" style="margin-top:12px;">Projet introuvable (' + escapeHtml(id) + ').</div>';
+        showView('fiche');
+        return;
+      }
+
+      const created = p.timestamp
+        ? new Date(p.timestamp).toLocaleDateString('fr-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+        : '';
+      const metaRows = [
+        ['Horizon', horizonBadge(p)],
+        ['Sentiers', trailTags(p) || '<span style="color:var(--muted);">—</span>'],
+        ['Participants', p.participants ? escapeHtml(p.participants) : '<span style="color:var(--muted);">—</span>'],
+        created ? ['Créé le', escapeHtml(created)] : null,
+      ].filter(Boolean);
+
+      // Signalements rattachés (relation recalculée en filtrant, jamais stockée).
+      const attached = attachedReports(p.id);
+      const reportRows = attached.map(function (r) {
+        const famIcon = FAMILY_ICONS[categoryFamily(r.category)];
+        const thumb = '<div class="report-item__thumb">'
+          + '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>'
+          + (r.photoThumb ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />' : '')
+          + '</div>';
+        const badge = isReportClosed(r)
+          ? '<span class="badge badge--report-clos">' + escapeHtml(r.status) + '</span>'
+          : '<span class="badge badge--report-ouvert">Ouvert</span>';
+        return '<div class="report-item">'
+          + thumb
+          + '<div class="report-item__body">'
+          +   '<div class="report-item__cat">' + escapeHtml(r.category || 'Sans catégorie') + '</div>'
+          +   '<div class="report-item__sub">' + escapeHtml(r.trail || 'Sans sentier précisé') + '</div>'
+          + '</div>'
+          + badge
+          + '</div>';
+      }).join('');
+      const assignBtn = p.status === 'Actif'
+        ? '<div style="margin-top:10px;">'
+          + '<wa-button href="map.html?assigner=' + encodeURIComponent(p.id) + '" appearance="outlined" size="small">'
+          + '<wa-icon slot="start" name="map-location-dot" variant="solid"></wa-icon>'
+          + 'Rattacher des signalements sur la carte</wa-button></div>'
+        : '';
+      const reportsSection =
+        '<div class="fiche__section">'
+        + '<h3 class="fiche__section-title">Signalements rattachés (' + attached.length + ')</h3>'
+        + (attached.length
+            ? '<div class="report-list">' + reportRows + '</div>'
+            : '<p class="report-empty">Aucun signalement rattaché pour l\'instant.</p>')
+        + assignBtn
+        + '</div>';
+
+      // Journal de suivi — rendu et composeur par le composant partagé
+      // (shared/journal.js), identique à celui du popup de la carte.
+      const fuEntries = window.ORFORD.journal.entriesHtml(p.followup);
+      const journalSection =
+        '<div class="fiche__section fiche__section--journal">'
+        + '<h3 class="fiche__section-title">Journal de suivi</h3>'
+        + (fuEntries
+            ? '<div class="fu-log">' + fuEntries + '</div>'
+            : '<p class="fu-empty">Aucune note pour l\'instant.</p>')
+        + window.ORFORD.journal.composerHtml('fiche',
+            { placeholder: 'Décision prise, achat de matériel, avancement, budget…' })
+        + '</div>';
+
+      body.innerHTML =
+        '<article class="fiche">'
+        + '<div class="fiche__head">'
+        +   '<h2 class="fiche__title">' + escapeHtml(p.title) + '</h2>'
+        +   '<div class="fiche__badges">' + statusBadge(p) + '</div>'
+        + '</div>'
+        + '<dl class="fiche__meta">'
+        +   metaRows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('')
+        + '</dl>'
+        + (p.description
+            ? '<div class="fiche__desc">' + escapeHtml(p.description) + '</div>'
+            : '<div class="fiche__desc is-empty">Aucune description pour l\'instant.</div>')
+        + reportsSection
+        + journalSection
+        + '<div class="fiche__actions">'
+        +   '<wa-button id="btnEdit" appearance="outlined" size="small">'
+        +     '<wa-icon slot="start" name="pen" variant="solid"></wa-icon>Modifier</wa-button>'
+        +   (p.status === 'Actif'
+              ? '<wa-button id="btnCloseProject" variant="brand" appearance="filled" size="small">'
+                + '<wa-icon slot="start" name="circle-check" variant="solid"></wa-icon>'
+                + 'Clôturer le projet</wa-button>'
+              : '')
+        + '</div>'
+        + '</article>';
+
+      document.getElementById('btnEdit').addEventListener('click', function () {
+        openForm(p);
+      });
+      const btnClose = document.getElementById('btnCloseProject');
+      if (btnClose) btnClose.addEventListener('click', function () { openCloseDialog(p); });
+      window.ORFORD.journal.wireComposer('fiche', async function (text, author) {
+        const res = await window.ORFORD_AUTH.post(
+          { action: 'appendProjectFollowup', id: p.id, text: text, author: author },
+          { title: 'Mot de passe du comité', message: 'La gestion des projets est réservée au comité.' }
+        );
+        if (res.cancelled) return false;
+        if (!res.ok) { toast('Erreur : ' + (res.error || 'échec de l\'ajout')); return false; }
+        p.followup = res.followup || ((p.followup ? p.followup + '\n' : '')
+          + '[' + window.ORFORD.journal.stamp() + ' · ' + (author || 'Anonyme') + '] ' + text);
+        renderFiche(p.id);
+        toast('Note ajoutée au journal.');
+        return true;
+      });
+      showView('fiche');
+    }
+
+    // ---------- Clôture : « Marquer terminé » ---------------------------
+    // Les signalements ouverts du projet sont listés cochés (→ Résolu) ;
+    // un décoché est détaché du projet et retourne au triage. Une seule
+    // requête serveur fait le tout (action closeProject).
+    let closingProject = null;
+
+    function openCloseDialog(p) {
+      closingProject = p;
+      const open = attachedReports(p.id).filter(function (r) { return !isReportClosed(r); });
+      const intro = document.getElementById('closeIntro');
+      const list  = document.getElementById('closeList');
+      const hint  = document.getElementById('closeHint');
+      if (!open.length) {
+        intro.textContent = 'Aucun signalement ouvert n\'est rattaché — le projet sera simplement marqué Clôturé.';
+        list.innerHTML = '';
+        hint.hidden = true;
+      } else {
+        intro.textContent = 'Les signalements cochés seront clôturés en même temps que le projet :';
+        hint.hidden = false;
+        list.innerHTML = open.map(function (r) {
+          return '<label><input type="checkbox" checked value="' + r.rowIndex + '" />'
+            + '<span class="close-list__text">' + escapeHtml(r.category || 'Sans catégorie')
+            + '<div class="close-list__sub">' + escapeHtml(r.trail || 'Sans sentier précisé') + '</div>'
+            + '</span></label>';
+        }).join('');
+      }
+      document.getElementById('closeOverlay').hidden = false;
+    }
+
+    function hideCloseDialog() {
+      document.getElementById('closeOverlay').hidden = true;
+      closingProject = null;
+    }
+
+    async function confirmCloseProject() {
+      const p = closingProject;
+      if (!p) return;
+      const boxes = Array.from(document.querySelectorAll('#closeList input'));
+      const resolve = boxes.filter(function (b) { return b.checked; })
+        .map(function (b) { return parseInt(b.value, 10); });
+      const detach = boxes.filter(function (b) { return !b.checked; })
+        .map(function (b) { return parseInt(b.value, 10); });
+
+      const btn = document.getElementById('closeConfirm');
+      btn.loading = true;
+      try {
+        const res = await window.ORFORD_AUTH.post(
+          { action: 'closeProject', id: p.id, resolve: resolve, detach: detach },
+          { title: 'Mot de passe du comité', message: 'La gestion des projets est réservée au comité.' }
+        );
+        if (res.cancelled) return;
+        if (!res.ok) { toast('Erreur : ' + (res.error || 'échec de la clôture')); return; }
+        // Miroir local de ce que le serveur vient de faire — pas de refetch.
+        p.status = 'Clôturé';
+        reports.forEach(function (r) {
+          if (resolve.indexOf(r.rowIndex) !== -1) r.status = 'Clôturé';
+          if (detach.indexOf(r.rowIndex) !== -1) r.project = '';
+        });
+        hideCloseDialog();
+        updateStats();
+        renderFiche(p.id);
+        toast(resolve.length
+          ? 'Projet clôturé — ' + resolve.length + (resolve.length === 1 ? ' signalement clôturé.' : ' signalements clôturés.')
+          : 'Projet clôturé.');
+      } finally {
+        btn.loading = false;
+      }
+    }
+
+    document.getElementById('closeCancel').addEventListener('click', hideCloseDialog);
+    document.getElementById('closeConfirm').addEventListener('click', confirmCloseProject);
+    document.getElementById('closeOverlay').addEventListener('click', function (e) {
+      if (e.target === this) hideCloseDialog();
+    });
+
+    // ---------- Formulaire ---------------------------------------------
+    const YEARS_AHEAD = 3;
+    let editing = null; // null = création, sinon le projet en cours d'édition
+
+    function yearOptions(selected) {
+      const now = new Date().getFullYear();
+      const years = [];
+      for (let y = now - 1; y <= now + YEARS_AHEAD; y++) years.push(y);
+      if (selected && years.indexOf(selected) === -1) {
+        years.push(selected);
+        years.sort();
+      }
+      return years.map(function (y) {
+        return '<wa-option value="' + y + '"' + '>' + y + '</wa-option>';
+      }).join('');
+    }
+
+    const MONTHS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const SEASON_OPTIONS = [
+      ['printemps', 'Printemps (mars à mai)'],
+      ['ete',       'Été (juin à août)'],
+      ['automne',   'Automne (sept. à nov.)'],
+      ['hiver',     'Hiver (déc. à fév.)'],
+    ];
+
+    let horizonKind = 'none';
+
+    // (Re)construit les champs sous les boutons radio selon le type choisi.
+    // `preset` = { date?, month?, season?, year? } pour pré-remplir en édition.
+    function buildHorizonInputs(kind, preset) {
+      preset = preset || {};
+      const wrap = document.getElementById('horizonInputs');
+      const now = new Date();
+      if (kind === 'day') {
+        wrap.innerHTML = '<wa-input type="date" id="hDate" value="' + (preset.date || '') + '"></wa-input>';
+        whenReady(['hDate'], function () {});
+      } else if (kind === 'month') {
+        wrap.innerHTML =
+          '<wa-select id="hMonth">' + MONTHS.map(function (m, i) {
+            return '<wa-option value="' + (i + 1) + '">' + m.charAt(0).toUpperCase() + m.slice(1) + '</wa-option>';
+          }).join('') + '</wa-select>'
+          + '<wa-select id="hYear">' + yearOptions(preset.year) + '</wa-select>';
+        whenReady(['hMonth', 'hYear'], function () {
+          document.getElementById('hMonth').value = String(preset.month || (now.getMonth() + 1));
+          document.getElementById('hYear').value = String(preset.year || now.getFullYear());
+        });
+      } else if (kind === 'season') {
+        wrap.innerHTML =
+          '<wa-select id="hSeason">' + SEASON_OPTIONS.map(function (s) {
+            return '<wa-option value="' + s[0] + '">' + s[1] + '</wa-option>';
+          }).join('') + '</wa-select>'
+          + '<wa-select id="hYear">' + yearOptions(preset.year) + '</wa-select>';
+        whenReady(['hSeason', 'hYear'], function () {
+          document.getElementById('hSeason').value = preset.season || 'ete';
+          document.getElementById('hYear').value = String(preset.year || now.getFullYear());
+        });
+      } else if (kind === 'year') {
+        wrap.innerHTML = '<wa-select id="hYear">' + yearOptions(preset.year) + '</wa-select>';
+        whenReady(['hYear'], function () {
+          document.getElementById('hYear').value = String(preset.year || now.getFullYear());
+        });
+      } else {
+        wrap.innerHTML = '';
+      }
+      wrap.querySelectorAll('wa-select, wa-input').forEach(function (el) {
+        el.addEventListener('change', updateHorizonPreview);
+        el.addEventListener('input', updateHorizonPreview);
+      });
+      updateHorizonPreview();
+    }
+
+    // Les web components s'upgradent de façon asynchrone — on attend qu'ils
+    // soient définis avant d'écrire/lire .value, sinon la valeur se perd.
+    // L'aperçu est rafraîchi après coup, car écrire .value par programme ne
+    // déclenche aucun événement `change`.
+    function whenReady(ids, fn) {
+      Promise.all([
+        customElements.whenDefined('wa-select'),
+        customElements.whenDefined('wa-input'),
+      ]).then(function () {
+        requestAnimationFrame(function () {
+          if (ids.every(function (id) { return document.getElementById(id); })) fn();
+          updateHorizonPreview();
+        });
+      });
+    }
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    // Traduit l'état du formulaire d'horizon en plage { start, end }.
+    function readHorizon() {
+      const get = function (id) {
+        const el = document.getElementById(id);
+        return el ? String(el.value || '') : '';
+      };
+      if (horizonKind === 'day') {
+        const d = get('hDate');
+        return d ? { start: d, end: d } : { start: '', end: '' };
+      }
+      if (horizonKind === 'month') {
+        const m = parseInt(get('hMonth'), 10), y = parseInt(get('hYear'), 10);
+        if (!m || !y) return { start: '', end: '' };
+        const last = new Date(y, m, 0).getDate();
+        return { start: y + '-' + pad(m) + '-01', end: y + '-' + pad(m) + '-' + pad(last) };
+      }
+      if (horizonKind === 'season') {
+        const y = parseInt(get('hYear'), 10);
+        const r = y ? seasonRange(get('hSeason'), y) : null;
+        return r || { start: '', end: '' };
+      }
+      if (horizonKind === 'year') {
+        const y = parseInt(get('hYear'), 10);
+        return y ? { start: y + '-01-01', end: y + '-12-31' } : { start: '', end: '' };
+      }
+      return { start: '', end: '' };
+    }
+
+    function updateHorizonPreview() {
+      const h = readHorizon();
+      const el = document.getElementById('horizonPreview');
+      el.innerHTML = (horizonKind === 'none')
+        ? 'Le projet ira dans la section « À planifier ».'
+        : 'Affiché : <strong>' + escapeHtml(formatHorizon(h.start, h.end)) + '</strong>';
+    }
+
+    function setHorizonKind(kind, preset) {
+      horizonKind = kind;
+      document.querySelectorAll('#horizonSeg button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.kind === kind));
+      });
+      buildHorizonInputs(kind, preset);
+    }
+
+    document.querySelectorAll('#horizonSeg button').forEach(function (b) {
+      b.addEventListener('click', function () { setHorizonKind(b.dataset.kind); });
+    });
+
+    function renderTrailChecks(selected) {
+      const sel = new Set(selected || []);
+      document.getElementById('trailChecks').innerHTML = trailList.map(function (t) {
+        return '<label><input type="checkbox" value="' + escapeHtml(t.name) + '"'
+          + (sel.has(t.name) ? ' checked' : '') + ' />'
+          + '<span class="trail-dot" style="background:' + t.color + ';"></span>'
+          + escapeHtml(t.name) + '</label>';
+      }).join('');
+    }
+
+    function openForm(project) {
+      editing = project || null;
+      document.getElementById('formTitle').textContent =
+        editing ? 'Modifier le projet' : 'Nouveau projet';
+      document.getElementById('statusField').hidden = !editing;
+
+      customElements.whenDefined('wa-input').then(function () {
+        document.getElementById('fTitle').value = editing ? editing.title : '';
+        document.getElementById('fDesc').value = editing ? editing.description : '';
+        document.getElementById('fParticipants').value = editing ? editing.participants : '';
+        if (editing) {
+          whenReady(['fStatus'], function () {
+            // « Terminé » (ancien vocabulaire) s'affiche comme « Clôturé ».
+            document.getElementById('fStatus').value =
+              editing.status === 'Terminé' ? 'Clôturé' : editing.status;
+          });
+        }
+      });
+
+      renderTrailChecks(editing ? editing.trails : []);
+
+      // Re-sélectionne le raccourci d'horizon correspondant à la plage.
+      if (editing) {
+        const h = detectHorizonKind(editing.start, editing.end);
+        if (h.kind === 'day') setHorizonKind('day', { date: editing.start });
+        else if (h.kind === 'month') setHorizonKind('month', { month: h.month, year: h.year });
+        else if (h.kind === 'season') setHorizonKind('season', { season: h.season, year: h.year });
+        else if (h.kind === 'year') setHorizonKind('year', { year: h.year });
+        else if (h.kind === 'range') setHorizonKind('day', { date: editing.start }); // approximation : plage libre rare
+        else setHorizonKind('none');
+      } else {
+        setHorizonKind('none');
+      }
+
+      showView('form');
+    }
+
+    async function saveForm() {
+      const title = String(document.getElementById('fTitle').value || '').trim();
+      if (!title) {
+        toast('Le but du projet est obligatoire.');
+        document.getElementById('fTitle').focus();
+        return;
+      }
+      const h = readHorizon();
+      const trails = Array.from(document.querySelectorAll('#trailChecks input:checked'))
+        .map(function (i) { return i.value; });
+
+      const payload = {
+        action: editing ? 'updateProject' : 'createProject',
+        title: title,
+        description: String(document.getElementById('fDesc').value || ''),
+        trails: trails,
+        start: h.start,
+        end: h.end,
+        participants: String(document.getElementById('fParticipants').value || ''),
+      };
+      if (editing) {
+        payload.id = editing.id;
+        payload.status = String(document.getElementById('fStatus').value || 'Actif');
+      }
+
+      const btn = document.getElementById('btnSave');
+      btn.loading = true;
+      try {
+        const res = await window.ORFORD_AUTH.post(payload, {
+          title: 'Mot de passe du comité',
+          message: 'La gestion des projets est réservée au comité.',
+        });
+        if (res.cancelled) return;
+        if (!res.ok) { toast('Erreur : ' + (res.error || 'échec de l\'enregistrement')); return; }
+        toast(editing ? 'Projet mis à jour.' : 'Projet créé.');
+        const id = editing ? editing.id : res.id;
+        await load(false);
+        history.replaceState(null, '', 'projets.html?id=' + encodeURIComponent(id));
+        renderFiche(id);
+      } finally {
+        btn.loading = false;
+      }
+    }
+
+    document.getElementById('btnSave').addEventListener('click', saveForm);
+    document.getElementById('btnCancel').addEventListener('click', function () {
+      // Retour à la vue d'où l'on venait : fiche si on éditait, sinon liste.
+      if (editing) renderFiche(editing.id); else renderList();
+    });
+    document.getElementById('btnNew').addEventListener('click', function () {
+      openForm(null);
+    });
+
+    // ---------- Chargement ----------------------------------------------
+    function route() {
+      const id = currentId();
+      if (id) renderFiche(id); else renderList();
+    }
+
+    async function load(showSpinner) {
+      if (showSpinner !== false) showState('Chargement…');
+      try {
+        const [data, trails] = await Promise.all([
+          fetch(ENDPOINT_URL, { method: 'GET' }).then(function (r) { return r.json(); }),
+          getTrailList(),
+        ]);
+        if (!data.ok) throw new Error(data.error || 'Réponse invalide');
+        projects = data.projects || [];
+        reports  = data.reports || [];
+        trailList = trails;
+        updateStats();
+        hideState();
+        return true;
+      } catch (err) {
+        console.error(err);
+        showState('Erreur de chargement : ' + err.message, true);
+        return false;
+      }
+    }
+
+    load().then(function (ok) { if (ok) route(); });
+  </script>
+</body>
+</html>

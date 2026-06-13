@@ -186,8 +186,34 @@
     return FALLBACK_COLOR;
   }
 
+  // List of the MAIN trails (no access segments, no child sections that
+  // roll up under a parent), in file order, deduped. Single source of truth
+  // for any UI that needs "the trails": one entry per name, with its colour
+  // and whether it's rough (broussailleux).
+  async function getTrailList() {
+    const data = await loadTrails();
+    const out = [];
+    const seen = new Set();
+    if (data && Array.isArray(data.features)) {
+      for (const f of data.features) {
+        const p = (f && f.properties) || {};
+        if (!p.name || p.kind === 'access' || p.parent) continue;
+        const key = normalize(p.name);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          name: p.name,
+          color: p.color || FALLBACK_COLOR,
+          rough: p.condition === 'rough',
+        });
+      }
+    }
+    return out;
+  }
+
   window.ORFORD = window.ORFORD || {};
   window.ORFORD.addTrailsToMap     = addTrailsToMap;
   window.ORFORD.getTrailColor      = getTrailColor;
+  window.ORFORD.getTrailList       = getTrailList;
   window.ORFORD.TRAIL_FALLBACK_COLOR = FALLBACK_COLOR;
 })();

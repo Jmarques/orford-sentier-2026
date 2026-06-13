@@ -1,5 +1,5 @@
 // ============================================================
-// <site-masthead page="signaler|carte|corvees"></site-masthead>
+// <site-masthead page="signaler|carte|corvees|projets"></site-masthead>
 // Renders the shared top bar (brand + nav) used on every page.
 // Light DOM so shared/theme.css can style it directly.
 // ============================================================
@@ -27,6 +27,7 @@ class SiteMasthead extends HTMLElement {
         ${link('index.html',   'Signaler', 'signaler')}
         ${link('map.html',     'Carte',    'carte')}
         ${link('corvees.html', 'Corvées',  'corvees')}
+        ${link('projets.html', 'Projets',  'projets')}
       </nav>
     `;
   }

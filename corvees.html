@@ -224,7 +224,7 @@
   <main class="corvees" id="content" hidden>
     <section class="panel">
       <h2 class="panel__title">Vue d'ensemble</h2>
-      <p class="panel__hint">Tâches ouvertes (Nouveau + En cours) par sentier et par type. Les cases plus foncées concentrent le plus de travail.</p>
+      <p class="panel__hint">Tâches ouvertes (non résolues) par sentier et par type. Les cases plus foncées concentrent le plus de travail.</p>
       <div class="matrix-wrap" id="matrixWrap"></div>
     </section>
 
@@ -261,15 +261,18 @@
       });
     }
 
-    // A report counts as open work unless it has been closed (Résolu/Doublon).
+    // A report counts as open work unless it has been closed. « Clôturé » is
+    // the current value; « Résolu » (legacy) stays recognized.
     function isClosed(status) {
       const s = String(status || '').toLowerCase();
-      return s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0 || s.indexOf('doublon') === 0;
+      return s.indexOf('clôtur') === 0 || s.indexOf('clotur') === 0
+        || s.indexOf('résolu') === 0 || s.indexOf('resolu') === 0
+        || s.indexOf('doublon') === 0;
     }
 
     // Link to the map pre-filtered to a trail and/or type. Pass null to leave
-    // that dimension unfiltered (all trails / all types). Open tasks (Nouveau +
-    // En cours) are the map's default, so no status param is needed.
+    // that dimension unfiltered (all trails / all types). Open tasks are the
+    // map's default, so no status param is needed.
     function mapUrl(trailKey, family) {
       const p = new URLSearchParams();
       if (trailKey !== null && trailKey !== undefined) p.set('trail', trailKey);
