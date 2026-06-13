@@ -11,6 +11,11 @@ const PROJECTS = [
   { id: 'P-2', timestamp: '2026-05-15T12:00:00Z', title: 'Remplacer les 3 panneaux de départ',
     description: '', trails: ["Sentier de l'Écurie", 'Sentier de la Sapinière'],
     start: '2026-08-01', end: '2026-08-31', status: 'Actif', participants: '', followup: '' },
+  // « 2026 » : commence tôt (1er janv.) mais finit tard (31 déc.) — discrimine
+  // le tri par échéance (doit finir DERNIER) du vieux tri par début (1er).
+  { id: 'P-6', timestamp: '2026-05-10T12:00:00Z', title: 'Drainage de la section nord',
+    description: '', trails: ['Sentier des Ruisseaux'],
+    start: '2026-01-01', end: '2026-12-31', status: 'Actif', participants: '', followup: '' },
 ];
 
 const REPORTS = [
@@ -43,16 +48,28 @@ const posts = []; // corps des POST interceptés
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1100, height: 950 } });
 page.on('pageerror', (e) => console.log('PAGE ERROR:', e.message));
-await page.route('**/script.google.com/**', (route) => {
+await page.route('**/script.google.com/**', async (route) => {
   const req = route.request();
   if (req.method() === 'POST') {
-    posts.push(JSON.parse(req.postData()));
+    const body = JSON.parse(req.postData());
+    posts.push(body);
+    // Retarde updateLocation pour rendre l'état « Enregistrement… » observable.
+    if (body.action === 'updateLocation') await new Promise((r) => setTimeout(r, 700));
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ ok: true }) });
   }
   return route.fulfill({ contentType: 'application/json', body: JSON.stringify(FAKE) });
 });
 // Mot de passe « déjà mémorisé » pour court-circuiter le prompt d'auth.
 await page.addInitScript(() => localStorage.setItem('orford.auth', 'test'));
+
+// ===== 0. Liste : tri par échéance (date de fin) =====
+await page.goto('http://localhost:8765/projets.html');
+await page.waitForSelector('.project-card');
+const order = await page.locator('.project-card__title').allTextContents();
+console.log('liste — ordre des titres :', order.join(' | '));
+console.log('tri par échéance (20 juin < Août < 2026) :',
+  order[0].includes("l'arbre") && order[1].includes('panneaux') && order[2].includes('Drainage'),
+  '(P-6 « 2026 » finit dernier malgré un début au 1er janvier)');
 
 // ===== 1. Fiche projet : signalements rattachés =====
 await page.goto('http://localhost:8765/projets.html?id=P-1');
@@ -114,7 +131,8 @@ for (let i = 0; i < nPins && !(assignedChecked && freeChecked); i++) {
     console.log('popup assigné — renvoi :', (await popup.locator('.jr-redirect').textContent()).trim());
     console.log('popup assigné — balise projet :', (await popup.locator('.project-chip').count()) === 1);
     console.log('popup assigné — AUCUN composeur ni bouton de clôture :',
-      (await popup.locator('.jr-composer').count()) === 0 && (await popup.locator('.close-btn').count()) === 0);
+      (await popup.locator('.jr-composer').count()) === 0
+      && (await popup.locator('.close-btn').count()) === 0);
     await popup.screenshot({ path: '/tmp/p4-popup-assigne.png' });
   } else if (!hasRedirect && !freeChecked) {
     freeChecked = true;
@@ -131,10 +149,47 @@ console.log('popup — les deux cas rencontrés :', assignedChecked && freeCheck
 const mapFuPost = posts.find((p) => p.action === 'appendFollowup');
 console.log('appendFollowup envoyé :', JSON.stringify({ rowIndex: mapFuPost.rowIndex, text: mapFuPost.text, author: mapFuPost.author }));
 
+// ===== 3a. Déplacement d'un repère — l'entrée est le repère lui-même =====
+await page.goto('http://localhost:8765/map.html');
+await page.waitForSelector('.marker-pin', { timeout: 10000 });
+// Ouvrir un popup → le repère prend l'icône de déplacement + une infobulle.
+await page.locator('.marker-pin').first().click();
+await page.waitForSelector('.leaflet-popup', { timeout: 5000 });
+await page.waitForTimeout(300);
+console.log('déplacement — repère prêt (pin-move-ready) :', await page.locator('.marker-pin.pin-move-ready').count() === 1);
+console.log('déplacement — état prêt = icône flèche, PAS de glow ocre :',
+  await page.locator('.marker-pin.pin-move-ready wa-icon[name="up-down-left-right"]').count() === 1
+  && await page.locator('.marker-pin.pin-moving').count() === 0);
+console.log('déplacement — infobulle « toucher pour déplacer » :', await page.locator('.move-tip').count() === 1);
+// Toucher le repère (devenu cliquable) démarre le mode déplacement.
+await page.locator('.marker-pin.pin-move-ready').click();
+await page.waitForTimeout(400);
+console.log('déplacement — barre visible :', await page.locator('#relocateBar:not([hidden])').count() === 1);
+console.log('déplacement — repère pulsé (pin-moving) :', await page.locator('.marker-pin.pin-moving').count() === 1);
+console.log('déplacement — repère = bouton de validation (crochet) :',
+  await page.locator('.marker-pin.pin-moving wa-icon[name="check"]').count() === 1);
+console.log('déplacement — popup fermé pendant le glissé :', await page.locator('.leaflet-popup').count() === 0);
+// Valider en touchant le repère lui-même (le crochet) — pas la barre.
+await page.locator('.marker-pin.pin-moving').click();
+// Pendant l'enregistrement (réponse retardée) : feedback clair, repère figé.
+await page.waitForSelector('.marker-pin.pin-saving', { timeout: 2000 });
+console.log('déplacement — feedback enregistrement (spinner figé) :',
+  await page.locator('.marker-pin.pin-saving').count() === 1
+  && await page.locator('.marker-pin.pin-moving').count() === 0);
+console.log('déplacement — barre « Enregistrement… », boutons masqués :',
+  (await page.locator('.relocate-bar__text').textContent()).includes('Enregistrement')
+  && await page.locator('.relocate-bar__actions').isHidden());
+await page.waitForTimeout(900); // laisse la sauvegarde se terminer
+const movePost = posts.find((p) => p.action === 'updateLocation');
+console.log('déplacement — updateLocation envoyé :',
+  movePost ? JSON.stringify({ rowIndex: movePost.rowIndex, lat: +movePost.latitude.toFixed(4) }) : 'NON');
+console.log('déplacement — barre refermée après confirmation :',
+  await page.locator('#relocateBar:not([hidden])').count() === 0);
+
 // ===== 3b. Filtre projet sur la carte =====
 await page.goto('http://localhost:8765/map.html');
 await page.waitForSelector('.marker-pin', { timeout: 10000 });
-console.log('filtre projet — options :', await page.locator('#projectFilter option').count(), '(attendu : 4 — Tous/Sans/P-1/P-2)');
+console.log('filtre projet — options :', await page.locator('#projectFilter option').count(), '(attendu : 5 — Tous/Sans/P-1/P-2/P-6)');
 console.log('filtre projet — pins par défaut :', await page.locator('.marker-pin').count(), '(attendu : 3, tout visible)');
 await page.selectOption('#projectFilter', 'aucun');
 await page.waitForTimeout(400);

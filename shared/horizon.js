@@ -15,7 +15,8 @@
 //
 // Expose sur window.ORFORD :
 //   formatHorizon(start, end)     → libellé humain
-//   horizonSortKey(start)         → nombre pour trier (vide → +Infinity)
+//   horizonSortKey(start, end)    → clé de tri par échéance (vide → +Infinity)
+//   compareHorizon(a, b)          → comparateur {start,end} par échéance crois.
 //   detectHorizonKind(start, end) → { kind, year, month, season } pour
 //                                   pré-remplir le formulaire d'édition
 //   seasonRange(season, year)     → { start, end } d'une saison
@@ -137,15 +138,27 @@
     }
   }
 
-  // Clé de tri : les projets sans date (« À planifier ») vont en dernier.
-  function horizonSortKey(start) {
-    const p = parseIso(start);
+  // Clé de tri par ÉCHÉANCE : date de fin (repli sur le début si la fin
+  // manque). Les projets sans date (« À planifier ») vont en dernier.
+  function horizonSortKey(start, end) {
+    const p = parseIso(end) || parseIso(start);
     return p ? toDate(p).getTime() : Infinity;
+  }
+
+  // Comparateur de projets par échéance croissante : celui qui se termine le
+  // plus tôt d'abord (« 20 juin » avant « Été » avant « 2026 »). À fin égale,
+  // le plus précis — celui qui commence le plus tard — passe devant.
+  function compareHorizon(a, b) {
+    const k = horizonSortKey(a.start, a.end) - horizonSortKey(b.start, b.end);
+    if (k !== 0) return k;
+    const sa = parseIso(a.start), sb = parseIso(b.start);
+    return (sb ? toDate(sb).getTime() : 0) - (sa ? toDate(sa).getTime() : 0);
   }
 
   window.ORFORD = window.ORFORD || {};
   window.ORFORD.formatHorizon     = formatHorizon;
   window.ORFORD.horizonSortKey    = horizonSortKey;
+  window.ORFORD.compareHorizon    = compareHorizon;
   window.ORFORD.detectHorizonKind = detectHorizonKind;
   window.ORFORD.seasonRange       = seasonRange;
 })();

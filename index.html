@@ -443,6 +443,11 @@
     // =========================================================
     const ENDPOINT_URL = window.ORFORD.ENDPOINT_URL;
 
+    // Distance max (m) entre une position AUTOMATIQUE (EXIF/GPS) et le sentier
+    // choisi pour l'« aimanter » sur le tracé. Au-delà, on refuse l'envoi et on
+    // demande de vérifier le sentier ou de placer le repère à la main.
+    const TRAIL_SNAP_MAX_M = 100;
+
     // =========================================================
     // State
     // =========================================================
@@ -784,6 +789,35 @@
         return;
       }
 
+      // Aimantation sur le tracé — uniquement pour une position AUTOMATIQUE
+      // (EXIF de la photo ou GPS de l'appareil), jamais pour un placement
+      // manuel sur la carte (volontaire, y compris hors sentier). Si le sentier
+      // choisi a un tracé : au-delà du seuil on refuse l'envoi (sentier
+      // probablement erroné), sinon on ramène le repère sur la perpendiculaire
+      // la plus proche pour corriger l'imprécision GPS.
+      let snappedToTrail = false;
+      if (state.gpsSource === 'exif' || state.gpsSource === 'device') {
+        const near = await window.ORFORD.nearestPointOnTrail(
+          els.trail.value, state.latitude, state.longitude
+        );
+        if (near && near.distance > TRAIL_SNAP_MAX_M) {
+          els.gpsField.hidden = false;
+          setGpsStatus(
+            'Le repère est à ' + Math.round(near.distance) + ' m du sentier choisi. '
+            + 'Vérifiez le sentier sélectionné, ou placez le repère manuellement sur la carte.',
+            'err'
+          );
+          els.gpsField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          showStatus('Position trop loin du sentier choisi.', 'err');
+          return;
+        }
+        if (near && near.distance > 1) { // déjà sur le tracé → on ne bouge rien
+          state.latitude  = near.lat;
+          state.longitude = near.lng;
+          snappedToTrail  = true;
+        }
+      }
+
       const trail = els.trail.value;
       const category = els.category.value;
 
@@ -838,7 +872,8 @@
         const coordsSent = (state.latitude != null && state.longitude != null)
           ? ` (${state.latitude.toFixed(5)}, ${state.longitude.toFixed(5)})`
           : ' (sans position GPS)';
-        showStatus('Signalement envoyé. Merci beaucoup!' + coordsSent, 'ok');
+        const adjustNote = snappedToTrail ? ' Position ramenée sur le tracé du sentier.' : '';
+        showStatus('Signalement envoyé. Merci beaucoup!' + coordsSent + adjustNote, 'ok');
         resetForm();
       } catch (err) {
         console.error(err);

@@ -622,7 +622,7 @@
   <script>
     const ENDPOINT_URL      = window.ORFORD.ENDPOINT_URL;
     const formatHorizon     = window.ORFORD.formatHorizon;
-    const horizonSortKey    = window.ORFORD.horizonSortKey;
+    const compareHorizon    = window.ORFORD.compareHorizon;
     const detectHorizonKind = window.ORFORD.detectHorizonKind;
     const seasonRange       = window.ORFORD.seasonRange;
     const getTrailList      = window.ORFORD.getTrailList;
@@ -720,7 +720,7 @@
     // Sous-titre du hero — identique quelle que soit la vue affichée.
     function updateStats() {
       const active = projects.filter(function (p) { return p.status === 'Actif'; })
-        .sort(function (a, b) { return horizonSortKey(a.start) - horizonSortKey(b.start); });
+        .sort(compareHorizon);
       const next = active.find(function (p) { return p.start; });
       document.getElementById('stats').textContent = active.length === 0
         ? 'Aucun projet actif'
@@ -749,9 +749,9 @@
 
     function renderList() {
       const active = projects.filter(function (p) { return p.status === 'Actif'; })
-        .sort(function (a, b) { return horizonSortKey(a.start) - horizonSortKey(b.start); });
+        .sort(compareHorizon);
       const closed = projects.filter(function (p) { return p.status !== 'Actif'; })
-        .sort(function (a, b) { return horizonSortKey(b.start) - horizonSortKey(a.start); });
+        .sort(function (a, b) { return compareHorizon(b, a); });
 
       const planned   = active.filter(function (p) { return p.start; });
       const unplanned = active.filter(function (p) { return !p.start; });

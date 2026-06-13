@@ -285,8 +285,8 @@ L'ordre des colonnes de `appendRow()` doit correspondre à celui de
 | A   | Horodatage          | Date de création |
 | B   | Sentier             | |
 | C   | Catégorie           | |
-| D   | Latitude            | vide si « à localiser » |
-| E   | Longitude           | vide si « à localiser » |
+| D   | Latitude            | toujours rempli (position obligatoire à l'envoi) |
+| E   | Longitude           | toujours rempli |
 | F   | Précision GPS (m)   | |
 | G   | Source GPS          | `Appareil` / `Photo EXIF` / `Choix manuel` |
 | H   | Lien Maps           | calculé depuis lat/lng |
@@ -311,7 +311,7 @@ auto-réparé à la première création si besoin.
 | `action`         | Niveau requis | Effet |
 |------------------|---------------|-------|
 | *(aucune)*       | communauté ou comité | `createReport` — nouveau signalement (statut `Nouveau`). |
-| `updateLocation` | **comité** | Met à jour lat/lng/source/lien Maps d'une ligne existante (repère posé a posteriori depuis le tiroir « à localiser »). |
+| `updateLocation` | **comité** | Met à jour lat/lng/source/lien Maps d'une ligne existante (déplacement d'un repère mal placé depuis la carte). |
 | `updateStatus`   | **comité** | Clôt un signalement — uniquement `Clôturé` ou `Doublon` (liste blanche ; `Résolu` accepté en héritage). |
 | `appendFollowup` | **comité** | Ajoute une entrée datée au journal de suivi (col. O), **sans jamais écraser** l'existant. |
 | `createProject`  | **comité** | Nouveau projet (onglet `Projets`, ID auto-incrémenté, statut `Actif`). |
@@ -326,10 +326,10 @@ refus renvoie `{ ok:false, authError:true, error }`, ce qui déclenche une
 re-demande de mot de passe côté client.
 
 `doGet` n'exige **aucun** mot de passe (consultation libre) et renvoie **toutes**
-les lignes en JSON (`{ ok, count, reports }`), y compris celles sans coordonnées :
-c'est le client (`map.html`) qui sépare les signalements « plaçables » de ceux
-« à localiser ». Les vignettes photo sont servies via
-`https://drive.google.com/thumbnail?id=…`.
+les lignes en JSON (`{ ok, count, reports }`). La position étant obligatoire à
+l'envoi, chaque signalement a des coordonnées ; le client (`map.html`) ignore par
+prudence toute ligne sans coordonnées plutôt que de planter. Les vignettes photo
+sont servies via `https://drive.google.com/thumbnail?id=…`.
 
 ### Authentification (deux mots de passe)
 

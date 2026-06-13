@@ -70,6 +70,14 @@ sur place.
 > **Le signalement ne peut être envoyé sans photo ni sans position.**
 > C'est voulu : un signalement incomplet est très difficile à traiter.
 
+> **Précision automatique.** Quand la position vient de la photo ou du GPS
+> de l'appareil, le site la ramène doucement sur le tracé du **sentier
+> choisi** (le GPS est rarement parfait sous les arbres). Si le repère
+> tombe à plus d'une centaine de mètres du sentier, l'envoi est refusé et
+> on vous demande de vérifier le sentier sélectionné ou de placer le
+> repère à la main. Un repère que **vous** placez sur la carte est
+> toujours gardé tel quel — pratique pour un problème en dehors du sentier.
+
 ### Étape 2 — Choisir le sentier et la catégorie
 
 - **Sentier** : sélectionnez le sentier concerné dans la liste. Si vous
@@ -215,25 +223,32 @@ demande le **mot de passe du comité** (mémorisé après la première fois).
 > projet (voir « Organiser les projets »). L'heure exacte d'une entrée
 > apparaît au survol de sa date.
 
-### Les signalements « à localiser »
+### Déplacer un repère mal placé
 
-Quand un signalement n'a pas de position GPS (par exemple parce qu'il a
-été envoyé sans GPS ou rapporté à un membre du comité oralement), il
-n'apparaît pas sur la carte. Pour ne pas le perdre, le bandeau du haut
-affiche un petit bouton orangé **« N à localiser »**.
+Tous les signalements ont une position (c'est obligatoire à l'envoi), mais
+elle n'est pas toujours parfaite : un GPS imprécis sous les arbres, ou un
+repère posé un peu à côté. Vous pouvez corriger **n'importe quel** repère
+directement sur la carte.
 
-![La pastille « à localiser » et le tiroir qui s'ouvre avec la liste des signalements sans position](docs/screenshots/carte-tiroir-a-localiser.png)
+C'est une opération rare, donc l'entrée est discrète — **aucun bouton
+supplémentaire** : c'est le repère lui-même qui devient l'entrée.
 
-Touchez ce bouton pour ouvrir un tiroir avec la liste de ces
-signalements. Pour chacun, deux gestes possibles :
+1. Touchez le repère pour ouvrir son popup. Le repère prend alors l'**icône
+   de déplacement** (les flèches) et une petite bulle apparaît : *« Touchez
+   le repère pour le déplacer »*.
+2. Touchez à nouveau le repère. Le popup se referme et le repère passe en
+   **mode déplacement** : il devient orangé, clignote, et son icône se change
+   en crochet ✓. Glissez-le à sa juste place.
+3. Touchez le repère (le ✓) — ou le bouton **Confirmer** de la barre du bas —
+   pour enregistrer. **Annuler** le remet où il était. Tant que vous n'avez
+   pas confirmé, rien n'est modifié.
 
-- **Localiser sur la carte** — ouvre une mini-carte sur laquelle vous
-  placez le repère ; touchez **Confirmer** pour enregistrer la position.
-  Le signalement quitte alors la liste et apparaît sur la carte
-  principale.
-- **✓ Clôturer / Doublon** — si le signalement est déjà obsolète, vous
-  pouvez le clôturer sans le localiser. (S'il fait partie d'un projet,
-  la balise « 📁 … » remplace ces boutons.)
+![Quand le popup d'un repère est ouvert, le repère prend l'icône de déplacement et une bulle invite à le toucher pour le déplacer](docs/screenshots/carte-mode-deplacement.png)
+
+> **Bon à savoir.** Le déplacement est possible même sur un signalement
+> déjà dans un projet ou déjà clôturé : corriger *où* se trouve un
+> problème est indépendant de son suivi. Un repère que vous placez à la
+> main est toujours respecté tel quel (jamais ramené sur le sentier).
 
 ---
 
@@ -248,7 +263,8 @@ projets répondent à « *comment on s'organise pour le faire?* ».
 
 ### La liste des projets
 
-Les projets sont **triés par date** : le plus proche en haut. Chaque
+Les projets sont **triés par échéance** : ce qui doit être fait en premier
+en haut (le 20 juin avant « cet été » avant « en 2026 »). Chaque
 carte montre la **période visée** (badge), le **titre**, les **sentiers**
 concernés, le nombre de **signalements** rattachés et les
 **participants**. En bas :
@@ -379,9 +395,8 @@ première fois qu'il fait une action de comité.
 - **Tout le monde** (avec le mot de passe communauté) : signaler, et bien
   sûr consulter la carte et les projets sans aucun mot de passe.
 - **Le comité** (avec le mot de passe comité) : clôturer un signalement,
-  ajouter un suivi, placer un repère sur un signalement « à localiser »,
-  et **gérer les projets** (créer, modifier, assigner des signalements,
-  journal, marquer terminé).
+  ajouter un suivi, déplacer un repère mal placé, et **gérer les projets**
+  (créer, modifier, assigner des signalements, journal, marquer terminé).
 
 ### Le numéro de ligne
 
@@ -400,12 +415,11 @@ pas été choisie).
   répondre.
 - **« Mot de passe incorrect » / « Action réservée au comité »** :
   vérifiez le mot de passe (communauté pour signaler, comité pour
-  clôturer / suivi / placer un repère). Demandez-le à un membre du comité
+  clôturer / suivi / déplacer un repère). Demandez-le à un membre du comité
   si besoin.
-- **Un signalement n'apparaît pas sur la carte** : il est probablement
-  dans le tiroir **« à localiser »** (sans GPS), ou son statut est
-  *Résolu / Doublon* et donc masqué — réactivez ces filtres dans la
-  légende pour le voir.
+- **Un signalement n'apparaît pas sur la carte** : son statut est
+  probablement *Clôturé / Doublon* et donc masqué — réactivez ces filtres
+  dans la légende pour le voir. Vérifiez aussi le filtre par projet.
 
 ---
 

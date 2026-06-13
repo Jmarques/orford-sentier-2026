@@ -197,6 +197,32 @@
     /* Mode assignation : ocre = déjà dans CE projet ; gris = dans un autre. */
     .marker-pin.pin-mine  { background: var(--ochre); }
     .marker-pin.pin-other { background: #98a39c; opacity: 0.8; }
+    /* Repère « prêt à déplacer » (son popup est ouvert) : aucune mise en valeur
+       — il garde sa couleur de statut, seule l'icône change (flèche). Simple
+       bouton ; le curseur main signale qu'il est cliquable. */
+    .marker-pin.pin-move-ready { cursor: pointer; }
+    /* Repère en cours de déplacement : ocre + halo pulsé pour le distinguer,
+       et il sert de bouton de validation (crochet). */
+    .marker-pin.pin-moving {
+      background: var(--ochre);
+      box-shadow: 0 0 0 4px rgba(232, 147, 39, 0.30);
+      animation: pin-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pin-pulse {
+      0%, 100% { box-shadow: 0 0 0 4px rgba(232, 147, 39, 0.30); }
+      50%      { box-shadow: 0 0 0 9px rgba(232, 147, 39, 0.10); }
+    }
+    /* Repère pendant l'enregistrement : ocre figé (pas de halo) + spinner. */
+    .marker-pin.pin-saving { background: var(--ochre); cursor: default; }
+    .pin-spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      border-top-color: var(--paper);
+      border-radius: 50%;
+      animation: pin-spin 0.7s linear infinite;
+    }
+    @keyframes pin-spin { to { transform: rotate(360deg); } }
     .marker-pin__icon {
       /* Counter-rotate so the icon stays upright inside the tilted pin */
       transform: rotate(45deg);
@@ -326,10 +352,9 @@
       color: var(--muted);
       margin: 2px 0 6px;
     }
-    /* Chip « Projet : … » — la balise qui mène à la fiche du projet.
-       (Utilisée dans l'accordéon du popup ET dans le tiroir « à localiser ».) */
-    .popup .project-chip,
-    .todo-item .project-chip {
+    /* Chip « Projet : … » — la balise qui mène à la fiche du projet,
+       dans l'accordéon du popup. */
+    .popup .project-chip {
       display: inline-flex;
       align-items: center;
       gap: 5px;
@@ -347,10 +372,8 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .popup .project-chip:hover,
-    .todo-item .project-chip:hover { background: rgba(31, 58, 46, 0.14); }
-    .popup .project-chip wa-icon,
-    .todo-item .project-chip wa-icon { font-size: 11px; color: var(--moss); flex-shrink: 0; }
+    .popup .project-chip:hover { background: rgba(31, 58, 46, 0.14); }
+    .popup .project-chip wa-icon { font-size: 11px; color: var(--moss); flex-shrink: 0; }
 
     /* Actions du mode assignation, dans le popup. */
     .popup .assign-btn {
@@ -421,7 +444,7 @@
     .assign-banner__exit:hover { background: var(--forest-deep); }
     .assign-banner__exit wa-icon { font-size: 12px; }
 
-    /* ---------- Close-report controls (popup + drawer) ---------- */
+    /* ---------- Close-report controls (popup) ---------- */
     .close-row {
       display: flex;
       align-items: center;
@@ -456,7 +479,6 @@
       color: var(--muted);
     }
     .close-btn--dup:hover { background: rgba(31, 58, 46, 0.12); }
-    .todo-item__close { margin-top: 8px; }
 
     /* ---------- Suivi & résolution — accordion (popup) ---------- */
     .popup .fa {
@@ -513,191 +535,6 @@
     }
     .popup .jr-composer { font-size: 12px; }
 
-    /* ---------- "À localiser" chip in the hero ---------- */
-    .todo-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: 10px;
-      padding: 3px 10px 3px 8px;
-      background: rgba(164, 87, 46, 0.14);
-      color: var(--clay);
-      border: 1px solid rgba(164, 87, 46, 0.28);
-      border-radius: 999px;
-      font: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .todo-chip:hover,
-    .todo-chip:focus-visible {
-      background: rgba(164, 87, 46, 0.22);
-      outline: none;
-    }
-    .todo-chip wa-icon { font-size: 12px; }
-
-    /* ---------- Admin drawer (slides up from the bottom) ---------- */
-    .drawer-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 36, 27, 0.4);
-      z-index: 1100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.18s ease;
-    }
-    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
-
-    .drawer {
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      max-height: 80vh;
-      max-height: 80dvh;
-      background: var(--paper);
-      border-top-left-radius: 14px;
-      border-top-right-radius: 14px;
-      box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
-      z-index: 1200;
-      transform: translateY(100%);
-      transition: transform 0.22s ease;
-      display: flex;
-      flex-direction: column;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .drawer.open { transform: translateY(0); }
-    .drawer__handle {
-      width: 40px; height: 4px;
-      background: rgba(31, 58, 46, 0.2);
-      border-radius: 2px;
-      margin: 8px auto 4px;
-      flex-shrink: 0;
-    }
-    .drawer__head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px 12px;
-      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
-      flex-shrink: 0;
-    }
-    .drawer__title {
-      font-family: 'Fraunces', serif;
-      font-weight: 600;
-      font-size: 18px;
-      color: var(--forest-deep);
-      margin: 0;
-    }
-    .drawer__close { background: none; border: none; cursor: pointer; padding: 4px; color: var(--muted); }
-    .drawer__close:hover { color: var(--forest-deep); }
-
-    /* List view */
-    .drawer__body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-    .todo-list { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
-    .todo-item {
-      display: flex;
-      gap: 12px;
-      padding: 12px;
-      background: var(--paper-warm);
-      border: 1px solid rgba(31, 58, 46, 0.1);
-      border-radius: 10px;
-    }
-    .todo-item__thumb {
-      flex-shrink: 0;
-      width: 84px; height: 84px;
-      border-radius: 8px;
-      background: rgba(31, 58, 46, 0.06);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--moss);
-      position: relative;
-    }
-    .todo-item__thumb wa-icon { font-size: 28px; }
-    .todo-item__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-    .todo-item__cat {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--forest-deep);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .todo-item__cat wa-icon { color: var(--moss); font-size: 13px; }
-    .todo-item__sub {
-      font-size: 12px;
-      color: var(--muted);
-      font-variant-numeric: tabular-nums;
-    }
-    .todo-item__notes {
-      font-size: 13px;
-      color: var(--text);
-      margin: 4px 0 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .todo-item__action { margin-top: 8px; align-self: flex-start; }
-
-    .drawer__empty {
-      padding: 32px 20px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .drawer__empty wa-icon { font-size: 28px; color: var(--success); display: block; margin: 0 auto 8px; }
-
-    /* The list wrapper uses display:contents so its children participate
-       directly in the drawer's flex layout. Edit view sits below as a
-       sibling. We toggle visibility via [data-state]. */
-    .drawer__list { display: contents; }
-    .drawer__edit { display: flex; flex-direction: column; height: 100%; }
-    .drawer[data-state="edit"] .drawer__list { display: none; }
-    .drawer[data-state="list"] .drawer__edit { display: none; }
-    .edit-summary {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      padding: 10px 16px;
-      background: var(--paper-warm);
-      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
-      flex-shrink: 0;
-    }
-    .edit-summary__thumb {
-      width: 44px; height: 44px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: rgba(31, 58, 46, 0.08);
-      flex-shrink: 0;
-    }
-    .edit-summary__text { min-width: 0; flex: 1; }
-    .edit-summary__cat { font-size: 13px; font-weight: 600; color: var(--forest-deep); }
-    .edit-summary__sub { font-size: 11px; color: var(--muted); }
-
-    .edit-hint {
-      padding: 8px 16px;
-      background: rgba(192, 138, 47, 0.1);
-      color: #8a6120;
-      font-size: 13px;
-      border-bottom: 1px solid rgba(192, 138, 47, 0.18);
-      flex-shrink: 0;
-    }
-    .edit-map {
-      flex: 1;
-      min-height: 280px;
-      background: var(--paper-warm);
-    }
-    .edit-actions {
-      display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid rgba(31, 58, 46, 0.1);
-      background: var(--paper);
-      flex-shrink: 0;
-    }
-    .edit-actions wa-button { flex: 1; }
-
     /* Toast */
     .toast {
       position: fixed;
@@ -717,6 +554,57 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .toast.err { background: var(--clay); }
+
+    /* Infobulle « Touchez le repère pour le déplacer » (popup ouvert). */
+    .move-tip {
+      background: var(--forest-deep);
+      color: var(--paper);
+      border: none;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+    .move-tip.leaflet-tooltip-bottom::before { border-bottom-color: var(--forest-deep); }
+
+    /* ---------- Barre du mode déplacement d'un repère ---------- */
+    .relocate-bar {
+      position: fixed;
+      left: 50%;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 1300;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: calc(100% - 24px);
+      padding: 8px 8px 8px 16px;
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.15);
+      border-radius: 999px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+    }
+    .relocate-bar__text { font-size: 13px; color: var(--forest-deep); }
+    .relocate-bar__actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .relocate-bar button {
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .relocate-btn--confirm { background: var(--success); color: var(--paper); }
+    .relocate-btn--confirm:hover { background: #245840; }
+    .relocate-btn--confirm:disabled { opacity: 0.6; cursor: default; }
+    .relocate-btn--cancel {
+      background: transparent;
+      color: var(--muted);
+      border-color: rgba(31, 58, 46, 0.2);
+    }
+    .relocate-btn--cancel:hover { background: rgba(31, 58, 46, 0.08); }
 
     /* ---------- State overlay ---------- */
     .state {
@@ -744,10 +632,6 @@
     <h1>Carte des <em>signalements</em></h1>
     <p class="page-hero__subtitle">
       <span id="stats">Chargement…</span>
-      <button type="button" id="todoChip" class="todo-chip" hidden>
-        <wa-icon name="location-dot" variant="solid"></wa-icon>
-        <span id="todoChipCount">0</span> à localiser
-      </button>
     </p>
   </header>
 
@@ -803,48 +687,17 @@
 
   <site-footer></site-footer>
 
-  <!-- Admin drawer: list of reports without coords + inline picker -->
-  <div id="drawerBackdrop" class="drawer-backdrop" hidden></div>
-  <aside id="drawer" class="drawer" data-state="list" hidden aria-hidden="true">
-    <div class="drawer__handle" aria-hidden="true"></div>
-
-    <!-- LIST VIEW -->
-    <div class="drawer__list">
-      <div class="drawer__head">
-        <h2 class="drawer__title">À localiser sur la carte</h2>
-        <button type="button" class="drawer__close" id="drawerCloseBtn" aria-label="Fermer">
-          <wa-icon name="xmark" variant="solid"></wa-icon>
-        </button>
-      </div>
-      <div class="drawer__body">
-        <div id="todoList" class="todo-list"></div>
-      </div>
-    </div>
-
-    <!-- EDIT VIEW -->
-    <div class="drawer__edit">
-      <div class="drawer__head">
-        <h2 class="drawer__title">Placer le repère</h2>
-        <button type="button" class="drawer__close" id="editCloseBtn" aria-label="Retour à la liste">
-          <wa-icon name="arrow-left" variant="solid"></wa-icon>
-        </button>
-      </div>
-      <div class="edit-summary" id="editSummary"></div>
-      <p class="edit-hint">Touchez la carte pour placer un repère. Vous pouvez le glisser pour ajuster.</p>
-      <div id="editMap" class="edit-map"></div>
-      <div class="edit-actions">
-        <wa-button id="editCancelBtn" appearance="outlined" variant="neutral" type="button">
-          Annuler
-        </wa-button>
-        <wa-button id="editConfirmBtn" appearance="filled" variant="brand" type="button" disabled>
-          <wa-icon slot="start" name="check" variant="solid"></wa-icon>
-          Confirmer
-        </wa-button>
-      </div>
-    </div>
-  </aside>
-
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Barre du mode déplacement : remplace le popup pendant qu'on glisse un
+       repère. Masquée hors de ce mode. -->
+  <div id="relocateBar" class="relocate-bar" hidden role="status" aria-live="polite">
+    <span class="relocate-bar__text">Glissez le repère à sa juste place.</span>
+    <span class="relocate-bar__actions">
+      <button type="button" id="relocateCancel" class="relocate-btn--cancel">Annuler</button>
+      <button type="button" id="relocateConfirm" class="relocate-btn--confirm">Confirmer</button>
+    </span>
+  </div>
 
   <div id="stateBox" class="state">Chargement…</div>
 
@@ -1077,6 +930,8 @@
 
       // Closure controls live INSIDE the expanded accordion — closing is part
       // of the resolution workflow (write a final follow-up, then mark closed).
+      // (Le déplacement du repère n'est PAS un bouton : pendant que le popup est
+      // ouvert, le repère lui-même devient l'entrée — voir popupopen.)
       const closeRow = sc === 'clos' ? '' :
         '<div class="close-row">'
         +   '<button type="button" class="close-btn" onclick="closeReport(' + r.rowIndex + ', \'Clôturé\')">'
@@ -1159,8 +1014,8 @@
     // =========================================================
     // Fetch & render
     // =========================================================
-    // Module-level state so the drawer/edit flow can mutate the cluster
-    // and counters in place (no full page reload after a successful update).
+    // Module-level state so updates re-render the cluster in place
+    // (no full page reload after a successful change).
     const cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
       spiderfyOnMaxZoom:   true,
@@ -1170,9 +1025,10 @@
     map.addLayer(cluster);
 
     let placedCount = 0;
-    let pendingReports = []; // open reports without coordinates
     let allReports = [];     // every report from the server — source of truth for re-render
     let trailColorMap = {};  // trail name → colour (pre-fetched so popupHtml is synchronous)
+    let markersByRow = {};   // rowIndex → Leaflet marker (rebuilt at each render)
+    let relocating = null;   // { rowIndex, marker, start } pendant un déplacement de repère
 
     const FAMILY_KEYS = ['nature', 'signalisation', 'infrastructure', 'terrain', 'dechets', 'autre'];
     // Legend filters. Closed statuses (resolu/doublon) start hidden — the
@@ -1237,39 +1093,29 @@
 
     function updateCounters() {
       setStats(placedCount);
-      const chip  = document.getElementById('todoChip');
-      const count = document.getElementById('todoChipCount');
-      if (pendingReports.length > 0) {
-        count.textContent = pendingReports.length;
-        chip.hidden = false;
-      } else {
-        chip.hidden = true;
-      }
     }
 
     function addPlacedMarker(r) {
       const m = L.marker([r.latitude, r.longitude], { icon: makeIcon(r) });
       m.bindPopup(popupHtml(r), { minWidth: 260, maxWidth: 300, maxHeight: 460 });
+      m._report = r; // référence pour le mode déplacement (popupopen/close)
       cluster.addLayer(m);
+      markersByRow[r.rowIndex] = m; // pour pouvoir « soulever » ce repère lors d'un déplacement
       placedCount++;
     }
 
-    // Rebuilds markers + the "à localiser" list from allReports. A pin shows
-    // only if its status and type both pass the legend filters; closed reports
-    // never appear in the to-locate list. Pass fit=true to recentre the map on
+    // Rebuilds the markers from allReports. A pin shows only if its status and
+    // type both pass the legend filters. Pass fit=true to recentre the map on
     // the visible pins (only wanted on the initial load).
     function render(fit) {
       placedCount = 0;
-      pendingReports = [];
-      let locatedTotal = 0; // reports with coords, before the legend filters
+      markersByRow = {};
       cluster.clearLayers();
 
       allReports.forEach(function (r) {
-        if (Number.isFinite(r.latitude) && Number.isFinite(r.longitude)) {
-          locatedTotal++;
-          if (isVisibleOnMap(r)) addPlacedMarker(r);
-        } else if (!isClosed(r)) {
-          pendingReports.push(r);
+        if (Number.isFinite(r.latitude) && Number.isFinite(r.longitude)
+            && isVisibleOnMap(r)) {
+          addPlacedMarker(r);
         }
       });
 
@@ -1278,8 +1124,6 @@
         hideState();
       } else if (allReports.length === 0) {
         showState('Aucun signalement pour l\'instant.');
-      } else if (locatedTotal === 0 && pendingReports.length > 0) {
-        showState('Aucun signalement n\'est encore localisé. Ouvrez « à localiser » pour commencer.');
       } else {
         showState('Aucun signalement à afficher avec ces filtres.');
       }
@@ -1429,233 +1273,6 @@
     }
 
     // =========================================================
-    // Admin drawer — list pending reports + inline picker
-    // =========================================================
-    const drawerEl    = document.getElementById('drawer');
-    const backdropEl  = document.getElementById('drawerBackdrop');
-    const todoListEl  = document.getElementById('todoList');
-    const editSummary = document.getElementById('editSummary');
-
-    let editMap        = null;
-    let editMarker     = null;
-    let editingReport  = null; // the report currently being placed
-
-    function openDrawer() {
-      drawerEl.hidden = false;
-      backdropEl.hidden = false;
-      // next frame so the transition runs
-      requestAnimationFrame(() => {
-        drawerEl.classList.add('open');
-        backdropEl.classList.add('open');
-      });
-      drawerEl.setAttribute('aria-hidden', 'false');
-      drawerEl.dataset.state = 'list';
-      renderTodoList();
-    }
-
-    function closeDrawer() {
-      drawerEl.classList.remove('open');
-      backdropEl.classList.remove('open');
-      drawerEl.setAttribute('aria-hidden', 'true');
-      // hide elements after transition completes (220ms)
-      setTimeout(() => {
-        drawerEl.hidden = true;
-        backdropEl.hidden = true;
-        // tear down the edit map so it's fresh next time
-        if (editMap) { editMap.remove(); editMap = null; editMarker = null; }
-        editingReport = null;
-      }, 240);
-    }
-
-    document.getElementById('todoChip').addEventListener('click', openDrawer);
-    document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
-    backdropEl.addEventListener('click', closeDrawer);
-
-    function renderTodoList() {
-      if (pendingReports.length === 0) {
-        todoListEl.innerHTML =
-          '<div class="drawer__empty">' +
-            '<wa-icon name="circle-check" variant="solid"></wa-icon>' +
-            'Tout est localisé. Bon travail!' +
-          '</div>';
-        return;
-      }
-
-      todoListEl.innerHTML = pendingReports.map(itemHtml).join('');
-      // Wire up each "Localiser" button
-      todoListEl.querySelectorAll('[data-row]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const row = parseInt(btn.dataset.row, 10);
-          const r = pendingReports.find((x) => x.rowIndex === row);
-          if (r) openEditView(r);
-        });
-      });
-      // Wire up the "Résolu / Doublon" closure buttons
-      todoListEl.querySelectorAll('[data-close-row]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          closePending(parseInt(btn.dataset.closeRow, 10), btn.dataset.reason);
-        });
-      });
-    }
-
-    function itemHtml(r) {
-      const famIcon = FAMILY_ICONS[categoryFamily(r.category)];
-      // Always render the family icon — it acts as a fallback if the photo
-      // fails to load (img.onerror removes the <img> and the icon shows through).
-      const thumb =
-        '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>' +
-        (r.photoThumb
-          ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" ' +
-            'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" ' +
-            'onerror="this.remove()" />'
-          : '');
-      const sub = [escapeHtml(r.trail || ''), formatDate(r.timestamp)]
-        .filter(Boolean).join(' · ');
-      const notes = r.notes
-        ? '<p class="todo-item__notes">' + escapeHtml(r.notes) + '</p>'
-        : '';
-      const reporter = r.reporterName
-        ? '<p class="todo-item__sub" style="font-style: italic;">par ' + escapeHtml(r.reporterName) + '</p>'
-        : '';
-
-      // Tâche dans un projet : pas de clôture individuelle ici non plus —
-      // renvoi vers la fiche (même règle que le popup).
-      let closeRow;
-      if (r.project) {
-        const proj = projectsById[r.project];
-        closeRow = '<div class="todo-item__close">'
-          + '<a class="project-chip" href="projets.html?id=' + encodeURIComponent(r.project) + '">'
-          + '<wa-icon name="folder-open" variant="solid"></wa-icon>'
-          + escapeHtml(proj ? proj.title : r.project) + '</a></div>';
-      } else {
-        closeRow = '<div class="todo-item__close close-row">'
-          + '<button type="button" class="close-btn" data-close-row="' + r.rowIndex + '" data-reason="Clôturé">'
-          +   '<wa-icon name="circle-check" variant="solid"></wa-icon>Clôturer</button>'
-          + '<button type="button" class="close-btn close-btn--dup" data-close-row="' + r.rowIndex + '" data-reason="Doublon">Doublon</button>'
-          + '</div>';
-      }
-
-      return '<div class="todo-item">' +
-        '<div class="todo-item__thumb">' + thumb + '</div>' +
-        '<div class="todo-item__body">' +
-          '<div class="todo-item__cat">' +
-            '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>' +
-            escapeHtml(r.category || 'Sans catégorie') +
-          '</div>' +
-          '<div class="todo-item__sub">' + sub + '</div>' +
-          notes +
-          reporter +
-          '<wa-button class="todo-item__action" appearance="filled" variant="brand" size="s" data-row="' + r.rowIndex + '">' +
-            '<wa-icon slot="start" name="map-pin" variant="solid"></wa-icon>' +
-            'Localiser sur la carte' +
-          '</wa-button>' +
-          closeRow +
-        '</div>' +
-      '</div>';
-    }
-
-    // =========================================================
-    // Edit view — Leaflet picker scoped to the drawer
-    // =========================================================
-    function openEditView(report) {
-      editingReport = report;
-      drawerEl.dataset.state = 'edit';
-
-      // Render the compact summary
-      const famIcon = FAMILY_ICONS[categoryFamily(report.category)];
-      const thumb = report.photoThumb
-        ? '<img class="edit-summary__thumb" src="' + escapeHtml(report.photoThumb) + '" alt="" onerror="this.style.display=\'none\'" />'
-        : '<div class="edit-summary__thumb" style="display:flex;align-items:center;justify-content:center;color:var(--moss);"><wa-icon name="' + famIcon + '" variant="solid"></wa-icon></div>';
-      editSummary.innerHTML = thumb +
-        '<div class="edit-summary__text">' +
-          '<div class="edit-summary__cat">' + escapeHtml(report.category || 'Sans catégorie') + '</div>' +
-          '<div class="edit-summary__sub">' +
-            escapeHtml([report.trail, formatDate(report.timestamp)].filter(Boolean).join(' · ')) +
-          '</div>' +
-        '</div>';
-
-      // Init / reset the picker map
-      if (!editMap) {
-        editMap = L.map('editMap', { zoomControl: true }).setView(MAP_CENTER, MAP_ZOOM);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(editMap);
-        window.ORFORD.addTrailsToMap(editMap);
-        editMap.on('click', (e) => placeEditPin(e.latlng));
-      } else {
-        if (editMarker) { editMap.removeLayer(editMarker); editMarker = null; }
-        editMap.setView(MAP_CENTER, MAP_ZOOM);
-      }
-      // Force tile recalculation now that the container is visible
-      setTimeout(() => editMap.invalidateSize(), 60);
-
-      document.getElementById('editConfirmBtn').setAttribute('disabled', '');
-    }
-
-    function placeEditPin(latlng) {
-      if (editMarker) {
-        editMarker.setLatLng(latlng);
-      } else {
-        editMarker = L.marker(latlng, { draggable: true }).addTo(editMap);
-      }
-      document.getElementById('editConfirmBtn').removeAttribute('disabled');
-    }
-
-    document.getElementById('editCloseBtn').addEventListener('click', backToList);
-    document.getElementById('editCancelBtn').addEventListener('click', backToList);
-    document.getElementById('editConfirmBtn').addEventListener('click', confirmEdit);
-
-    function backToList() {
-      drawerEl.dataset.state = 'list';
-      if (editMarker && editMap) { editMap.removeLayer(editMarker); editMarker = null; }
-      editingReport = null;
-    }
-
-    async function confirmEdit() {
-      if (!editingReport || !editMarker) return;
-      const btn = document.getElementById('editConfirmBtn');
-      btn.setAttribute('loading', '');
-      btn.setAttribute('disabled', '');
-
-      const latlng = editMarker.getLatLng();
-      try {
-        const data = await ORFORD_AUTH.post({
-          action:    'updateLocation',
-          rowIndex:  editingReport.rowIndex,
-          latitude:  latlng.lat,
-          longitude: latlng.lng,
-        }, { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' });
-        if (data.cancelled) return;
-        if (!data.ok) throw new Error(data.error || 'Échec.');
-
-        // Update the source of truth, then re-render so the report moves
-        // from pending → placed (no reload).
-        const r = allReports.find((x) => x.rowIndex === editingReport.rowIndex);
-        if (r) {
-          r.latitude  = latlng.lat;
-          r.longitude = latlng.lng;
-          r.gpsSource = 'Choix manuel (différé)';
-        }
-        render(false);
-        showToast('Position enregistrée');
-
-        if (pendingReports.length === 0) {
-          closeDrawer();
-        } else {
-          backToList();
-          renderTodoList();
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Échec : ' + err.message, true);
-      } finally {
-        btn.removeAttribute('loading');
-        btn.removeAttribute('disabled');
-      }
-    }
-
-    // =========================================================
     // Clôture d'un signalement (Résolu / Doublon)
     // =========================================================
     // Shared confirm + POST. Returns true once the server has recorded
@@ -1715,11 +1332,185 @@
     }
     window.setReportProjectUI = setReportProjectUI; // referenced by inline onclick
 
-    // Branche le composeur du journal quand un popup s'ouvre (le HTML du
-    // popup est une chaîne statique — on ne peut attacher les écouteurs
-    // qu'une fois l'élément dans le DOM). wireComposer est idempotent :
-    // rouvrir le même popup ne double pas les écouteurs.
+    // =========================================================
+    // Déplacement d'un repère (correction de position)
+    // ---------------------------------------------------------
+    // Action rare et délibérée, SANS bouton : pendant que son popup est ouvert,
+    // le repère prend l'icône de déplacement et devient cliquable (+ infobulle).
+    // Le toucher démarre le mode dédié : popup fermé, repère déplaçable, barre
+    // Confirmer/Annuler, et rien n'est écrit tant qu'on n'a pas confirmé. On
+    // n'arme jamais le glisser tout court (un panoramique le bougerait par
+    // accident) : il faut le clic délibéré sur le repère, popup ouvert.
+    // =========================================================
+    // Icône « prêt à déplacer » : affichée sur le repère pendant que SON popup
+    // est ouvert. Elle remplace l'icône de catégorie par la flèche de
+    // déplacement + un anneau ocre, pour inviter à toucher le repère (pas de
+    // bouton dans le popup). makeMovingIcon, elle, sert pendant le glissé actif.
+    function makeMoveReadyIcon(r) {
+      // État « prêt à déplacer » : le repère garde sa COULEUR DE STATUT et son
+      // allure normale (pas d'ocre, pas de halo) — seule l'icône devient la
+      // flèche de déplacement. C'est un bouton discret. onclick + stopPropagation
+      // DANS l'icône : le clic démarre le déplacement sans remonter jusqu'au
+      // gestionnaire de Leaflet (qui rouvrirait le popup).
+      const pinClass = 'status-' + statusClass(r.status);
+      return L.divIcon({
+        className: '',
+        html:
+          '<div class="marker-pin ' + pinClass + ' pin-move-ready" ' +
+              'onclick="event.stopPropagation();startRelocate(' + r.rowIndex + ')">' +
+            '<span class="marker-pin__icon">' +
+              '<wa-icon name="up-down-left-right" variant="solid"></wa-icon>' +
+            '</span>' +
+          '</div>',
+        iconSize:   [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -28]
+      });
+    }
+
+    function makeSavingIcon() {
+      // Pendant l'enregistrement : repère figé (spinner, plus de halo pulsé, ni
+      // déplaçable ni cliquable) — signal clair que la position part au serveur.
+      return L.divIcon({
+        className: '',
+        html:
+          '<div class="marker-pin pin-saving">' +
+            '<span class="marker-pin__icon"><span class="pin-spinner"></span></span>' +
+          '</div>',
+        iconSize:   [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -28]
+      });
+    }
+
+    function makeMovingIcon() {
+      // En cours de déplacement : ocre + halo pulsé (mise en valeur forte), et le
+      // repère devient un bouton de VALIDATION — l'icône passe au crochet et le
+      // toucher confirme la nouvelle position (comme « Confirmer » dans la barre).
+      return L.divIcon({
+        className: '',
+        html:
+          '<div class="marker-pin pin-moving" ' +
+              'onclick="event.stopPropagation();confirmRelocate()">' +
+            '<span class="marker-pin__icon">' +
+              '<wa-icon name="check" variant="solid"></wa-icon>' +
+            '</span>' +
+          '</div>',
+        iconSize:   [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -28]
+      });
+    }
+
+    function startRelocate(rowIndex) {
+      if (relocating) cancelRelocate();
+      const r = allReports.find(function (x) { return x.rowIndex === rowIndex; });
+      if (!r || !Number.isFinite(r.latitude) || !Number.isFinite(r.longitude)) return;
+      map.closePopup();
+      // On retire le repère statique du cluster le temps d'en manipuler une
+      // copie déplaçable (sinon deux repères se superposeraient).
+      const orig = markersByRow[rowIndex];
+      if (orig) cluster.removeLayer(orig);
+
+      const start = { lat: r.latitude, lng: r.longitude };
+      const marker = L.marker([start.lat, start.lng], {
+        draggable: true,
+        autoPan: true,
+        icon: makeMovingIcon(),
+        zIndexOffset: 1000,
+      }).addTo(map);
+      relocating = { rowIndex: rowIndex, marker: marker, start: start };
+
+      // Un peu de zoom pour un placement précis, sans dérouter l'utilisateur.
+      if (map.getZoom() < 16) map.setView([start.lat, start.lng], 16, { animate: true });
+      else map.panTo([start.lat, start.lng], { animate: true });
+
+      document.getElementById('relocateBar').hidden = false;
+    }
+    window.startRelocate = startRelocate; // referenced by inline onclick in popups
+
+    function cancelRelocate() {
+      if (!relocating || relocating.saving) return; // pas d'annulation en plein enregistrement
+      map.removeLayer(relocating.marker);
+      const orig = markersByRow[relocating.rowIndex];
+      if (orig) cluster.addLayer(orig); // on remet le repère à sa place d'origine
+      relocating = null;
+      document.getElementById('relocateBar').hidden = true;
+    }
+
+    // Barre : libellé + boutons selon l'état (édition ↔ enregistrement).
+    function setRelocateBarSaving(saving) {
+      const bar = document.getElementById('relocateBar');
+      bar.querySelector('.relocate-bar__text').textContent =
+        saving ? 'Enregistrement…' : 'Glissez le repère à sa juste place.';
+      bar.querySelector('.relocate-bar__actions').hidden = saving;
+    }
+
+    // Remet le repère en mode déplaçable (après une annulation ou un échec).
+    function restoreMovingMarker() {
+      if (!relocating) return;
+      relocating.saving = false;
+      relocating.marker.setIcon(makeMovingIcon());
+      if (relocating.marker.dragging) relocating.marker.dragging.enable();
+    }
+
+    async function confirmRelocate() {
+      if (!relocating || relocating.saving) return; // garde anti double-envoi
+      relocating.saving = true;
+      const rowIndex = relocating.rowIndex;
+      const latlng = relocating.marker.getLatLng();
+
+      // Feedback « en cours » : le repère se fige (spinner, plus de glow, ni
+      // déplaçable ni cliquable) et la barre passe à « Enregistrement… ».
+      if (relocating.marker.dragging) relocating.marker.dragging.disable();
+      relocating.marker.setIcon(makeSavingIcon());
+      setRelocateBarSaving(true);
+
+      try {
+        const data = await ORFORD_AUTH.post(
+          { action: 'updateLocation', rowIndex: rowIndex, latitude: latlng.lat, longitude: latlng.lng },
+          { title: 'Accès comité', message: 'Entrez le mot de passe du comité.' }
+        );
+        if (data.cancelled) { restoreMovingMarker(); setRelocateBarSaving(false); return; }
+        if (!data.ok) throw new Error(data.error || 'Échec.');
+        const r = allReports.find(function (x) { return x.rowIndex === rowIndex; });
+        if (r) { r.latitude = latlng.lat; r.longitude = latlng.lng; }
+        // Démontage du mode, puis re-rendu depuis la source de vérité.
+        map.removeLayer(relocating.marker);
+        relocating = null;
+        document.getElementById('relocateBar').hidden = true;
+        setRelocateBarSaving(false); // remet la barre à l'état édition pour la prochaine fois
+        render(false);
+        showToast('Position enregistrée');
+      } catch (err) {
+        console.error(err);
+        showToast('Échec : ' + err.message, true);
+        restoreMovingMarker();   // on peut réessayer
+        setRelocateBarSaving(false);
+      }
+    }
+
+    window.confirmRelocate = confirmRelocate; // référencé par l'onclick du repère (crochet)
+    document.getElementById('relocateConfirm').addEventListener('click', confirmRelocate);
+    document.getElementById('relocateCancel').addEventListener('click', cancelRelocate);
+
+    // À l'ouverture d'un popup : (1) affordance de déplacement sur le repère,
+    // (2) branchement du composeur du journal.
     map.on('popupopen', function (e) {
+      // 1) Affordance de déplacement : le repère devient l'entrée (icône +
+      //    infobulle + clic). Désactivée en mode assignation, où le clic du
+      //    repère sert à assigner — on ne mélange pas les deux gestes.
+      const marker = e.popup._source;
+      if (marker && marker._report && !assignProject) {
+        marker.setIcon(makeMoveReadyIcon(marker._report));
+        marker.bindTooltip('Touchez le repère pour le déplacer', {
+          direction: 'bottom', offset: [0, 4], opacity: 1, className: 'move-tip',
+        }).openTooltip();
+      }
+
+      // 2) Composeur du journal (le HTML du popup est une chaîne statique — on
+      //    n'attache les écouteurs qu'une fois l'élément dans le DOM).
+      //    wireComposer est idempotent : rouvrir le même popup ne double pas.
       const el = e.popup.getElement();
       const composer = el && el.querySelector('.jr-composer');
       if (!composer) return;
@@ -1749,24 +1540,23 @@
       });
     });
 
-    // Pending (no-GPS) report from the drawer: mark closed, refresh the list.
-    async function closePending(rowIndex, reason) {
-      try {
-        if (!(await postStatus(rowIndex, reason))) return;
-        const r = allReports.find((x) => x.rowIndex === rowIndex);
-        if (r) r.status = reason;
-        render(false);
-        showToast('Signalement clôturé : ' + reason);
-        if (pendingReports.length === 0) {
-          closeDrawer();
-        } else {
-          renderTodoList();
-        }
-      } catch (err) {
-        console.error(err);
-        showToast('Échec : ' + err.message, true);
-      }
-    }
+    // À la fermeture du popup : on retire l'affordance de déplacement et on
+    // restaure l'icône normale du repère (sauf si on vient d'entrer en mode
+    // déplacement — render() reconstruira de toute façon les repères).
+    map.on('popupclose', function (e) {
+      const marker = e.popup._source;
+      if (!marker || !marker._report) return;
+      if (marker.getTooltip()) marker.unbindTooltip();
+      // Restaurer l'icône AU PROCHAIN TICK, et seulement si le repère est encore
+      // sur la carte. Si le popup se ferme parce que render() vide le cluster, un
+      // setIcon synchrone recréerait une icône orpheline (un repère fantôme qui
+      // intercepte les clics) ; en différant, clearLayers a fini et hasLayer est
+      // alors faux, donc on ne touche pas à un repère qui part.
+      setTimeout(function () {
+        if (cluster.hasLayer(marker)) marker.setIcon(makeIcon(marker._report));
+      }, 0);
+    });
+
   </script>
 </body>
 </html>

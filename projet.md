@@ -29,7 +29,7 @@ frein. Le public est en grande partie des boomers → voir
 |---|-------|----------|
 | 1 | **Nom** | « **Projet** » — c'est le mot employé naturellement par le comité. |
 | 2 | **Emplacement** | **Nouvelle page `projets.html`**, entrée dédiée dans le bandeau (Signaler · Carte · Corvées · Projets · Guide). |
-| 3 | **Horizon** | **Plage de dates** (début/fin) avec raccourcis de saisie : date précise (20 juin → début = fin), mois, saison, année. Tri par date de début. Affichage humain : « 20 juin », « Août », « Été 2026 », « 2027 ». Plage vide = « À planifier ». |
+| 3 | **Horizon** | **Plage de dates** (début/fin) avec raccourcis de saisie : date précise (20 juin → début = fin), mois, saison, année. Tri par **date de fin (échéance)** croissante. Affichage humain : « 20 juin », « Août », « Été 2026 », « 2027 ». Plage vide = « À planifier ». |
 | 4 | **Sentiers** | Relation **0..N** : multi-select dans le formulaire, stocké en une colonne (noms séparés par des virgules). |
 | 5 | **Champs descriptifs** | **Titre** (= le but, court et actionnable) + **Description** libre. Pas de champs matériel/budget dédiés : le **placeholder de la Description suggère un mini-modèle** (Problème / Solution retenue / Matériel / Budget) — guide sans obliger. Les approbations de budget (événements datés) iront au **journal** (Phase 3). On ajoutera un champ dédié seulement si l'usage montre que l'info se perd. |
 | 6 | **Signalements** | Un signalement appartient à **0 ou 1 projet** ; un projet a 0..N signalements. Colonne `Projet` dans l'onglet `Signalements` ; la liste côté projet se recalcule en filtrant. |
@@ -113,7 +113,7 @@ colonne P), et **redéployer** l'application Web après modification.
 
 ### Liste (vue par défaut)
 
-- Projets `Actif` triés par **date de début** croissante ; « À planifier »
+- Projets `Actif` triés par **date de fin (échéance)** croissante ; « À planifier »
   (sans date) en bas ; `Terminé` / `Abandonné` repliés tout en bas.
   **Pas de groupes visuels** « En retard / À venir » — le tri par date
   suffit, les regroupements n'ajoutaient que du bruit.

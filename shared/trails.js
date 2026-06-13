@@ -157,6 +157,61 @@
     return layer;
   }
 
+  // Projette le point `p` ([lng, lat]) sur le segment [a, b] et renvoie le
+  // pied de la perpendiculaire, BORNÉ aux extrémités du segment (si le pied
+  // tombe au-delà, c'est l'extrémité la plus proche). Calcul dans un plan
+  // local équirectangulaire autour de `p` (mètres) — exact à l'échelle d'un
+  // sentier. Retourne un point [lng, lat].
+  function projectOnSegment(p, a, b) {
+    const mPerDegLat = 111320;
+    const mPerDegLng = 111320 * Math.cos((p[1] * Math.PI) / 180);
+    const toXY = (c) => [(c[0] - p[0]) * mPerDegLng, (c[1] - p[1]) * mPerDegLat];
+    const A = toXY(a), B = toXY(b); // P est l'origine (0, 0)
+    const ABx = B[0] - A[0], ABy = B[1] - A[1];
+    const ab2 = ABx * ABx + ABy * ABy;
+    let t = ab2 ? (-A[0] * ABx - A[1] * ABy) / ab2 : 0;
+    t = Math.max(0, Math.min(1, t)); // borne aux extrémités
+    const fx = A[0] + t * ABx, fy = A[1] + t * ABy;
+    return [p[0] + fx / mPerDegLng, p[1] + fy / mPerDegLat];
+  }
+
+  // Point le plus proche du TRACÉ d'un sentier donné (sa ligne principale ET
+  // ses sous-sections `parent`, mais pas les accès/connecteurs), par projection
+  // perpendiculaire sur le segment le plus proche. Sert à « aimanter » une
+  // position GPS imprécise sur le sentier choisi. Retourne
+  // { lat, lng, distance } (mètres), ou null si le sentier n'a pas de tracé
+  // (« Autre sentier », sentier absent du GeoJSON) — auquel cas on n'aimante pas.
+  async function nearestPointOnTrail(trailName, lat, lng) {
+    const data = await loadTrails();
+    if (!data || !Array.isArray(data.features)) return null;
+    const target = normalize(trailName);
+    if (!target) return null;
+
+    const lines = [];
+    for (const f of data.features) {
+      const props = (f && f.properties) || {};
+      if (props.kind === 'access') continue;
+      if (normalize(props.name) !== target && normalize(props.parent) !== target) continue;
+      const g = f.geometry;
+      if (!g) continue;
+      if (g.type === 'LineString') lines.push(g.coordinates);
+      else if (g.type === 'MultiLineString') g.coordinates.forEach((c) => lines.push(c));
+    }
+    if (lines.length === 0) return null;
+
+    const p = [lng, lat];
+    let best = null, bestDist = Infinity;
+    for (const coords of lines) {
+      for (let i = 1; i < coords.length; i++) {
+        const foot = projectOnSegment(p, coords[i - 1], coords[i]);
+        const d = haversine(p, foot);
+        if (d < bestDist) { bestDist = d; best = foot; }
+      }
+    }
+    if (!best) return null;
+    return { lat: best[1], lng: best[0], distance: bestDist };
+  }
+
   // Strip accents + lowercase, so "Sapiniére" matches "Sapinière" etc.
   // Won't paper over real divergences (e.g. "des" vs "de l'") but it
   // forgives typos and case differences between the HTML and GeoJSON.
@@ -215,5 +270,6 @@
   window.ORFORD.addTrailsToMap     = addTrailsToMap;
   window.ORFORD.getTrailColor      = getTrailColor;
   window.ORFORD.getTrailList       = getTrailList;
+  window.ORFORD.nearestPointOnTrail = nearestPointOnTrail;
   window.ORFORD.TRAIL_FALLBACK_COLOR = FALLBACK_COLOR;
 })();

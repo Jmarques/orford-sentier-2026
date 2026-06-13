@@ -63,8 +63,8 @@ const FAKE_REPORTS = [
     notes: 'Pancarte du circuit bleu décollée du poteau.',
     priority: '', status: 'Nouveau', followup: '' },
   { rowIndex: 7, timestamp: '2026-05-22T13:15:00Z', trail: 'Sentier des Ruisseaux',
-    category: 'Érosion', latitude: null, longitude: null, accuracy: null,
-    gpsSource: '', photoUrl: '',
+    category: 'Érosion', latitude: 45.3016, longitude: -72.2688, accuracy: 11,
+    gpsSource: 'Appareil', photoUrl: '',
     photoThumb: 'https://picsum.photos/seed/ru-erosion/600/400',
     photoName: '', reporterName: 'Visiteur',
     notes: "Le sentier s'enfonce après la côte du castor.",
@@ -91,12 +91,12 @@ const FAKE_REPORTS = [
     priority: '', status: 'Résolu',
     followup: '[2026-05-02 11:00 · Louise M.] Coupé et déplacé samedi matin.' },
 
-  // À localiser sans sentier précisé
+  // Signalement sans sentier précisé (mais positionné, comme tous désormais)
   { rowIndex: 10, timestamp: '2026-05-25T10:00:00Z', trail: '',
-    category: 'Autre', latitude: null, longitude: null, accuracy: null,
-    gpsSource: '', photoUrl: '', photoThumb: '', photoName: '',
+    category: 'Autre', latitude: 45.3027, longitude: -72.2702, accuracy: 18,
+    gpsSource: 'Choisi sur la carte', photoUrl: '', photoThumb: '', photoName: '',
     reporterName: 'Anonyme',
-    notes: "Un randonneur m'a parlé d'une zone très boueuse, je ne sais pas où.",
+    notes: "Zone très boueuse signalée par un randonneur.",
     priority: '', status: 'Nouveau', followup: '' },
 
   // Un doublon (sur les déchets)
@@ -231,14 +231,17 @@ async function main() {
   const closePopup = page.locator('.leaflet-popup .fa__body');
   await shot(closePopup, 'carte-popup-cloture');
 
-  // ----- Carte — tiroir « à localiser » ------------------------------
+  // ----- Carte — déplacer un repère (l'entrée est le repère) ---------
+  // Ouvrir un popup fait prendre au repère l'icône de déplacement + une
+  // infobulle « touchez pour déplacer » : c'est l'affordance, sans bouton.
   await page.goto(BASE + '/map.html', { waitUntil: 'networkidle' });
-  await page.waitForSelector('#todoChip:not([hidden])');
+  await page.waitForSelector('.marker-pin');
   await page.waitForTimeout(800);
-  await page.click('#todoChip');
-  await page.waitForSelector('#drawer.open');
-  await page.waitForTimeout(500);
-  await shot(page, 'carte-tiroir-a-localiser');
+  await page.locator('.marker-pin').first().click();
+  await page.waitForSelector('.marker-pin.pin-move-ready');
+  await page.waitForSelector('.move-tip');
+  await page.waitForTimeout(400);
+  await shot(page, 'carte-mode-deplacement');
 
   // (Page Corvées : retirée de la navigation en juin 2026 — plus de
   //  captures. Le code de corvees.html est conservé, hors nav.)
