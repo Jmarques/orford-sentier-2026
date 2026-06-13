@@ -82,9 +82,11 @@ Pages disponibles une fois le serveur lancé :
 
 - http://localhost:8765/index.html — **Signaler** (formulaire)
 - http://localhost:8765/map.html — **Carte**
-- http://localhost:8765/corvees.html — **Corvées**
 - http://localhost:8765/projets.html — **Projets**
 - http://localhost:8765/guide.html — **Guide**
+- http://localhost:8765/corvees.html — **Corvées** *(retirée de la
+  navigation en juin 2026 — le filtre « Sans projet » de la carte a repris
+  son rôle de triage ; le code est conservé, la page reste accessible par URL)*
 
 ### Option sans dépendance — Python (pas d'auto-reload)
 
@@ -103,15 +105,18 @@ Il faut alors **rafraîchir le navigateur à la main** après chaque modificatio
   ([eruda](https://github.com/liriliri/eruda)) directement sur la page —
   pratique pour déboguer sur un vrai téléphone.
 - **Paramètres d'URL de la carte** : `map.html` accepte des filtres
-  pré-appliqués via la query string, utilisés par la page Corvées :
+  pré-appliqués via la query string :
   - `?trail=Sentier%20des%20Ruisseaux` — n'affiche qu'un sentier.
   - `?type=dechets` — ne montre qu'un type (`nature`, `signalisation`,
     `infrastructure`, `terrain`, `dechets`, `autre`).
-  - Les deux se combinent : `?trail=…&type=dechets`.
+  - `?projet=aucun` — seulement les signalements **sans projet** (la vue
+    triage) ; `?projet=P-3` — ceux d'un projet donné (utilisé par le lien
+    « Voir sur la carte » des fiches). Le menu « Tous les projets » de la
+    légende offre les mêmes choix à la main.
+  - Tous se combinent : `?trail=…&type=dechets&projet=aucun`.
   - `?assigner=P-3` — **mode assignation** (depuis une fiche projet) :
     bannière de contexte, pré-filtre sur les sentiers du projet, et une
-    action « Assigner / Retirer » dans chaque popup. `?projet=` est
-    **réservé** à un futur filtre d'affichage par projet.
+    action « Assigner / Retirer » dans chaque popup.
 
 ---
 
@@ -121,7 +126,7 @@ Il faut alors **rafraîchir le navigateur à la main** après chaque modificatio
 .
 ├── index.html            # Page « Signaler » (formulaire mobile)
 ├── map.html              # Carte des signalements (+ outils comité, mode assignation)
-├── corvees.html          # Console d'organisation (matrice sentier × type)
+├── corvees.html          # Matrice sentier × type (hors navigation, conservée)
 ├── projets.html          # Projets d'entretien (liste, fiche, création, clôture)
 ├── guide.html            # Rend GUIDE.md en page web
 ├── code.gs               # Back-end Google Apps Script (à déployer côté Google)

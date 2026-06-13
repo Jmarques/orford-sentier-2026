@@ -786,6 +786,14 @@
         <option value="*">Tous les sentiers</option>
       </select>
     </div>
+    <!-- Filtre par projet — même pilule que le filtre sentier. « Sans
+         projet » = la vue triage (ce qui n'a pas encore de plan). Masqué en
+         mode assignation, qui a son propre pré-filtrage. -->
+    <div class="legend-group legend-group--trail" id="projectFilterGroup">
+      <select id="projectFilter" class="trail-filter" aria-label="Filtrer par projet" title="Tous les signalements, ceux sans projet, ou ceux d'un projet donné">
+        <option value="*">Tous les projets</option>
+      </select>
+    </div>
     <div class="legend-group" role="group" aria-label="Calques">
       <button type="button" class="legend-item legend-item--off" id="oldTracesToggle" aria-pressed="false" data-tip="Anciens tracés" aria-label="Afficher les anciens tracés (cartes papier)"><span class="legend-icon"><wa-icon name="scroll" variant="solid"></wa-icon></span></button>
     </div>
@@ -1172,6 +1180,8 @@
     const activeStatuses = new Set(['nouveau']);
     const activeFamilies = new Set(FAMILY_KEYS);
     let activeTrail = null; // null = all trails; '' matches reports with no trail
+    // null = tous ; 'aucun' = sans projet (vue triage) ; sinon un ID (P-3).
+    let activeProjectFilter = null;
 
     function isClosed(r) { return statusClass(r.status) === 'clos'; }
     // La valeur spéciale '@projet' du filtre sentier (mode assignation,
@@ -1186,10 +1196,16 @@
       }
       return t === normTrail(activeTrail);
     }
+    function projectFilterMatches(r) {
+      if (activeProjectFilter === null) return true;
+      if (activeProjectFilter === 'aucun') return !r.project;
+      return r.project === activeProjectFilter;
+    }
     function isVisibleOnMap(r) {
       return activeStatuses.has(statusKey(r.status)) &&
              activeFamilies.has(categoryFamily(r.category)) &&
-             trailMatches((r.trail || '').trim());
+             trailMatches((r.trail || '').trim()) &&
+             projectFilterMatches(r);
     }
 
     // Initial filters can be driven by URL params (e.g. when opened from the
@@ -1198,6 +1214,10 @@
       const p = new URLSearchParams(location.search);
       const trail = p.get('trail');
       if (trail !== null) activeTrail = trail.trim();
+      // ?projet=aucun (sans projet) ou ?projet=P-3 — validé une fois les
+      // projets chargés (populateProjectFilter). Ignoré en mode assignation.
+      const proj = p.get('projet');
+      if (proj && !ASSIGN_ID) activeProjectFilter = proj.trim();
       const type = p.get('type');
       if (type) {
         const fams = type.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
@@ -1278,6 +1298,7 @@
         allProjects.forEach(function (p) { projectsById[p.id] = p; });
         setupAssignMode();
         populateTrailFilter();
+        populateProjectFilter();
         // Pre-fetch the colour of every trail present in the data so the popup
         // can render the trail-dot synchronously.
         const trailKeys = Array.from(new Set(allReports.map(function (r) {
@@ -1352,6 +1373,36 @@
       activeTrail = e.target.value === '*' ? null : e.target.value;
       render(false);
       updateTrailVisibility();
+    });
+
+    // Menu « projets » : Tous / Sans projet (triage) / un projet actif.
+    // Un ID venu de l'URL mais inconnu (projet supprimé, faute de frappe)
+    // retombe silencieusement sur « Tous ».
+    function populateProjectFilter() {
+      const group = document.getElementById('projectFilterGroup');
+      if (assignProject) { group.hidden = true; return; }
+      const sel = document.getElementById('projectFilter');
+      const actives = allProjects.filter(function (p) { return p.status === 'Actif'; });
+      const optionFor = function (p) {
+        return '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.title) + '</option>';
+      };
+      // Un projet clos visé par l'URL reste sélectionnable (lien de sa fiche).
+      let extra = '';
+      if (activeProjectFilter && activeProjectFilter !== 'aucun'
+          && !actives.some(function (p) { return p.id === activeProjectFilter; })) {
+        const p = projectsById[activeProjectFilter];
+        if (p) extra = optionFor(p); else activeProjectFilter = null;
+      }
+      sel.innerHTML = '<option value="*">Tous les projets</option>'
+        + '<option value="aucun">Sans projet</option>'
+        + extra
+        + actives.map(optionFor).join('');
+      sel.value = activeProjectFilter === null ? '*' : activeProjectFilter;
+    }
+
+    document.getElementById('projectFilter').addEventListener('change', function (e) {
+      activeProjectFilter = e.target.value === '*' ? null : e.target.value;
+      render(false);
     });
 
     // Turn each legend entry into a show/hide filter for the map. The dimmed

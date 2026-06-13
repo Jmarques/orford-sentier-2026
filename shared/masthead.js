@@ -26,7 +26,6 @@ class SiteMasthead extends HTMLElement {
       <nav class="masthead__nav" aria-label="Pages du site">
         ${link('index.html',   'Signaler', 'signaler')}
         ${link('map.html',     'Carte',    'carte')}
-        ${link('corvees.html', 'Corvées',  'corvees')}
         ${link('projets.html', 'Projets',  'projets')}
       </nav>
     `;

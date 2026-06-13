@@ -240,22 +240,8 @@ async function main() {
   await page.waitForTimeout(500);
   await shot(page, 'carte-tiroir-a-localiser');
 
-  // ----- Corvées — vue d'ensemble -----------------------------------
-  await page.goto(BASE + '/corvees.html', { waitUntil: 'networkidle' });
-  await page.waitForSelector('.matrix');
-  await page.waitForTimeout(800);
-  await shot(page, 'corvees-vue-densemble');
-
-  // Gros plan sur les cartes par sentier
-  const cards = page.locator('.trail-cards');
-  await shot(cards, 'corvees-cartes-sentier');
-
-  // ----- Carte arrivée depuis un clic sur Corvées -------------------
-  await page.goto(BASE + '/map.html?trail=' + encodeURIComponent('Sentier des Ruisseaux') + '&type=dechets',
-    { waitUntil: 'networkidle' });
-  await page.waitForSelector('.leaflet-marker-icon');
-  await page.waitForTimeout(1200);
-  await shot(page, 'corvees-vers-carte');
+  // (Page Corvées : retirée de la navigation en juin 2026 — plus de
+  //  captures. Le code de corvees.html est conservé, hors nav.)
 
   // ----- Carte — anciens tracés en transparence ----------------------
   await page.goto(BASE + '/map.html', { waitUntil: 'networkidle' });

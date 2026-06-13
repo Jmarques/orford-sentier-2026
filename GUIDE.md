@@ -7,27 +7,25 @@ on a essayé de tout illustrer.
 
 > Le site fonctionne dans n'importe quel navigateur récent (Chrome, Safari,
 > Firefox, Edge), sur ordinateur, tablette ou téléphone. **Pas de compte à
-> créer** : consulter la carte et les corvées est totalement libre. Pour
+> créer** : consulter la carte et les projets est totalement libre. Pour
 > *envoyer* quelque chose, un simple **mot de passe partagé** est demandé une
 > seule fois (voir « [Le mot de passe](#le-mot-de-passe) »).
 
 ## À quoi sert l'application
 
-L'application permet quatre choses :
+L'application permet trois choses :
 
 1. **Signaler** un problème vu sur un sentier (arbre tombé, déchets,
    pancarte brisée, ravinement, etc.) — avec une photo et la position.
 2. **Consulter la carte** des signalements pour voir où sont les
    problèmes, leur statut, et tous les détails.
-3. **Organiser les corvées** — la page « Corvées » montre, en un coup
-   d'œil, ce qui reste à faire par sentier et par type de tâche.
-4. **Planifier les projets** — la page « Projets » permet au comité de
+3. **Planifier les projets** — la page « Projets » permet au comité de
    regrouper des signalements en projets d'entretien, avec une date
    visée, du matériel, des participants et un journal de suivi.
 
 Toutes les pages se trouvent dans le bandeau du haut :
 
-![Le bandeau du haut avec les liens Signaler · Carte · Corvées · Projets](docs/screenshots/bandeau-navigation.png)
+![Le bandeau du haut avec les liens Signaler · Carte · Projets](docs/screenshots/bandeau-navigation.png)
 
 ---
 
@@ -131,6 +129,9 @@ sur la carte.
 - **Sentier** : un menu déroulant pour ne voir qu'**un seul sentier** à
   la fois. Quand un sentier est choisi, **le tracé GPS des autres
   sentiers est aussi masqué** pour éviter le bruit.
+- **Projet** : un second menu déroulant pour voir tous les signalements
+  (par défaut), seulement ceux **« Sans projet »** — pratique pour
+  repérer ce qui n'a pas encore de plan — ou ceux d'**un projet donné**.
 - **Anciens tracés** (icône parchemin 📜, tout à droite) : superpose en
   **transparence les anciennes cartes papier** numérisées des sentiers.
   Pratique pour comparer le tracé d'aujourd'hui avec celui d'autrefois,
@@ -236,66 +237,12 @@ signalements. Pour chacun, deux gestes possibles :
 
 ---
 
-## 3. Comprendre la page Corvées
-
-La page **Corvées** est l'outil d'organisation : elle montre, en un coup
-d'œil, **qui a quoi à faire**.
-
-![Vue d'ensemble de la page Corvées avec la matrice sentier × type et les cartes par sentier](docs/screenshots/corvees-vue-densemble.png)
-
-### La matrice sentier × type
-
-Une grande grille : **les sentiers en lignes**, **les types de tâche en
-colonnes** (Nature, Signalisation, Infrastructure, Terrain, Déchets,
-Autre). Chaque case contient le **nombre de tâches ouvertes** de ce type
-sur ce sentier.
-
-- **Les cases plus foncées** concentrent le plus de travail — un signal
-  visuel pour repérer les grappes.
-- À la dernière colonne et à la dernière ligne, vous trouvez les
-  **totaux** (par sentier, par type, et le grand total en bas à droite).
-
-### Chaque chiffre est cliquable
-
-Cliquer un nombre ouvre la **carte pré-filtrée** sur cette intersection.
-Quelques exemples :
-
-- Cliquer le **9** dans Sentier des Ruisseaux × Terrain → la carte
-  affiche uniquement les tâches *terrain* du sentier des *Ruisseaux*.
-- Cliquer un **total de ligne** → toutes les tâches du sentier (tous
-  types).
-- Cliquer un **total de colonne** → ce type sur tous les sentiers.
-- Cliquer le **grand total** en bas à droite → la carte avec tout ce qui
-  est ouvert.
-
-![Après un clic sur le 9 de Terrain/Ruisseaux : la carte est filtrée à ce sentier et à ce type](docs/screenshots/corvees-vers-carte.png)
-
-### Les cartes par sentier
-
-Sous la matrice, on retrouve une **carte par sentier**, triée du plus
-chargé au moins chargé. Chacune affiche :
-
-- Une **pastille de couleur** (la couleur du sentier sur la carte).
-- Le **nom du sentier** et le **nombre total** de tâches ouvertes.
-- Une rangée de **chips** par type, avec le nombre — chacun aussi
-  cliquable vers la carte filtrée.
-
-![Les cartes par sentier, triées du plus chargé au moins chargé](docs/screenshots/corvees-cartes-sentier.png)
-
-> **À noter — Localisé ou pas.** La matrice compte **toutes** les tâches
-> ouvertes, même celles « à localiser ». La carte, elle, ne peut
-> afficher que les tâches qui ont une position. Donc un « 9 » sur
-> Corvées peut donner 7 pins sur la carte + 2 dans le tiroir
-> « à localiser ». Pensez à vérifier les deux.
-
----
-
-## 4. Organiser les projets (mode comité)
+## 3. Organiser les projets (mode comité)
 
 La page **Projets** est l'agenda du comité : on y regroupe les
 signalements en **projets d'entretien**, chacun avec une période visée.
-C'est la réponse à « *comment on s'organise pour le faire?* » — là où
-Corvées répond à « *qu'est-ce qu'il y a à faire?* ».
+La carte répond à « *qu'est-ce qu'il y a à faire, et où?* » ; les
+projets répondent à « *comment on s'organise pour le faire?* ».
 
 ![La liste des projets triés par date, avec la section À planifier et les terminés repliés](docs/screenshots/projets-vue-densemble.png)
 
@@ -397,7 +344,7 @@ cochés** :
 
 ---
 
-## 5. Bon à savoir
+## 4. Bon à savoir
 
 ### Où sont les données
 
@@ -430,8 +377,7 @@ première fois qu'il fait une action de comité.
 ### Qui peut faire quoi
 
 - **Tout le monde** (avec le mot de passe communauté) : signaler, et bien
-  sûr consulter la carte, les corvées et les projets sans aucun mot de
-  passe.
+  sûr consulter la carte et les projets sans aucun mot de passe.
 - **Le comité** (avec le mot de passe comité) : clôturer un signalement,
   ajouter un suivi, placer un repère sur un signalement « à localiser »,
   et **gérer les projets** (créer, modifier, assigner des signalements,

@@ -245,10 +245,13 @@ Trois états visibles des repères dans ce mode :
 
 ### À réévaluer après usage
 
-- Sort de la page **Corvées** (boîte de triage « non assignés »? fusion dans
-  Projets? statu quo?).
-- **Filtre carte par projet** en mode normal (`?projet=P-3` ou
-  `?projet=P-3,P-7`) — le nom de paramètre est réservé pour ça.
+- ~~Sort de la page **Corvées**~~ → **tranché le 12 juin 2026** : retirée de
+  la navigation (code conservé, accessible par URL). Son utilité de triage
+  vit dans le **filtre projet de la carte** : menu « Tous les projets /
+  Sans projet / … » + `?projet=aucun` / `?projet=P-3` (lien « Voir sur la
+  carte » des fiches). Le défaut reste « tout afficher ». À noter : Jeremy
+  trouve que « Corvées » aurait été un bon nom pour les projets — le mot
+  redevient disponible si on renomme un jour.
 - **Champ « Matériel » dédié** (et/ou suivi de budget structuré) si l'usage
   montre que l'info se perd dans la Description.
 - Toute idée de participation des bénévoles hors comité (« Ça m'intéresse »).

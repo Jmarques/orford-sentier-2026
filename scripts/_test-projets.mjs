@@ -131,6 +131,28 @@ console.log('popup — les deux cas rencontrés :', assignedChecked && freeCheck
 const mapFuPost = posts.find((p) => p.action === 'appendFollowup');
 console.log('appendFollowup envoyé :', JSON.stringify({ rowIndex: mapFuPost.rowIndex, text: mapFuPost.text, author: mapFuPost.author }));
 
+// ===== 3b. Filtre projet sur la carte =====
+await page.goto('http://localhost:8765/map.html');
+await page.waitForSelector('.marker-pin', { timeout: 10000 });
+console.log('filtre projet — options :', await page.locator('#projectFilter option').count(), '(attendu : 4 — Tous/Sans/P-1/P-2)');
+console.log('filtre projet — pins par défaut :', await page.locator('.marker-pin').count(), '(attendu : 3, tout visible)');
+await page.selectOption('#projectFilter', 'aucun');
+await page.waitForTimeout(400);
+console.log('« Sans projet » — pins :', await page.locator('.marker-pin').count(), '(attendu : 1)');
+await page.selectOption('#projectFilter', 'P-1');
+await page.waitForTimeout(400);
+console.log('« P-1 » — pins :', await page.locator('.marker-pin').count(), '(attendu : 1)');
+await page.goto('http://localhost:8765/map.html?projet=aucun');
+await page.waitForSelector('.marker-pin', { timeout: 10000 });
+console.log('?projet=aucun — select :', await page.locator('#projectFilter').inputValue(),
+  '· pins :', await page.locator('.marker-pin').count(), '(attendu : aucun · 1)');
+await page.goto('http://localhost:8765/map.html?assigner=P-1');
+await page.waitForSelector('.marker-pin', { timeout: 10000 });
+console.log('mode assignation — filtre projet masqué :', await page.locator('#projectFilterGroup').isHidden());
+await page.goto('http://localhost:8765/projets.html?id=P-2');
+await page.waitForSelector('.fiche');
+console.log('fiche — lien « Voir sur la carte » :', await page.locator('.fiche__map-link').getAttribute('href'));
+
 // ===== 4. Mode assignation =====
 await page.goto('http://localhost:8765/map.html?assigner=P-1');
 await page.waitForSelector('.marker-pin', { timeout: 10000 });

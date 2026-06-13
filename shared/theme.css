@@ -36,6 +36,11 @@
 
 * { box-sizing: border-box; }
 
+/* L'attribut hidden doit TOUJOURS gagner — sans ce garde, n'importe quelle
+   classe posant un `display:` écrase silencieusement [hidden] (bug attrapé
+   trois fois : dialogue de clôture, bannière d'assignation, filtre projet). */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
