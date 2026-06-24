@@ -234,10 +234,34 @@
       padding-top: 14px;
       border-top: 1px solid rgba(31, 58, 46, 0.1);
       font-size: 14.5px;
-      white-space: pre-wrap;
       overflow-wrap: break-word;
     }
     .fiche__desc.is-empty { color: var(--muted); font-style: italic; }
+    .fiche__desc p { margin: 0 0 10px; }
+    .fiche__desc p:last-child { margin-bottom: 0; }
+    .fiche__desc .desc-h {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--forest-deep);
+      margin: 16px 0 5px;
+    }
+    .fiche__desc > .desc-h:first-child { margin-top: 0; }
+    .fiche__desc .desc-list { margin: 4px 0 10px; padding-left: 22px; }
+    .fiche__desc .desc-list li { margin: 3px 0; }
+    .fiche__desc strong { font-weight: 700; }
+
+    /* Aide-mémoire de mise en forme (replié par défaut) */
+    .desc-help { margin-top: 8px; font-size: 13px; --spacing: 10px; }
+    .desc-help::part(header) { font-size: 13px; color: var(--moss); padding: 8px 10px; }
+    .desc-help::part(base) { border-color: rgba(31, 58, 46, 0.14); background: var(--paper-warm); }
+    .desc-help table { border-collapse: collapse; width: 100%; }
+    .desc-help td { padding: 6px 8px; vertical-align: top; border-top: 1px solid rgba(31, 58, 46, 0.08); }
+    .desc-help tr:first-child td { border-top: 0; }
+    .desc-help code {
+      display: inline-block; background: rgba(31, 58, 46, 0.07);
+      border-radius: 4px; padding: 1px 5px; font-size: 12.5px; color: var(--forest-deep);
+    }
+    .desc-help .fmt-res { color: var(--muted); }
     .fiche__actions {
       display: flex;
       gap: 10px;
@@ -402,6 +426,10 @@
       margin-bottom: 6px;
     }
     .form-label .optional { font-weight: 400; color: var(--muted); }
+
+    /* La description s'ouvre à la taille de son contenu (resize="auto"),
+       mais plafonnée : au-delà, elle scrolle au lieu d'allonger la page. */
+    #fDesc::part(textarea) { max-height: 55vh; overflow-y: auto; }
 
     /* Gros boutons radio pour l'horizon — pas de date-pickers nus. */
     .seg {
@@ -568,8 +596,27 @@
 
         <div class="form-field">
           <label class="form-label" for="fDesc">Description <span class="optional">(facultatif — tout ce qu'il faut savoir pour la tâche)</span></label>
-          <wa-textarea id="fDesc" rows="7" resize="vertical"
+          <wa-textarea id="fDesc" rows="7" resize="auto"
             placeholder="Problème / historique :&#10;Solution retenue :&#10;Matériel nécessaire :&#10;Budget (si requis) :"></wa-textarea>
+          <wa-details class="desc-help" summary="Comment mettre en forme le texte ?">
+            <table>
+              <tr>
+                <td><code>Matériel :</code><br>ou <code>## Matériel</code></td>
+                <td class="fmt-res">→ un <strong>titre de section</strong></td>
+              </tr>
+              <tr>
+                <td><code>**important**</code></td>
+                <td class="fmt-res">→ <strong>important</strong> (en gras)</td>
+              </tr>
+              <tr>
+                <td><code>- madriers</code><br><code>- vis</code></td>
+                <td class="fmt-res">→ une liste à puces</td>
+              </tr>
+              <tr>
+                <td colspan="2" class="fmt-res">Laissez une ligne vide pour séparer deux paragraphes.</td>
+              </tr>
+            </table>
+          </wa-details>
         </div>
 
         <div class="form-field">
@@ -653,6 +700,44 @@
       return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
+    }
+
+    // Rendu Markdown restreint des descriptions de projet.
+    // SÉCURITÉ : on échappe TOUT le texte d'abord, puis on injecte nos propres
+    // balises — aucun HTML saisi par l'auteur ne peut survivre.
+    // Géré : titres (## ou ligne « Label : »), **gras**, listes « - ».
+    function renderDescription(raw) {
+      const lines = String(raw == null ? '' : raw).replace(/\r\n?/g, '\n').split('\n');
+      let html = '', inList = false, para = [];
+      function inline(s) { return s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+      function flushPara() { if (para.length) { html += '<p>' + para.join('<br>') + '</p>'; para = []; } }
+      function closeList() { if (inList) { html += '</ul>'; inList = false; } }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line === '') { flushPara(); closeList(); continue; }
+
+        const li = line.match(/^[-*]\s+(.*)$/);
+        if (li) {
+          flushPara();
+          if (!inList) { html += '<ul class="desc-list">'; inList = true; }
+          html += '<li>' + inline(escapeHtml(li[1])) + '</li>';
+          continue;
+        }
+        closeList();
+
+        const h = line.match(/^#{1,4}\s+(.*)$/);
+        if (h) { flushPara(); html += '<h4 class="desc-h">' + inline(escapeHtml(h[1])) + '</h4>'; continue; }
+
+        // Auto-titre : ligne courte se terminant par « : » (modèle « Label : »).
+        if (line.length <= 40 && /:$/.test(line)) {
+          flushPara(); html += '<h4 class="desc-h">' + inline(escapeHtml(line)) + '</h4>'; continue;
+        }
+
+        para.push(inline(escapeHtml(line)));
+      }
+      flushPara(); closeList();
+      return html;
     }
 
     const stateBox = document.getElementById('stateBox');
@@ -862,7 +947,7 @@
         +   metaRows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('')
         + '</dl>'
         + (p.description
-            ? '<div class="fiche__desc">' + escapeHtml(p.description) + '</div>'
+            ? '<div class="fiche__desc">' + renderDescription(p.description) + '</div>'
             : '<div class="fiche__desc is-empty">Aucune description pour l\'instant.</div>')
         + reportsSection
         + journalSection
