@@ -340,6 +340,77 @@
     .badge--report-clos   { background: rgba(74, 107, 82, 0.18); color: var(--success); }
     .report-empty { font-size: 13px; color: var(--muted); font-style: italic; }
 
+    /* ---------- Détail d'un signalement (dépliage inline) ----------
+       Cliquer une ligne la déplie sur place : photo, notes, journal et
+       clôture — le suivi qu'annonce le renvoi du popup de la carte. Pas
+       de modal ni d'aller-retour vers la carte (cf. principes UI). */
+    details.report-row {
+      background: var(--paper-warm);
+      border: 1px solid rgba(31, 58, 46, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    details.report-row > summary.report-item {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      list-style: none;
+      cursor: pointer;
+    }
+    details.report-row > summary.report-item::-webkit-details-marker { display: none; }
+    details.report-row[open] > summary.report-item {
+      border-bottom: 1px solid rgba(31, 58, 46, 0.1);
+    }
+    .report-item__count {
+      flex-shrink: 0;
+      font-size: 11px;
+      color: var(--moss);
+      background: rgba(31, 58, 46, 0.08);
+      border-radius: 10px;
+      padding: 1px 7px;
+    }
+    .report-item__chevron {
+      flex-shrink: 0;
+      font-size: 12px;
+      color: var(--moss);
+      transition: transform 0.15s ease;
+    }
+    details.report-row[open] > summary.report-item .report-item__chevron {
+      transform: rotate(90deg);
+    }
+    .report-item__detail {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .report-detail__photo {
+      width: 100%;
+      max-height: 280px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+    }
+    .report-detail__notes {
+      font-size: 13.5px;
+      color: var(--text);
+      line-height: 1.45;
+      margin: 0;
+    }
+    .report-detail__journal-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--moss);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin: 0;
+    }
+    .report-detail__actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .report-detail__actions .rep-detach {
+      margin-left: auto;     /* poussé à droite, à l'écart de la résolution */
+      --wa-color-text-link: var(--muted);
+    }
+
     /* ---------- Journal de suivi (fiche) ----------
        Rendu par le composant partagé (.jr-*, shared/journal.js) — ici on ne
        règle que la densité de la fiche et le message « vide ». */
@@ -696,6 +767,128 @@
       return reports.filter(function (r) { return r.project === projectId; });
     }
 
+    // Première entrée (dérivée) du journal d'un signalement : le signalement
+    // lui-même, rendu comme le popup de la carte (shared/journal.js).
+    function autoEntryHtml(r) {
+      return window.ORFORD.journal.entryHtml({
+        author: r.reporterName || 'Anonyme',
+        date: r.timestamp,
+        text: 'A signalé le problème.',
+        auto: true,
+      });
+    }
+
+    // Corps déplié d'un signalement rattaché : photo, notes, journal de suivi
+    // et — s'il est ouvert — composeur + clôture. C'est ici qu'aboutit le
+    // renvoi « suivi & clôture sur la fiche du projet » du popup de la carte.
+    function reportDetailHtml(r, closed) {
+      const photo = r.photoThumb
+        ? '<img class="report-detail__photo" src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />'
+        : '';
+      const notes = r.notes
+        ? '<p class="report-detail__notes">' + escapeHtml(r.notes) + '</p>'
+        : '';
+      const log = autoEntryHtml(r) + window.ORFORD.journal.entriesHtml(r.followup);
+      const journalBlock =
+        '<p class="report-detail__journal-title">Suivi &amp; résolution</p>'
+        + '<div class="fu-log" id="rep-log-' + r.rowIndex + '">' + log + '</div>';
+      // Signalement clos : détail en lecture seule (pas de composeur ni clôture).
+      const actions = closed ? '' :
+        window.ORFORD.journal.composerHtml('rep-' + r.rowIndex,
+          { placeholder: 'Proposer une solution, ajouter une info…' })
+        + '<div class="report-detail__actions">'
+        +   '<wa-button class="rep-close" data-row="' + r.rowIndex + '" data-reason="Clôturé" '
+        +     'variant="brand" appearance="filled" size="small">'
+        +     '<wa-icon slot="start" name="circle-check" variant="solid"></wa-icon>Clôturer</wa-button>'
+        +   '<wa-button class="rep-close" data-row="' + r.rowIndex + '" data-reason="Doublon" '
+        +     'appearance="outlined" size="small">Doublon</wa-button>'
+        // « Retirer du projet » : action d'organisation (pas de résolution),
+        // donc neutre et poussée à droite, à l'écart des boutons de clôture.
+        // Même verbe/icône que le mode assignation de la carte.
+        +   '<wa-button class="rep-detach" data-row="' + r.rowIndex + '" '
+        +     'appearance="plain" size="small">'
+        +     '<wa-icon slot="start" name="folder-minus" variant="solid"></wa-icon>Retirer du projet</wa-button>'
+        + '</div>';
+      return '<div class="report-item__detail">' + photo + notes + journalBlock + actions + '</div>';
+    }
+
+    // Clôture d'un signalement depuis sa fiche (mirroir de closeReport sur la
+    // carte) : updateStatus, miroir local, re-rendu. L'ajout au journal, lui,
+    // se fait en place sans re-rendu (cf. wireReportRows) pour ne pas replier.
+    async function closeReportOnFiche(p, rowIndex, reason) {
+      const msg = reason === 'Doublon'
+        ? 'Marquer ce signalement comme doublon et le clôturer ?'
+        : 'Clôturer ce signalement (tâche faite) ?';
+      if (!window.confirm(msg)) return;
+      const res = await window.ORFORD_AUTH.post(
+        { action: 'updateStatus', rowIndex: rowIndex, status: reason },
+        { title: 'Mot de passe du comité', message: 'Le suivi des signalements est réservé au comité.' }
+      );
+      if (res.cancelled) return;
+      if (!res.ok) { toast('Erreur : ' + (res.error || 'échec de la clôture')); return; }
+      const r = reports.find(function (x) { return x.rowIndex === rowIndex; });
+      if (r) r.status = reason;
+      updateStats();
+      renderFiche(p.id);
+      toast(reason === 'Doublon' ? 'Signalement marqué doublon.' : 'Signalement clôturé.');
+    }
+
+    // Détache un signalement du projet (col. P vidée côté serveur) : il
+    // retourne au triage en gardant son statut. Réversible via le mode
+    // assignation de la carte. Même action que « Retirer du projet » du popup.
+    async function detachReportFromProject(p, rowIndex) {
+      if (!window.confirm('Retirer ce signalement du projet ? Il retournera au triage.')) return;
+      const res = await window.ORFORD_AUTH.post(
+        { action: 'setReportProject', rowIndex: rowIndex, projectId: '' },
+        { title: 'Mot de passe du comité', message: 'Le suivi des signalements est réservé au comité.' }
+      );
+      if (res.cancelled) return;
+      if (!res.ok) { toast('Erreur : ' + (res.error || 'échec du retrait')); return; }
+      const r = reports.find(function (x) { return x.rowIndex === rowIndex; });
+      if (r) r.project = '';
+      updateStats();
+      renderFiche(p.id);
+      toast('Signalement retiré du projet.');
+    }
+
+    // Branche, après rendu de la fiche, le dépliage (un seul ouvert à la fois),
+    // le composeur de journal et les boutons de clôture de chaque signalement.
+    function wireReportRows(p) {
+      const rows = Array.from(document.querySelectorAll('details.report-row'));
+      rows.forEach(function (row) {
+        row.addEventListener('toggle', function () {
+          if (row.open) rows.forEach(function (o) { if (o !== row) o.open = false; });
+        });
+      });
+      attachedReports(p.id).forEach(function (r) {
+        if (isReportClosed(r)) return;
+        window.ORFORD.journal.wireComposer('rep-' + r.rowIndex, async function (text, author) {
+          const res = await window.ORFORD_AUTH.post(
+            { action: 'appendFollowup', rowIndex: r.rowIndex, text: text, author: author },
+            { title: 'Mot de passe du comité', message: 'Le suivi des signalements est réservé au comité.' }
+          );
+          if (res.cancelled) return false;
+          if (!res.ok) { toast('Erreur : ' + (res.error || 'échec de l\'ajout')); return false; }
+          r.followup = res.followup || ((r.followup ? r.followup + '\n' : '')
+            + '[' + window.ORFORD.journal.stamp() + ' · ' + (author || 'Anonyme') + '] ' + text);
+          const logEl = document.getElementById('rep-log-' + r.rowIndex);
+          if (logEl) logEl.innerHTML = autoEntryHtml(r) + window.ORFORD.journal.entriesHtml(r.followup);
+          toast('Suivi ajouté.');
+          return true;
+        });
+      });
+      document.querySelectorAll('wa-button.rep-close').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          closeReportOnFiche(p, parseInt(btn.dataset.row, 10), btn.dataset.reason);
+        });
+      });
+      document.querySelectorAll('wa-button.rep-detach').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          detachReportFromProject(p, parseInt(btn.dataset.row, 10));
+        });
+      });
+    }
+
     function escapeHtml(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -884,21 +1077,31 @@
       const attached = attachedReports(p.id);
       const reportRows = attached.map(function (r) {
         const famIcon = FAMILY_ICONS[categoryFamily(r.category)];
+        const closed = isReportClosed(r);
         const thumb = '<div class="report-item__thumb">'
           + '<wa-icon name="' + famIcon + '" variant="solid"></wa-icon>'
           + (r.photoThumb ? '<img src="' + escapeHtml(r.photoThumb) + '" alt="" onerror="this.remove()" />' : '')
           + '</div>';
-        const badge = isReportClosed(r)
+        const badge = closed
           ? '<span class="badge badge--report-clos">' + escapeHtml(r.status) + '</span>'
           : '<span class="badge badge--report-ouvert">Ouvert</span>';
-        return '<div class="report-item">'
+        // Pastille « nombre de notes de suivi » — visible seulement s'il y en a.
+        const fuCount = r.followup ? r.followup.split('\n').filter(function (l) { return l.trim(); }).length : 0;
+        const countChip = fuCount
+          ? '<span class="report-item__count" title="' + fuCount + ' note(s) de suivi">' + fuCount + '</span>'
+          : '';
+        const summary = '<summary class="report-item">'
           + thumb
           + '<div class="report-item__body">'
           +   '<div class="report-item__cat">' + escapeHtml(r.category || 'Sans catégorie') + '</div>'
           +   '<div class="report-item__sub">' + escapeHtml(r.trail || 'Sans sentier précisé') + '</div>'
           + '</div>'
+          + countChip
           + badge
-          + '</div>';
+          + '<wa-icon class="report-item__chevron" name="chevron-right" variant="solid"></wa-icon>'
+          + '</summary>';
+        return '<details class="report-row" data-row="' + r.rowIndex + '">'
+          + summary + reportDetailHtml(r, closed) + '</details>';
       }).join('');
       const assignBtn = p.status === 'Actif'
         ? '<div style="margin-top:10px;">'
@@ -980,6 +1183,7 @@
         toast('Note ajoutée au journal.');
         return true;
       });
+      wireReportRows(p);
       showView('fiche');
     }
 

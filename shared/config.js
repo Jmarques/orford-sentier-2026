@@ -4,7 +4,7 @@
 // in each HTML page can read it without bundling.
 // ============================================================
 window.ORFORD = {
-  ENDPOINT_URL: 'https://script.google.com/macros/s/AKfycbxNZB8SsIEcH5_RVD6WbfX8VjP7vqIMnnXZNTJRXVLOpcEh6gXcrpt-aHz59OU_wt9SMQ/exec',
+  ENDPOINT_URL: 'https://script.google.com/macros/s/AKfycbwBlUuKJv8v5p_rfsLNA_fBHXJUV0uQTqzpauY0U3xHvRykT_pOsmuUExda8WYl3uwmQw/exec',
 
   // Default map view — used by map.html overview and by both
   // map pickers (form + admin drawer) so they all start aligned.

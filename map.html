@@ -53,8 +53,8 @@
       height: 100vh;
       height: 100dvh;
     }
-    /* Hero on the map page uses the same .page-hero from shared/theme.css,
-       so h1 + subtitle match the other pages exactly. */
+    /* La page carte n'a pas de hero : la nav indique déjà où l'on est, et
+       chaque pixel sert la carte. Le compteur vit dans la barre de filtres. */
 
     /* ---------- Legend ---------- */
     /* Une seule rangée de "pilules" de filtres au traitement identique :
@@ -69,9 +69,31 @@
       font-size: 12px;
       color: var(--muted);
       display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    /* Conteneur des pilules : il enveloppe sur grand écran et passe en une
+       seule rangée à défilement horizontal sur mobile (voir media query). */
+    .legend-groups {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 8px;
+    }
+    /* Mobile : on ne replie plus les filtres sur 3-4 rangées (qui mangeaient
+       la carte) — une seule rangée qui défile au doigt. */
+    @media (max-width: 640px) {
+      .legend { padding: 6px 12px; gap: 8px; }
+      .legend-groups {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .legend-groups::-webkit-scrollbar { display: none; }
+      .legend-group { flex: 0 0 auto; }
     }
     .legend-group {
       display: inline-flex;
@@ -179,6 +201,47 @@
       background: var(--paper-warm);
     }
     .leaflet-container { font-family: inherit; }
+
+    /* ---------- Plein écran ---------- */
+    /* On masque la navigation et le pied de page : la carte + ses filtres
+       prennent toute la hauteur. Réversible (même bouton ou Échap). */
+    body.map-fullscreen site-masthead,
+    body.map-fullscreen site-footer { display: none; }
+
+    /* Bouton plein écran, injecté comme contrôle Leaflet (coin haut-droit).
+       Même langage visuel que les pilules de filtres. */
+    .map-fs-btn {
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.25);
+      border-radius: 8px;
+      color: var(--forest-deep);
+      font-size: 18px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    .map-fs-btn:hover { background: var(--paper-warm); }
+    .map-fs-btn:focus-visible { outline: 2px solid var(--moss); outline-offset: 1px; }
+
+    /* Badge compteur, posé en coin bas-gauche de la carte (contrôle Leaflet).
+       Forme compacte « 📍 47 » : l'icône repère dit déjà « signalements ». */
+    .map-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--paper);
+      border: 1px solid rgba(31, 58, 46, 0.2);
+      border-radius: 999px;
+      padding: 4px 11px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--forest-deep);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    }
+    .map-badge wa-icon { color: var(--clay); font-size: 13px; }
 
     /* Custom marker pins — teardrop shape colored by status,
        with a category-family icon inside (counter-rotated). */
@@ -628,13 +691,6 @@
 <body class="map-page">
   <site-masthead page="carte"></site-masthead>
 
-  <header class="page-hero">
-    <h1>Carte des <em>signalements</em></h1>
-    <p class="page-hero__subtitle">
-      <span id="stats">Chargement…</span>
-    </p>
-  </header>
-
   <!-- Bannière du mode assignation (?assigner=P-x) : rappelle le contexte et
        offre une sortie évidente vers la fiche du projet. Masquée en mode
        normal — le popup du quotidien ne gagne aucun bruit. -->
@@ -652,6 +708,9 @@
        sentier), sans libellé : les pastilles/icônes + tooltips parlent
        d'elles-mêmes, et le contenant commun assure la continuité visuelle. -->
   <div class="legend" aria-label="Filtres de la carte">
+    <!-- Le compteur n'est plus ici : il vit dans un badge en coin de carte
+         (créé en JS), pour ne rien retirer à la barre de filtres. -->
+    <div class="legend-groups">
     <div class="legend-group" role="group" aria-label="Filtrer par statut">
       <button type="button" class="legend-item" data-status="nouveau" data-tip="Nouveau" aria-label="Nouveau"><span class="legend-dot" style="background: var(--clay);"></span></button>
       <button type="button" class="legend-item" data-status="cloture" data-tip="Clôturé" aria-label="Clôturé"><span class="legend-dot" style="background: var(--moss);"></span></button>
@@ -680,6 +739,7 @@
     </div>
     <div class="legend-group" role="group" aria-label="Calques">
       <button type="button" class="legend-item legend-item--off" id="oldTracesToggle" aria-pressed="false" data-tip="Anciens tracés" aria-label="Afficher les anciens tracés (cartes papier)"><span class="legend-icon"><wa-icon name="scroll" variant="solid"></wa-icon></span></button>
+    </div>
     </div>
   </div>
 
@@ -731,6 +791,60 @@
       maxZoom: 19,
       attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
+
+    // =========================================================
+    // Plein écran — surtout utile sur mobile, où masthead + filtres + pied
+    // de page rognent la carte quand on superpose tracés GPS et signalements.
+    // Masque la navigation/pied de page, garde la carte ET ses filtres.
+    // =========================================================
+    let fsBtn = null;
+    function setFullscreen(on) {
+      document.body.classList.toggle('map-fullscreen', on);
+      if (fsBtn) {
+        fsBtn.firstChild.setAttribute('name', on ? 'compress' : 'expand');
+        fsBtn.setAttribute('aria-label', on ? 'Quitter le plein écran' : 'Plein écran');
+        fsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
+      // Leaflet doit recalculer ses dimensions après le changement de hauteur.
+      setTimeout(function () { map.invalidateSize(); }, 60);
+    }
+    const FullscreenControl = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd: function () {
+        const btn = L.DomUtil.create('button', 'map-fs-btn');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Plein écran');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.innerHTML = '<wa-icon name="expand" variant="solid"></wa-icon>';
+        L.DomEvent.disableClickPropagation(btn);
+        L.DomEvent.on(btn, 'click', function () {
+          setFullscreen(!document.body.classList.contains('map-fullscreen'));
+        });
+        fsBtn = btn;
+        return btn;
+      }
+    });
+    map.addControl(new FullscreenControl());
+
+    // Badge compteur en coin bas-gauche : nombre de signalements affichés,
+    // mis à jour par setStats() au fil des filtres. Forme compacte (icône + n°).
+    const StatsControl = L.Control.extend({
+      options: { position: 'bottomleft' },
+      onAdd: function () {
+        const el = L.DomUtil.create('div', 'map-badge');
+        el.id = 'stats';
+        el.innerHTML = '<wa-icon name="location-dot" variant="solid"></wa-icon>'
+          + '<span id="statsNum">…</span>';
+        return el;
+      }
+    });
+    map.addControl(new StatsControl());
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && document.body.classList.contains('map-fullscreen')) {
+        setFullscreen(false);
+      }
+    });
 
     // =========================================================
     // Anciens tracés (cartes papier numérisées) — calque optionnel
@@ -992,8 +1106,12 @@
     }
 
     function setStats(n) {
-      document.getElementById('stats').textContent =
-        n + (n === 1 ? ' signalement' : ' signalements');
+      const num = document.getElementById('statsNum');
+      if (num) num.textContent = n;
+      // Texte complet réservé aux lecteurs d'écran — le badge reste compact.
+      const badge = document.getElementById('stats');
+      if (badge) badge.setAttribute('aria-label',
+        n + (n === 1 ? ' signalement affiché' : ' signalements affichés'));
     }
 
     function showState(msg, isError) {
@@ -1170,8 +1288,6 @@
         showToast('Projet introuvable : ' + ASSIGN_ID, true);
         return;
       }
-      document.querySelector('.page-hero h1').innerHTML =
-        'Assigner des <em>signalements</em>';
       document.getElementById('assignBannerTitle').textContent = assignProject.title;
       document.getElementById('assignExit').href =
         'projets.html?id=' + encodeURIComponent(assignProject.id);
